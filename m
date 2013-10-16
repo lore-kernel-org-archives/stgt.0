@@ -1,233 +1,161 @@
-From: ronnie sahlberg <ronniesahlberg@gmail.com>
-Subject: Re: [PATCH] Add an array that describes which opcodes are supported
- by the RDWR and SHEEPDOG backends.
-Date: Wed, 16 Oct 2013 09:05:17 -0700
-Message-ID: <CAN05THRoWjikoYrZL1Der+JiVTw=KZRzMpsWePa6Gvc1bHYf9w@mail.gmail.com>
-References: <1381588740-25968-1-git-send-email-ronniesahlberg@gmail.com>
-	<1381588740-25968-2-git-send-email-ronniesahlberg@gmail.com>
+From: Eric Millbrandt <eric.millbrandt@cacheio.com>
+Subject: tgtd regression:  new NAA descriptor breaks multipathd
+Date: Wed, 16 Oct 2013 19:51:24 -0400
+Message-ID: <525F267C.8030109@cacheio.com>
 Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="2phmseN5FuigreBIsSJ26xhrV3mPBBIiB"
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=1jAAOtzJePEXIEtZ5jZMj7X7W2Zfzy5YZcERQBMkLQE=;
-        b=HCYaNrnnMOmEGRvH/KNRzRPoH+3slFVg/B+BGpA/W5p4EXGu4GpGAjs5A2sOkg+z12
-         AWdgRQ/VGdejbvYfreYH8Durh67OW9DLkrgK6XrAEBtNzY4VlRwLADjr26GSBf8oWgUq
-         9e30q4AD+HiMUw6QNUX/UcT7fpO/q2uWsdUnQ3BWbOk6W1dFaY3WbtNKLi+QDeoj9cqb
-         JWOgk5ym2nZbx1649F21YDQDCpwuXlhsPmy91x5mIytfXJ5uL5fhQzBGpIAhaTWHZSvz
-         ORKCDtDciZeFTbSkG/Xhi6Kce8+d8MI7/eLj05MP9dYgS/Dlpwj/qDx2kpyfczFh8uF2
-         sFzw==
-In-Reply-To: <1381588740-25968-2-git-send-email-ronniesahlberg@gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: stgt <stgt@vger.kernel.org>
-Cc: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, Alexander Nezhinsky <nezhinsky@gmail.com>
+Cc: stgt@vger.kernel.org
 
-ping?
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--2phmseN5FuigreBIsSJ26xhrV3mPBBIiB
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-On Sat, Oct 12, 2013 at 7:38 AM, Ronnie Sahlberg
-<ronniesahlberg@gmail.com> wrote:
-> While RDWR supports all SBC opcodes that TGTD implement SHEEPDOG
-> only supports a subset and lacks the following opcodes:
->             WRITE_VERIFY10/12/16 VERIFY10/12/16 PREFETCH10/16
->             WRITE_SAME10/16 UNMAP and ORWRITE
->
-> This allows backends to specify which opcodes it is prepared to process
-> and which commands should fail with invalid op code
-> and allows SHEEPDOG backed LUNs to respond with INVALID_OP_CODE
-> correctly.
->
-> This is most useful for block devices where we have several different backens
-> and where some backends only support a subset of the commands
->
-> Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-> ---
->  usr/bs.c          |    8 ++++++++
->  usr/bs_rdwr.c     |   51 +++++++++++++++++++++++++++++++++++++++++++++++++++
->  usr/bs_sheepdog.c |   38 ++++++++++++++++++++++++++++++++++++++
->  usr/scsi.c        |    6 ++++++
->  usr/tgtd.h        |    1 +
->  5 files changed, 104 insertions(+), 0 deletions(-)
->
-> diff --git a/usr/bs.c b/usr/bs.c
-> index 636f53b..5299498 100644
-> --- a/usr/bs.c
-> +++ b/usr/bs.c
-> @@ -463,3 +463,11 @@ int bs_thread_cmd_submit(struct scsi_cmd *cmd)
->
->         return 0;
->  }
-> +
-> +void bs_create_opcode_map(unsigned char *map, unsigned char *opcodes, int num)
-> +{
-> +       int i;
-> +
-> +       for (i = 0; i < num; i++)
-> +               map[opcodes[i]] = 1;
-> +}
-> diff --git a/usr/bs_rdwr.c b/usr/bs_rdwr.c
-> index 47d2d99..6a88205 100644
-> --- a/usr/bs_rdwr.c
-> +++ b/usr/bs_rdwr.c
-> @@ -412,6 +412,8 @@ static void bs_rdwr_exit(struct scsi_lu *lu)
->         bs_thread_close(info);
->  }
->
-> +static char bs_ops_supported[256];
-> +
->  static struct backingstore_template rdwr_bst = {
->         .bs_name                = "rdwr",
->         .bs_datasize            = sizeof(struct bs_thread_info),
-> @@ -421,9 +423,58 @@ static struct backingstore_template rdwr_bst = {
->         .bs_exit                = bs_rdwr_exit,
->         .bs_cmd_submit          = bs_thread_cmd_submit,
->         .bs_oflags_supported    = O_SYNC | O_DIRECT,
-> +       .bs_ops_supported       = bs_ops_supported,
->  };
->
->  __attribute__((constructor)) static void bs_rdwr_constructor(void)
->  {
-> +       static char opcodes[] = {
-> +               ALLOW_MEDIUM_REMOVAL,
-> +               COMPARE_AND_WRITE,
-> +               FORMAT_UNIT,
-> +               INQUIRY,
-> +               MAINT_PROTOCOL_IN,
-> +               MODE_SELECT,
-> +               MODE_SELECT_10,
-> +               MODE_SENSE,
-> +               MODE_SENSE_10,
-> +               ORWRITE_16,
-> +               PERSISTENT_RESERVE_IN,
-> +               PERSISTENT_RESERVE_OUT,
-> +               PRE_FETCH_10,
-> +               PRE_FETCH_16,
-> +               READ_10,
-> +               READ_12,
-> +               READ_16,
-> +               READ_6,
-> +               READ_CAPACITY,
-> +               RELEASE,
-> +               REPORT_LUNS,
-> +               REQUEST_SENSE,
-> +               RESERVE,
-> +               SEND_DIAGNOSTIC,
-> +               SERVICE_ACTION_IN,
-> +               START_STOP,
-> +               SYNCHRONIZE_CACHE,
-> +               SYNCHRONIZE_CACHE_16,
-> +               TEST_UNIT_READY,
-> +               UNMAP,
-> +               VERIFY_10,
-> +               VERIFY_12,
-> +               VERIFY_16,
-> +               WRITE_10,
-> +               WRITE_12,
-> +               WRITE_16,
-> +               WRITE_6,
-> +               WRITE_SAME,
-> +               WRITE_SAME_16,
-> +               WRITE_VERIFY,
-> +               WRITE_VERIFY_12,
-> +               WRITE_VERIFY_16
-> +       };
-> +
-> +       bs_create_opcode_map(bs_ops_supported, &opcodes[0],
-> +               sizeof(opcodes) / sizeof(opcodes[0]));
-> +
->         register_backingstore_template(&rdwr_bst);
->  }
-> diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
-> index 4b5a951..3099b58 100644
-> --- a/usr/bs_sheepdog.c
-> +++ b/usr/bs_sheepdog.c
-> @@ -1017,6 +1017,8 @@ static void bs_sheepdog_exit(struct scsi_lu *lu)
->         }
->  }
->
-> +static char bs_ops_supported[256];
-> +
->  static struct backingstore_template sheepdog_bst = {
->         .bs_name                = "sheepdog",
->         .bs_datasize            =
-> @@ -1026,9 +1028,45 @@ static struct backingstore_template sheepdog_bst = {
->         .bs_init                = bs_sheepdog_init,
->         .bs_exit                = bs_sheepdog_exit,
->         .bs_cmd_submit          = bs_thread_cmd_submit,
-> +       .bs_ops_supported       = bs_ops_supported,
->  };
->
->  __attribute__((constructor)) static void __constructor(void)
->  {
-> +       static char opcodes[] = {
-> +               ALLOW_MEDIUM_REMOVAL,
-> +               FORMAT_UNIT,
-> +               INQUIRY,
-> +               MAINT_PROTOCOL_IN,
-> +               MODE_SELECT,
-> +               MODE_SELECT_10,
-> +               MODE_SENSE,
-> +               MODE_SENSE_10,
-> +               PERSISTENT_RESERVE_IN,
-> +               PERSISTENT_RESERVE_OUT,
-> +               READ_10,
-> +               READ_12,
-> +               READ_16,
-> +               READ_6,
-> +               READ_CAPACITY,
-> +               RELEASE,
-> +               REPORT_LUNS,
-> +               REQUEST_SENSE,
-> +               RESERVE,
-> +               SEND_DIAGNOSTIC,
-> +               SERVICE_ACTION_IN,
-> +               START_STOP,
-> +               SYNCHRONIZE_CACHE,
-> +               SYNCHRONIZE_CACHE_16,
-> +               TEST_UNIT_READY,
-> +               WRITE_10,
-> +               WRITE_12,
-> +               WRITE_16,
-> +               WRITE_6
-> +       };
-> +
-> +       bs_create_opcode_map(bs_ops_supported, &opcodes[0],
-> +               sizeof(opcodes) / sizeof(opcodes[0]));
-> +
->         register_backingstore_template(&sheepdog_bst);
->  }
-> diff --git a/usr/scsi.c b/usr/scsi.c
-> index 2636a5c..bce5ae0 100644
-> --- a/usr/scsi.c
-> +++ b/usr/scsi.c
-> @@ -492,6 +492,12 @@ int scsi_cmd_perform(int host_no, struct scsi_cmd *cmd)
->         if (spc_access_check(cmd))
->                 return SAM_STAT_RESERVATION_CONFLICT;
->
-> +       if (cmd->dev->bst->bs_ops_supported
-> +       && !cmd->dev->bst->bs_ops_supported[op]) {
-> +               sense_data_build(cmd, ILLEGAL_REQUEST, ASC_INVALID_OP_CODE);
-> +               return SAM_STAT_CHECK_CONDITION;
-> +       }
-> +
->         return cmd->dev->dev_type_template.ops[op].cmd_perform(host_no, cmd);
->  }
->
-> diff --git a/usr/tgtd.h b/usr/tgtd.h
-> index 484e6e9..70f6306 100644
-> --- a/usr/tgtd.h
-> +++ b/usr/tgtd.h
-> @@ -165,6 +165,7 @@ struct backingstore_template {
->         void (*bs_exit)(struct scsi_lu *dev);
->         int (*bs_cmd_submit)(struct scsi_cmd *cmd);
->         int bs_oflags_supported;
-> +       const char *bs_ops_supported;
->
->         struct list_head backingstore_siblings;
->  };
-> --
-> 1.7.3.1
->
+Hello all,
+
+Since commit 6402eb875488240a403c6d032b9e81d7802801eb "add NAA Locally
+Assigned designator to 0x83 VPD page" added generated NAA descriptors,
+the scsi_id field that I was assigning to each target lun is no longer
+seen on the initiator side.This in turn breaks multipathing on my
+initiators because it is seeing unique identifiers even though the
+targets are the same.
+
+This is a trivial example of the issue that I see. I have a target disk
+(wwm 0x50014ee6036945cb) that I export with tgtd. Below is the
+descriptor on the target from the host system:
+
+[root@cio-5 ~]# sg_inq --page=3D0x83 /dev/sdj
+VPD INQUIRY: Device Identification page
+Designation descriptor number 1, descriptor length: 12
+designator_type: NAA, code_set: Binary
+associated with the addressed logical unit
+NAA 5, IEEE Company_id: 0x14ee
+Vendor Specific Identifier: 0x6036945cb
+[0x50014ee6036945cb]
+
+I run two instances of tgtd on two seperate Infiniband interfaces and
+export the target on both so that I can use multipathd to provide
+redundancy. I configure the lun using the following targets.conf file.
+
+default-driver iser
+<target
+iqn.2012-07.com.cacheio:cio-5.cio-ATA-WDC_WD5000LPVX-5-350014ee6036945cb>=
+
+<backing-store /dev/disk/cacheio/ATA-WDC_WD5000LPVX-5-350014ee6036945cb>
+lun 1
+vendor_id "ATA "
+product_id "WD5000LPVX-5"
+product_rev "1A01"
+scsi_sn "WX81A33E1930"
+scsi_id 350014ee6036945cb
+bs-type aio
+mode_page "0x0A:1:4:0x01:0x04:0x0:0x0"
+write-cache off
+</backing-store>
+</target>
+
+Then I connect the initiator to the lun over the two paths. They appear
+as sdb and sdc. Now when I look at the descriptors from the initiator, I
+see two descriptors for each lun:
+
+[root@cio-2 ~]# sg_inq --page=3D0x83 /dev/sdb
+VPD INQUIRY: Device Identification page
+Designation descriptor number 1, descriptor length: 40
+designator_type: T10 vendor identification, code_set: ASCII
+associated with the addressed logical unit
+vendor id: 350014ee
+vendor specific: 6036945cb
+Designation descriptor number 2, descriptor length: 12
+designator_type: NAA, code_set: Binary
+associated with the addressed logical unit
+NAA 3, Locally assigned:
+[0x3000000200000001]
+
+[root@cio-2 ~]# sg_inq --page=3D0x83 /dev/sdc
+VPD INQUIRY: Device Identification page
+Designation descriptor number 1, descriptor length: 40
+designator_type: T10 vendor identification, code_set: ASCII
+associated with the addressed logical unit
+vendor id: 350014ee
+vendor specific: 6036945cb
+Designation descriptor number 2, descriptor length: 12
+designator_type: NAA, code_set: Binary
+associated with the addressed logical unit
+NAA 3, Locally assigned:
+[0x3000000100000001]
+
+Notice that the NAA descriptors are now different even though the target
+is the same!
+
+[root@cio-2 tgt]# scsi_id --whitelisted --page=3D0x83 /dev/sdb
+33000000200000001
+[root@cio-2 tgt]# scsi_id --whitelisted --page=3D0x83 /dev/sdc
+33000000100000001
+
+This has the effect of breaking multipathd because the identifiers no
+longer match...
+
+[root@cio-2 ~]# lsblk
+NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sda 8:0 0 93.2G 0 disk
+=E2=94=9C=E2=94=80sda1 8:1 0 1000M 0 part /boot
+=E2=94=94=E2=94=80sda2 8:2 0 87.9G 0 part
+=E2=94=9C=E2=94=80vg_cio-lv_root (dm-0) 253:0 0 78.1G 0 lvm /
+=E2=94=94=E2=94=80vg_cio-lv_home (dm-1) 253:1 0 9.8G 0 lvm /home
+sdb 8:16 0 465.8G 0 disk
+=E2=94=94=E2=94=8033000000200000001 (dm-2) 253:2 0 465.8G 0 mpath
+sdc 8:32 0 465.8G 0 disk
+=E2=94=94=E2=94=8033000000100000001 (dm-3) 253:3 0 465.8G 0 mpath
+
+[root@cio-2 tgt]# multipath -ll
+33000000100000001 dm-3 ATA,WD5000LPVX-5
+size=3D466G features=3D'0' hwhandler=3D'0' wp=3Drw
+`-+- policy=3D'round-robin 0' prio=3D-1 status=3Dactive
+`- 32:0:0:1 sdc 8:32 active ready running
+Oct 16 19:19:06 | sdb: alua not supported
+33000000200000001 dm-2 ATA,WD5000LPVX-5
+size=3D466G features=3D'0' hwhandler=3D'0' wp=3Drw
+`-+- policy=3D'round-robin 0' prio=3D-1 status=3Dactive
+`- 31:0:0:1 sdb 8:16 active ready running
+
+I've reverted the commit for my local systems to restore the previous
+behavior. But I'm interested in correctly assigning the NAA instead of
+using the generated one.
+
+Eric
+
+
+
+
+
+--2phmseN5FuigreBIsSJ26xhrV3mPBBIiB
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Using GnuPG with Thunderbird - http://www.enigmail.net/
+
+iQIcBAEBAgAGBQJSXyZ8AAoJEEGoGVjD4GfIL3oQANzF7ZO0tLExa182rrfgRChf
+34xdYLfiYSOD0bzkiAMr99Q6EUa2XEEN88+fJEKkJKsPbruHIVfjNDVFVYdB2O8d
+bEs1Da02LcLZsrgmuFrZKLwuDF9gpZpGAhAMbj2tZr4WIy/HfgtMeXOaZEZ7uZKV
+G7RqCvd1W5TlVuN2aGzHnsNOSz6INhOBfwgT2ri8jYiq1adz0kYZRSR7QpTdDAc1
+bCU1jnEzVwX3UY4HGfGmV/FXuGjwTpRbQPS5IzF2h9fbv4dMbmEmtAsUqpRUoX7y
+w0dPe/YUUv2qqWviqi2tDq6r1lXOGfa5dt2hPZJfw3gFHB1HuJdz8g8HUm5fytuk
+wC3u8DAs6n/vD8CJx2FnJ+5/VkFasJzzLYaTJ5JbKTkQGVikOgJ4Y8XJFYzyGNF5
+WKotIuQw9PmXxM0GTnJT8oanr3RcChW9E8vs7xiYBNfpmMsr+Der/XAbp05PcALD
+Y/WrV59BmdBVQJf+GX+VdDxe/ZzPxHTe6+eMEEeI2HWkbvmsYLMNJAKCqETK6oR/
+slB403c4LQwUjAqZx6F1MRR5y3Iljil+RUTQ/o2Da3bb5ABPUAe23PC38cdRRnO/
++PvR0n2pZBX7Bo66E4YnaRNxu5agcNzbPkoXy/w+DoAFfekR90tvNn742vsRyhJe
+vw7+r0l5I0mNo+IwY+UI
+=P0ZW
+-----END PGP SIGNATURE-----
+
+--2phmseN5FuigreBIsSJ26xhrV3mPBBIiB--

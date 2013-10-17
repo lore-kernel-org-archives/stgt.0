@@ -1,7 +1,7 @@
 From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH v3 3/3] bs_sheepdog.c: test connection when new logical unit is created
-Date: Thu, 17 Oct 2013 16:38:34 +0900
-Message-ID: <1381995514-8816-4-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH v3 1/3] bs_sheepdog.c: mock the behavior of QEMU's sheepdog driver in a correct manner
+Date: Thu, 17 Oct 2013 16:38:32 +0900
+Message-ID: <1381995514-8816-2-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 References: <1381995514-8816-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 In-Reply-To: <1381995514-8816-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
@@ -13,90 +13,200 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: sheepdog@lists.wpkg.org, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 
-This patch adds creation of a test connection in the process of making
-logical unit. This is required for validating --backing-store option
-and avoid forever trying of reconnection.
+Current bs_sheepdog.c doesn't mock the behavior of QEMU's sheepdog
+driver in a correct manner when it opens snapshot VDIs. It treats the
+snapshot VDIs as read-only disks, but this behavior is different from
+the QEMU's driver. This patch lets bs_sheepdog.c mock the original
+behavior (delete an original VDI of the snapshot -> create a new non
+snapshot VDI based on the snapshot and open it). This patch also
+removes confusing notations of --backing-store option of
+bs_sheepdog.c.
 
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 ---
-
-v3: return error when --backing-store is invalid form
-
- usr/bs_sheepdog.c |   33 ++++++++++++++++++++++++++++++++-
- 1 file changed, 32 insertions(+), 1 deletion(-)
+ usr/bs_sheepdog.c |  109 +++++++++++++++++++++++++++++++++++++----------------
+ 1 file changed, 76 insertions(+), 33 deletions(-)
 
 diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
-index de66d59..1eb09c0 100644
+index 4f7cde0..11ddce6 100644
 --- a/usr/bs_sheepdog.c
 +++ b/usr/bs_sheepdog.c
-@@ -909,7 +909,7 @@ out:
+@@ -622,8 +622,11 @@ static int reload_inode(struct sheepdog_access_info *ai)
+ 	if (ret)
+ 		return -1;
  
- static int sd_open(struct sheepdog_access_info *ai, char *filename, int flags)
- {
--	int ret = 0, i, len;
-+	int ret = 0, i, len, fd;
- 	uint32_t vid = 0;
- 	char *orig_filename;
- 
-@@ -973,6 +973,15 @@ static int sd_open(struct sheepdog_access_info *ai, char *filename, int flags)
- 			parse_state = EXPECT_PORT;
- 			break;
- 		case EXPECT_PORT:
-+			len = strlen(result);
-+			for (i = 0; i < len; i++) {
-+				if (!isdigit(result[i])) {
-+					eprintf("invalid tcp port number:"\
-+						" %s\n", result);
-+					return -1;
-+				}
-+			}
+-	read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(vid),
+-		    ai->inode.nr_copies, SD_INODE_SIZE, 0);
++	ret = read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(vid),
++			  ai->inode.nr_copies, SD_INODE_SIZE, 0);
++	if (ret)
++		return -1;
 +
+ 	return 0;
+ }
+ 
+@@ -917,9 +920,9 @@ static int sd_open(struct sheepdog_access_info *ai, char *filename, int flags)
+ 	enum {
+ 		EXPECT_PROTO,
+ 		EXPECT_PATH,
+-		EXPECT_VDI,
+-		EXPECT_HOST_OR_PORT,
++		EXPECT_HOST,
+ 		EXPECT_PORT,
++		EXPECT_VDI,
+ 		EXPECT_TAG_OR_SNAP,
+ 		EXPECT_NOTHING,
+ 	} parse_state = EXPECT_PROTO;
+@@ -942,9 +945,6 @@ static int sd_open(struct sheepdog_access_info *ai, char *filename, int flags)
+ 	 * tcp:<host>:<port>:<vdi>
+ 	 * tcp:<host>:<port>:<vdi>:<tag>
+ 	 * tcp:<host>:<port>:<vdi>:<snapid>
+-	 * tcp:<port>:<vdi>
+-	 * tcp:<port>:<vdi>:<tag>
+-	 * tcp:<port>:<vdi>:<snapid>
+ 	 */
+ 
+ 	result = strtok_r(filename, ":", &saveptr);
+@@ -957,7 +957,7 @@ static int sd_open(struct sheepdog_access_info *ai, char *filename, int flags)
+ 				parse_state = EXPECT_PATH;
+ 			} else if (!strcmp("tcp", result)) {
+ 				ai->is_unix = 0;
+-				parse_state = EXPECT_HOST_OR_PORT;
++				parse_state = EXPECT_HOST;
+ 			} else {
+ 				eprintf("unknown protocol of sheepdog vdi:"\
+ 					" %s\n", result);
+@@ -968,26 +968,14 @@ static int sd_open(struct sheepdog_access_info *ai, char *filename, int flags)
+ 			strncpy(ai->uds_path, result, UNIX_PATH_MAX);
+ 			parse_state = EXPECT_VDI;
+ 			break;
+-		case EXPECT_HOST_OR_PORT:
+-			len = strlen(result);
+-			for (i = 0; i < len; i++) {
+-				if (!isdigit(result[i])) {
+-					/* result is a hostname */
+-					strncpy(ai->hostname, result,
+-						HOST_NAME_MAX);
+-					parse_state = EXPECT_PORT;
+-					goto next_token;
+-				}
+-			}
+-
+-			/* result is a port, use localhost as hostname */
+-			strncpy(ai->hostname, "localhost", strlen("localhost"));
+-set_port:
++		case EXPECT_HOST:
++			strncpy(ai->hostname, result, HOST_NAME_MAX);
++			parse_state = EXPECT_PORT;
++			break;
++		case EXPECT_PORT:
  			ai->port = atoi(result);
  			parse_state = EXPECT_VDI;
  			break;
-@@ -999,6 +1008,7 @@ trans_to_expect_nothing:
- 			eprintf("invalid VDI path of sheepdog, unexpected"\
- 				" token: %s (entire: %s)\n",
- 				result, orig_filename);
-+			ret = -1;
- 			goto out;
- 		default:
- 			eprintf("BUG: invalid state of parser: %d\n",
-@@ -1011,6 +1021,7 @@ trans_to_expect_nothing:
- 	    parse_state != EXPECT_TAG_OR_SNAP) {
- 		eprintf("invalid VDI path of sheepdog: %s (state: %d)\n",
- 			orig_filename, parse_state);
-+		ret = -1;
- 		goto out;
- 	}
+-		case EXPECT_PORT:
+-			goto set_port;
+ 		case EXPECT_VDI:
+ 			strncpy(vdi_name, result, SD_MAX_VDI_LEN);
+ 			parse_state = EXPECT_TAG_OR_SNAP;
+@@ -1017,8 +1005,6 @@ trans_to_expect_nothing:
+ 				parse_state);
+ 			exit(1);
+ 		}
+-
+-next_token:;
+ 	} while ((result = strtok_r(NULL, ":", &saveptr)) != NULL);
  
-@@ -1020,6 +1031,26 @@ trans_to_expect_nothing:
+ 	if (parse_state != EXPECT_NOTHING &&
+@@ -1039,7 +1025,8 @@ next_token:;
  	else
- 		dprintf("hostname: %s, port: %d\n", ai->hostname, ai->port);
+ 		dprintf("snapid: %d\n", snapid);
  
-+	/*
-+	 * test connection for validating command line option
-+	 *
-+	 * if this step is skipped, the main thread of tgtd will try to
-+	 * reconnect to sheep process forever
-+	 */
-+	fd = ai->is_unix ?
-+		connect_to_sdog_unix(ai->uds_path) :
-+		connect_to_sdog_tcp(ai->hostname, ai->port);
+-	ai->is_snapshot = !(snapid == -1) && strlen(tag);
++	dprintf("VDI name: %s\n", vdi_name);
++	ai->is_snapshot = !(snapid == -1) || strlen(tag);
+ 	ret = find_vdi_name(ai, vdi_name, snapid == -1 ? 0 : snapid, tag, &vid,
+ 			    ai->is_snapshot);
+ 	if (ret)
+@@ -1087,6 +1074,53 @@ static void set_medium_error(int *result, uint8_t *key, uint16_t *asc)
+ 	*asc = ASC_READ_ERROR;
+ }
+ 
++static int create_branch(struct sheepdog_access_info *ai)
++{
++	struct sheepdog_vdi_req hdr;
++	struct sheepdog_vdi_rsp *rsp = (struct sheepdog_vdi_rsp *)&hdr;
++	unsigned int wlen = 0, rlen;
++	int ret;
 +
-+	if (fd < 0) {
-+		eprintf("connecting to sheep process failed, "\
-+			"please verify the --backing-store option: %s",
-+			orig_filename);
-+		ret = -1;
-+		goto out;
++	hdr.opcode = SD_OP_DEL_VDI;
++	hdr.vdi_id = ai->inode.vdi_id;
++	hdr.flags = SD_FLAG_CMD_WRITE;
++	wlen = SD_MAX_VDI_LEN;
++	hdr.data_length = wlen;
++
++	ret = do_req(ai, (struct sheepdog_req *)&hdr, ai->inode.name,
++		     &wlen, &rlen);
++	if (ret) {
++		eprintf("deleting snapshot VDI for creating branch failed\n");
++		return -1;
 +	}
 +
-+	close(fd);		/* we don't need this connection */
++	memset(&hdr, 0, sizeof(hdr));
++	hdr.opcode = SD_OP_NEW_VDI;
++	hdr.vdi_id = ai->inode.vdi_id;
 +
- 	if (snapid == -1)
- 		dprintf("tag: %s\n", tag);
- 	else
++	hdr.flags = SD_FLAG_CMD_WRITE;
++	wlen = SD_MAX_VDI_LEN;
++	hdr.data_length = wlen;
++	hdr.vdi_size = ai->inode.vdi_size;
++	ret = do_req(ai, (struct sheepdog_req *)&hdr, ai->inode.name,
++		     &wlen, &rlen);
++	if (ret) {
++		eprintf("creating new VDI for creating branch failed\n");
++		return -1;
++	}
++
++	ret = read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(rsp->vdi_id),
++			  ai->inode.nr_copies, SD_INODE_SIZE, 0);
++	if (ret) {
++		eprintf("reloading new inode object failed");
++		return -1;
++	}
++
++	dprintf("creating branch from snapshot, new VDI ID: %x\n", rsp->vdi_id);
++
++	return 0;
++}
++
+ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ {
+ 	int ret = 0;
+@@ -1110,11 +1144,20 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 	case WRITE_12:
+ 	case WRITE_16:
+ 		if (ai->is_snapshot) {
+-			length = scsi_get_out_length(cmd);
+-			ret = sd_io(ai, 1, scsi_get_out_buffer(cmd),
+-				    length, cmd->offset);
+-		} else
+-			ret = -1;
++			ret = create_branch(ai);
++			if (ret) {
++				eprintf("creating writable VDI from"\
++					" snapshot failed\n");
++				set_medium_error(&result, &key, &asc);
++
++				return;
++			}
++			ai->is_snapshot = 0;
++		}
++
++		length = scsi_get_out_length(cmd);
++		ret = sd_io(ai, 1, scsi_get_out_buffer(cmd),
++			    length, cmd->offset);
+ 
+ 		if (ret)
+ 			set_medium_error(&result, &key, &asc);
 -- 
 1.7.10.4
 

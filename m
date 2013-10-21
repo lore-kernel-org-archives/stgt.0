@@ -1,44 +1,34 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] Add an array that describes which opcodes are
- supported by the RDWR and SHEEPDOG backends.
-Date: Mon, 21 Oct 2013 10:34:44 +0900
-Message-ID: <20131021101059Q.fujita.tomonori@lab.ntt.co.jp>
-References: <1381588740-25968-1-git-send-email-ronniesahlberg@gmail.com>
-	<1381588740-25968-2-git-send-email-ronniesahlberg@gmail.com>
+Subject: Re: [PATCH 0/3] Several fixes for tgt-admin and rbd modifications
+Date: Mon, 21 Oct 2013 10:42:17 +0900
+Message-ID: <20131021101831D.fujita.tomonori@lab.ntt.co.jp>
+References: <1381812477-5917-1-git-send-email-dan.mick@inktank.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1381588740-25968-2-git-send-email-ronniesahlberg@gmail.com>
+In-Reply-To: <1381812477-5917-1-git-send-email-dan.mick@inktank.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: ronniesahlberg@gmail.com
+To: dan.mick@inktank.com
 Cc: stgt@vger.kernel.org
 
-On Sat, 12 Oct 2013 07:38:59 -0700
-Ronnie Sahlberg <ronniesahlberg@gmail.com> wrote:
+On Mon, 14 Oct 2013 21:47:54 -0700
+Dan Mick <dan.mick@inktank.com> wrote:
 
-> While RDWR supports all SBC opcodes that TGTD implement SHEEPDOG
-> only supports a subset and lacks the following opcodes:
->             WRITE_VERIFY10/12/16 VERIFY10/12/16 PREFETCH10/16
->             WRITE_SAME10/16 UNMAP and ORWRITE
+> In revisiting the patch for tgt-admin, I found a shell dependency
+> that was masking my testing results, and an optimization for 
+> the check_device function; also, this patch avoids a few
+> bs_rdwr-specific checks when used with bs_rbd.  So in a sense
+> this is version 2 of the recent tgt-admin patch, now with more
+> goodness.
 > 
-> This allows backends to specify which opcodes it is prepared to process
-> and which commands should fail with invalid op code
-> and allows SHEEPDOG backed LUNs to respond with INVALID_OP_CODE
-> correctly.
+> Dan Mick (3):
+>   tgt-admin: avoid zsh-specific syntax in system() call
+>   tgt-admin: abort check_device() early if -e returns false
+>   tgt-admin: avoid in-use and backing_store existence tests for rbd
 > 
-> This is most useful for block devices where we have several different backens
-> and where some backends only support a subset of the commands
-> 
-> Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-> ---
->  usr/bs.c          |    8 ++++++++
->  usr/bs_rdwr.c     |   51 +++++++++++++++++++++++++++++++++++++++++++++++++++
->  usr/bs_sheepdog.c |   38 ++++++++++++++++++++++++++++++++++++++
->  usr/scsi.c        |    6 ++++++
->  usr/tgtd.h        |    1 +
->  5 files changed, 104 insertions(+), 0 deletions(-)
+>  scripts/tgt-admin |   12 +++++++++---
+>  1 file changed, 9 insertions(+), 3 deletions(-)
 
-Why backend store's bs_cmd_submit cannot return a proper error and
-sbr_rc returns that error to an initiator?
+Looks good. Applied, thanks.

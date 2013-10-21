@@ -1,42 +1,44 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH v3 0/3] various improvements of bs_sheepdog.c
-Date: Mon, 21 Oct 2013 10:27:15 +0900
-Message-ID: <20131021100249M.fujita.tomonori@lab.ntt.co.jp>
-References: <1381995514-8816-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: Re: [PATCH] Add an array that describes which opcodes are
+ supported by the RDWR and SHEEPDOG backends.
+Date: Mon, 21 Oct 2013 10:34:44 +0900
+Message-ID: <20131021101059Q.fujita.tomonori@lab.ntt.co.jp>
+References: <1381588740-25968-1-git-send-email-ronniesahlberg@gmail.com>
+	<1381588740-25968-2-git-send-email-ronniesahlberg@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1381995514-8816-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+In-Reply-To: <1381588740-25968-2-git-send-email-ronniesahlberg@gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: mitake.hitoshi@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org, sheepdog@lists.wpkg.org
+To: ronniesahlberg@gmail.com
+Cc: stgt@vger.kernel.org
 
-On Thu, 17 Oct 2013 16:38:31 +0900
-Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp> wrote:
+On Sat, 12 Oct 2013 07:38:59 -0700
+Ronnie Sahlberg <ronniesahlberg@gmail.com> wrote:
 
-> Hi tgt list and sheepdog list,
+> While RDWR supports all SBC opcodes that TGTD implement SHEEPDOG
+> only supports a subset and lacks the following opcodes:
+>             WRITE_VERIFY10/12/16 VERIFY10/12/16 PREFETCH10/16
+>             WRITE_SAME10/16 UNMAP and ORWRITE
 > 
-> This patchset improves bs_sheepdog.c of tgtd.
-> 1. correcting a treatment of snapshot VDIs
-> 2. removing segfault which can happen during logical unit deletion
-> 3. validating address of sheep process before logical unit creation
+> This allows backends to specify which opcodes it is prepared to process
+> and which commands should fail with invalid op code
+> and allows SHEEPDOG backed LUNs to respond with INVALID_OP_CODE
+> correctly.
 > 
-> Please consider applying them.
+> This is most useful for block devices where we have several different backens
+> and where some backends only support a subset of the commands
 > 
-> Thanks,
-> Hitoshi
-> 
-> v3: return error when --backing-store is invalid form (the 3rd patch)
-> 
-> Hitoshi Mitake (3):
->   bs_sheepdog.c: mock the behavior of QEMU's sheepdog driver in a
->     correct manner
->   bs_sheepdog.c: fix segmentation fault caused by deleting logical unit
->   bs_sheepdog.c: test connection when new logical unit is created
-> 
->  usr/bs_sheepdog.c |  139 +++++++++++++++++++++++++++++++++++++++++------------
->  1 file changed, 109 insertions(+), 30 deletions(-)
+> Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+> ---
+>  usr/bs.c          |    8 ++++++++
+>  usr/bs_rdwr.c     |   51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+>  usr/bs_sheepdog.c |   38 ++++++++++++++++++++++++++++++++++++++
+>  usr/scsi.c        |    6 ++++++
+>  usr/tgtd.h        |    1 +
+>  5 files changed, 104 insertions(+), 0 deletions(-)
 
-Applied.
+Why backend store's bs_cmd_submit cannot return a proper error and
+sbr_rc returns that error to an initiator?

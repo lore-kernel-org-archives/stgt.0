@@ -1,53 +1,25 @@
-From: Dan Mick <dan.mick@inktank.com>
-Subject: [PATCH] README.rbd: add documentation for the rbd --bsopts parameters
-Date: Mon, 28 Oct 2013 17:45:28 -0700
-Message-ID: <1383007528-19684-1-git-send-email-dan.mick@inktank.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH] README.rbd: add documentation for the rbd --bsopts
+ parameters
+Date: Tue, 29 Oct 2013 09:51:41 +0900 (JST)
+Message-ID: <20131029.095141.1281009750676933789.fujita.tomonori@lab.ntt.co.jp>
+References: <1383007528-19684-1-git-send-email-dan.mick@inktank.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
+In-Reply-To: <1383007528-19684-1-git-send-email-dan.mick@inktank.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: stgt@vger.kernel.org
-Cc: Dan Mick <dan.mick@inktank.com>
+Content-Type: Text/Plain; charset="us-ascii"
+To: dan.mick@inktank.com
+Cc: stgt@vger.kernel.org
 
-Signed-off-by: Dan Mick <dan.mick@inktank.com>
----
- doc/README.rbd |   25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+On Mon, 28 Oct 2013 17:45:28 -0700
+Dan Mick <dan.mick@inktank.com> wrote:
 
-diff --git a/doc/README.rbd b/doc/README.rbd
-index a91305a..274cc4d 100644
---- a/doc/README.rbd
-+++ b/doc/README.rbd
-@@ -24,3 +24,28 @@ where poolname is the RADOS pool containing the rbd image (defaults to
- optional (readonly) snapshot of the image imagename.  (Obviously when
- a snapshot is exported, writes are not supported.)
- 
-+You may also want to use the --bsopts parameter to pass Ceph-specific
-+parameters to bs_rbd.  Accepted keywords are
-+
-+conf=<path to ceph.conf file>
-+
-+This sets the path to the ceph.conf file for the cluster that
-+stgt should connect to for this target/lun creation (luns may
-+use different cluster connections).
-+
-+id=<client id>
-+
-+This sets the id portion of the ceph "client name" (which is
-+"type.id").  Type is fixed at "client", and the default name is
-+"client.admin", but you probably want this to set id to
-+something like "tgt" so that the name of the ceph client is
-+"client.tgt".  This lets you control permissions differently
-+for the tgt client compared to others, and sets the default log path, etc.
-+See the Ceph documentation regarding client names.
-+
-+To specify both options, separate them with ';', and since you are,
-+make sure to quote the option string to protect the semicolon from
-+the shell:
-+
-+	--bsopts "conf=/usr/local/ceph/ceph.conf;id=tgt"
-+
--- 
-1.7.10.4
+> Signed-off-by: Dan Mick <dan.mick@inktank.com>
+> ---
+>  doc/README.rbd |   25 +++++++++++++++++++++++++
+>  1 file changed, 25 insertions(+)
+
+Applied, thanks.

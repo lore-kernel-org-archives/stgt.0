@@ -1,54 +1,85 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH RFC] tgtd: send/recv iSCSI PDUs in worker threads
-Date: Tue, 05 Nov 2013 23:28:45 +0900 (JST)
-Message-ID: <20131105.232845.1568838937885769584.fujita.tomonori@lab.ntt.co.jp>
-References: <1383541996-7946-1-git-send-email-mitake.hitoshi@gmail.com>
+From: ronnie sahlberg <ronniesahlberg@gmail.com>
+Subject: Re: [PATCH] Add an array that describes which opcodes are supported
+ by the RDWR and SHEEPDOG backends.
+Date: Tue, 5 Nov 2013 06:39:36 -0800
+Message-ID: <CAN05THQ0Y0AAaNy619aQbw48325nKZVyRKqE+N+vE+s9hsAdyQ@mail.gmail.com>
+References: <1381588740-25968-1-git-send-email-ronniesahlberg@gmail.com>
+	<1381588740-25968-2-git-send-email-ronniesahlberg@gmail.com>
+	<20131021101059Q.fujita.tomonori@lab.ntt.co.jp>
+	<CAN05THSJYc9ESqVJQmBWuaKhVoZGHMp3bj7u4Wp5iBQf__soAA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1383541996-7946-1-git-send-email-mitake.hitoshi@gmail.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :cc:content-type;
+        bh=ihVNS/sUMkjIvFcBS3ISHQ9h6JBxdk76KtY9E0ftCjM=;
+        b=yknEBVwxswVdtQb/rkWEEEWtv1fToP7goSoa62Fx7HVkWpQ/jGzO70kD1SQtwaKxVs
+         335zVXb26ilRLkvfOWm2YB6iAdNZ9JsLc1VwbU4RQ3nqQpbEoT+ivi2Z9vmWjG4dKnq4
+         FH2y6vvG5SbWnBW55Kr9UlaIzy+kQG8BJFwOdppuLlu3bUmXUBWxFr8JNLaVeiTu6uip
+         D7MMnPEegVmIs0jGNo6tyvZr5vd5qjTIX/d2sJ33aP4E9s0aewb86xz2s463YY0bSXvX
+         JxEVD1kCAKF2Qk/7od9LOif3nxRXCp3x+x+c585FOzwphZ8Wr7oaWkKI4cNc/1o7NzX7
+         5YPA==
+In-Reply-To: <CAN05THSJYc9ESqVJQmBWuaKhVoZGHMp3bj7u4Wp5iBQf__soAA@mail.gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: mitake.hitoshi@gmail.com
-Cc: stgt@vger.kernel.org, mitake.hitoshi@lab.ntt.co.jp
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: stgt <stgt@vger.kernel.org>
 
-On Mon,  4 Nov 2013 14:13:16 +0900
-Hitoshi Mitake <mitake.hitoshi@gmail.com> wrote:
+Ping?
 
-> From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-> 
-> Current tgtd sends and receives iSCSI PDUs in its main event
-> loop. This design can cause bottleneck when many iSCSI clients connect
-> to single tgtd process. For example, we need multiple tgtd processes
-> for utilizing fast network like 10 GbE because typical single
-> processor core isn't fast enough for processing bunch of requests.
-> 
-> This patch lets tgtd send/receive iSCSI PDUs and check digests in its
-> worker threads. After applying this patch, the bottleneck in the main
-> event loop is removed and the performance is improved.
-> 
-> The improvement can be seen even if tgtd and iSCSI initiator are
-> running on a single host. Below is a snippet of fio result on my
-> laptop. The workload is 128MB random RW. Backingstore is sheepdog.
-> 
-> original tgtd:
->   read : io=65392KB, bw=4445.2KB/s, iops=1111, runt= 14711msec
->   write: io=65680KB, bw=4464.8KB/s, iops=1116, runt= 14711msec
-> 
-> tgtd with this patch:
->   read : io=65392KB, bw=5098.9KB/s, iops=1274, runt= 12825msec
->   write: io=65680KB, bw=5121.3KB/s, iops=1280, runt= 12825msec
-> 
-> This change will be more effective when a number of iSCSI clients
-> increases. I'd like to hear your comments on this change.
-> 
-> Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-> ---
->  usr/iscsi/iscsi_tcp.c | 291 +++++++++++++++++++++++++++++++++++++++++++++++---
->  usr/iscsi/iscsid.c    |  61 +++++++----
->  usr/iscsi/iscsid.h    |   4 +
->  3 files changed, 322 insertions(+), 34 deletions(-)
+We need something like an array like this so that we can also update
+REPORT_SUPPORTED_OPCODES correctly
+and have this opcode only return the opcodes that the particular
+backend supports.
 
-This change doesn't affect our complicated logic to handle outstanding
-commands with tcp disconnection (e.g. conn_close() in conn.c)?
+
+On Wed, Oct 30, 2013 at 6:44 PM, ronnie sahlberg
+<ronniesahlberg@gmail.com> wrote:
+> On Sun, Oct 20, 2013 at 6:34 PM, FUJITA Tomonori
+> <fujita.tomonori@lab.ntt.co.jp> wrote:
+>> On Sat, 12 Oct 2013 07:38:59 -0700
+>> Ronnie Sahlberg <ronniesahlberg@gmail.com> wrote:
+>>
+>>> While RDWR supports all SBC opcodes that TGTD implement SHEEPDOG
+>>> only supports a subset and lacks the following opcodes:
+>>>             WRITE_VERIFY10/12/16 VERIFY10/12/16 PREFETCH10/16
+>>>             WRITE_SAME10/16 UNMAP and ORWRITE
+>>>
+>>> This allows backends to specify which opcodes it is prepared to process
+>>> and which commands should fail with invalid op code
+>>> and allows SHEEPDOG backed LUNs to respond with INVALID_OP_CODE
+>>> correctly.
+>>>
+>>> This is most useful for block devices where we have several different backens
+>>> and where some backends only support a subset of the commands
+>>>
+>>> Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+>>> ---
+>>>  usr/bs.c          |    8 ++++++++
+>>>  usr/bs_rdwr.c     |   51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+>>>  usr/bs_sheepdog.c |   38 ++++++++++++++++++++++++++++++++++++++
+>>>  usr/scsi.c        |    6 ++++++
+>>>  usr/tgtd.h        |    1 +
+>>>  5 files changed, 104 insertions(+), 0 deletions(-)
+>>
+>> Why backend store's bs_cmd_submit cannot return a proper error and
+>> sbr_rc returns that error to an initiator?
+>
+>
+> It could, but this way it is more explicit which opcodes are
+> available, and a simple compare of the array between opcodes
+> makes it easy for non-bs_rdwr backend developers to see the delta
+> between their backend and rdwr.
+>
+> A second reason is for a followup patch.
+> The followup patch will use this array so that it can prune which
+> opcodes to report back for the REPORT_SUPPORTED_OPCODE opcode.
+> So that when you issue that command to a sheepdog LUN  you get a
+> pruned list back that only lists the opcodes that sheepdog supports.
+>
+>
+> regards
+> ronnie sahlberg

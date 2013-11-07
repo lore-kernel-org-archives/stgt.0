@@ -1,50 +1,70 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] tgtadm: add missing outgoing option to the help of
- unbind operation
-Date: Thu, 7 Nov 2013 16:07:49 +0900
-Message-ID: <20131107153957W.fujita.tomonori@lab.ntt.co.jp>
-References: <1383674359-11389-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH RFC] tgtd: send/recv iSCSI PDUs in worker threads
+Date: Thu, 7 Nov 2013 16:11:17 +0900
+Message-ID: <20131107154538Y.fujita.tomonori@lab.ntt.co.jp>
+References: <1383541996-7946-1-git-send-email-mitake.hitoshi@gmail.com>
+	<20131105.232845.1568838937885769584.fujita.tomonori@lab.ntt.co.jp>
+	<87iow6ibmd.wl%mitake.hitoshi@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1383674359-11389-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+In-Reply-To: <87iow6ibmd.wl%mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: konishi.ryusuke@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org
+To: mitake.hitoshi@gmail.com
+Cc: fujita.tomonori@lab.ntt.co.jp, stgt@vger.kernel.org, mitake.hitoshi@lab.ntt.co.jp
 
-On Wed,  6 Nov 2013 02:59:19 +0900
-Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> wrote:
+On Wed, 06 Nov 2013 10:04:42 +0900
+Hitoshi Mitake <mitake.hitoshi@gmail.com> wrote:
 
-> The help message of bind operation explains that --outgoing option is
-> used for an outgoing account:
+> At Tue, 05 Nov 2013 23:28:45 +0900 (JST),
+> FUJITA Tomonori wrote:
+> > 
+> > On Mon,  4 Nov 2013 14:13:16 +0900
+> > Hitoshi Mitake <mitake.hitoshi@gmail.com> wrote:
+> > 
+> > > From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+> > > 
+> > > Current tgtd sends and receives iSCSI PDUs in its main event
+> > > loop. This design can cause bottleneck when many iSCSI clients connect
+> > > to single tgtd process. For example, we need multiple tgtd processes
+> > > for utilizing fast network like 10 GbE because typical single
+> > > processor core isn't fast enough for processing bunch of requests.
+> > > 
+> > > This patch lets tgtd send/receive iSCSI PDUs and check digests in its
+> > > worker threads. After applying this patch, the bottleneck in the main
+> > > event loop is removed and the performance is improved.
+> > > 
+> > > The improvement can be seen even if tgtd and iSCSI initiator are
+> > > running on a single host. Below is a snippet of fio result on my
+> > > laptop. The workload is 128MB random RW. Backingstore is sheepdog.
+> > > 
+> > > original tgtd:
+> > >   read : io=65392KB, bw=4445.2KB/s, iops=1111, runt= 14711msec
+> > >   write: io=65680KB, bw=4464.8KB/s, iops=1116, runt= 14711msec
+> > > 
+> > > tgtd with this patch:
+> > >   read : io=65392KB, bw=5098.9KB/s, iops=1274, runt= 12825msec
+> > >   write: io=65680KB, bw=5121.3KB/s, iops=1280, runt= 12825msec
+> > > 
+> > > This change will be more effective when a number of iSCSI clients
+> > > increases. I'd like to hear your comments on this change.
+> > > 
+> > > Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+> > > ---
+> > >  usr/iscsi/iscsi_tcp.c | 291 +++++++++++++++++++++++++++++++++++++++++++++++---
+> > >  usr/iscsi/iscsid.c    |  61 +++++++----
+> > >  usr/iscsi/iscsid.h    |   4 +
+> > >  3 files changed, 322 insertions(+), 34 deletions(-)
+> > 
+> > This change doesn't affect our complicated logic to handle outstanding
+> > commands with tcp disconnection (e.g. conn_close() in conn.c)?
 > 
-> --lld <driver> --mode account --op bind --tid <id> --user <name> [--outgoing]
->       add the specific account having <name> to
->       the specific target with <id>.
->       <user> could be <IncomingUser> or <OutgoingUser>.
->       If you use --outgoing option, the account will
->       be added as an outgoing account.
-> 
-> However, the help message of unbind operation lacks the --outgoing
-> option even though it is mandatory to delete outgoing account:
-> 
-> --lld <driver> --mode account --op unbind --tid <id> --user <name>
->       delete the specific account having <name> from specific
->       target.
-> 
-> Thus, users will see the following error since they don't know the
-> --outgoing option is needed:
-> 
->   "tgtadm: can't find the account"
-> 
-> This fixes the issue by adding description of the outgoing option also
-> to the help message of unbind operation.
-> 
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> ---
->  usr/tgtadm.c |    5 +++--
->  1 file changed, 3 insertions(+), 2 deletions(-)
+> I think it doesn't affect the closing logic. Because any procedure
+> other than send/recv and digest checking are not delegated to worker
+> threads. Task queuing, connection closing, etc are done in main
+> thread even now.
 
-Applied, thanks!
+I've not read the patch but conn_close() has the code to handle a
+response to be being sent when a tcp connection is closed.

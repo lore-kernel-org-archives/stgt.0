@@ -1,39 +1,32 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] REPORT SUPPORTED OPCODES: Only return opcodes
- supported by the backend.
-Date: Mon, 25 Nov 2013 08:16:14 +0900 (JST)
-Message-ID: <20131125.081614.1545942096518960806.fujita.tomonori@lab.ntt.co.jp>
-References: <1385334153-12171-2-git-send-email-ronniesahlberg@gmail.com>
-	<20131125074519E.fujita.tomonori@lab.ntt.co.jp>
-	<CAN05THTqh_xPTPV=vsQ76p8ynN6XgZGO2GU+WOpt9VSOnqGY0w@mail.gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: =?utf-8?Q?Popovics_L=C3=A1szl=C3=B3?= <cuttie@me.com>
+Subject: iser problems
+Date: Mon, 25 Nov 2013 11:35:55 +0100
+Message-ID: <B5A712BD-9DBC-44A1-836F-E9A6289D0269@me.com>
+Mime-Version: 1.0 (Mac OS X Mail 7.1 \(1827\))
+Content-Transfer-Encoding: 8BIT
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <CAN05THTqh_xPTPV=vsQ76p8ynN6XgZGO2GU+WOpt9VSOnqGY0w@mail.gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: ronniesahlberg@gmail.com
-Cc: stgt@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+To: stgt@vger.kernel.org
 
-On Sun, 24 Nov 2013 15:17:35 -0800
-ronnie sahlberg <ronniesahlberg@gmail.com> wrote:
+Dear stgt list,
 
-> On Sun, Nov 24, 2013 at 3:12 PM, FUJITA Tomonori
-> <fujita.tomonori@lab.ntt.co.jp> wrote:
->> On Sun, 24 Nov 2013 15:02:33 -0800
->> Ronnie Sahlberg <ronniesahlberg@gmail.com> wrote:
->>
->>> Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
->>> ---
->>>  usr/spc.c |    6 ++++++
->>>  1 files changed, 6 insertions(+), 0 deletions(-)
->>
->> Applied, thanks.
->>
->> You still have a pending patch related with this opcode stuff?
-> 
-> I dont have any more patches right now, but I plan to send you patches
-> to add an opcode list to all the other backends in a few days.
+I would like to ask, that, is there any information about that, tgtd can run in multiple instances ?
+When we tried to run a second instance, it give an error message because rdma listening port is occupied.
 
-Nice, thanks in advance.
+We would like to test multiple tgt instance because we have a feeling about that, rdma connecion number is limited for one instance, and we reached this limit.
+
+We configured multiple storage machines with each of 312 disk which has 624 connection because of the multipath access.
+
+When we put load to the system get the following messages:
+
+Nov 4 14:08:10 taistoreb04 tgtd: iser_task_alloc_rdma_bufs(715) conn:0x2d31920 task:0x2bcb9180 tag:0x0028, free list empty
+
+On the initiator side we see devices disconnected.
+
+Is there any idea how to solve this problem ?
+
+Best regards,
+
+       Laszlo Popovics

@@ -1,50 +1,49 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] bs_sheepdog.c: fix up buffer overrun issues with unix
- domain socket
-Date: Tue, 03 Dec 2013 16:42:02 +0900 (JST)
-Message-ID: <20131203.164202.1568838937885781894.fujita.tomonori@lab.ntt.co.jp>
-References: <1386034122-8854-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: "Moussa Ba (moussaba)" <moussaba@micron.com>
+Subject: ISER - tgtadm: Can't find the driver
+Date: Thu, 5 Dec 2013 21:42:32 +0000
+Message-ID: <697D97E420EE024FB7451B574CD4991BCA072B25@NTXBOIMBX05.micron.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1386034122-8854-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Content-Language: en-US
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: konishi.ryusuke@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org, mitake.hitoshi@lab.ntt.co.jp
+To: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
+Cc: Shlomi Sasson <shlomis@mellanox.com>, Or Gerlitz <ogerlitz@mellanox.com>
 
-On Tue,  3 Dec 2013 10:28:42 +0900
-Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> wrote:
+I have been trying to reactivate a tgt array I was using a few months ago. I am currently using 3.12 but, tgtdadm
+fails with a:
 
-> The current sheepdog driver still has two buffer overrun issues due to
-> unsafe strncpy uses for the pathname buffer of unix domain socket:
-> 
-> 1) The size of "sun_path" string buffer of "sockaddr_un" structure is
->    108 bytes, however, UNIX_PATH_MAX macro is locally defined as 109.
->    So, the following strncpy use at connect_to_sdog_unix function
->    still can be filled without a terminating null byte.
-> 
->       strncpy(un.sun_path, path, UNIX_PATH_MAX - 1);
-> 
-> 2) The following use of strncpy at sd_open function also has a buffer
->    overrun issue because the size of ai->uds_path is the same as
->    UNIX_PATH_MAX.
-> 
->       strncpy(ai->uds_path, result, UNIX_PATH_MAX);
-> 
-> Moreover, the local definition of UNIX_PATH_MAX, which gives the
-> buffer size of unix domain socket pathname, is confusing.  It is
-> traditionally used to define the size of "sun_path" string buffer of
-> "sockaddr_un", which is 108 bytes including a terminating null byte,
-> but this local macro sets it to 109 bytes.
-> 
-> This patch fixes up these issues.
-> 
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> Cc: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-> ---
->  usr/bs_sheepdog.c |    6 +++---
->  1 file changed, 3 insertions(+), 3 deletions(-)
+tgtadm: Can't find the driver
 
-Applied, thanks.
+I ran the following commands to configure it:
+
+
+
+taskset  0x00000100 tgtd  --control-port 0 --iscsi portal=192.168.104.2:3260 --iser port=3260
+
+echo "Creating iqn.target0"
+tgtadm --lld iser --mode target --op new --tid=1 --targetname iqn.target0 -C 0
+tgtadm --lld iser --mode logicalunit --op new --tid 1 --lun 1 -b /dev/rssda --bstype rdwr -C 0
+tgtadm --lld iser --mode logicalunit --op update --tid 1 --lun 1 --params scsi_id="$RSSDA_ID" -C 0
+tgtadm --op update --mode target --tid 1 --name=MaxQueueCmd --value=256
+tgtadm --lld iser --mode target --op bind --tid 1 -I ALL
+
+
+
+Below are the modules Loaded
+
+mlx4_en                76854  0 
+mlx4_ib               129860  16 
+ib_sa                  23653  4 rdma_cm,ib_ipoib,ib_cm,mlx4_ib
+ib_mad                 40129  4 ib_cm,ib_umad,mlx4_ib,ib_sa
+ib_core                72427  11 ib_iser,ib_isert,rdma_cm,iw_cm,ib_ipoib,ib_cm,ib_uverbs,ib_umad,mlx4_ib,ib_sa,ib_mad
+mlx4_core             202689  2 mlx4_en,mlx4_ib
+rdma_cm                39115  2 ib_iser,ib_isert
+iw_cm                   9936  1 rdma_cm
+ib_addr                 6528  1 rdma_cm
+ib_cm                  37980  2 rdma_cm,ib_ipoib
+ib_uverbs              36365  48 
+rdma_cm                39115  2 ib_iser,ib_isert
+ib_mad                 40129  4 ib_cm,ib_umad,mlx4_ib,ib_sa

@@ -1,34 +1,48 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] util.h: correct range check of str_to_int_gt() and
- str_to_int_lt()
-Date: Tue, 10 Dec 2013 15:17:21 +0900
-Message-ID: <20131210144807I.fujita.tomonori@lab.ntt.co.jp>
-References: <1386650987-15110-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] Fix buffer overrun issue of lld name
+Date: Tue, 10 Dec 2013 18:25:34 +0900
+Message-ID: <1386667534-2914-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1386650987-15110-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: konishi.ryusuke@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-On Tue, 10 Dec 2013 13:49:47 +0900
-Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> wrote:
+The string buffer of lld name in tgtadm_req struct (req->lld) will not
+be null-terminated if user specifies very long lld name for the
+argument of -L or --lld option.
 
-> The range checks of str_to_int_gt() and str_to_int_lt() are not
-> implemented literally.  The current definitions fail to reject a
-> marginal value.
-> 
-> Due to this difference, tgtd accepts option "-t 0" without an error,
-> which overrides nr_iothreads to 0 and causes clients to hang.
-> 
-> This corrects str_to_int_gt()/str_to_int_lt() and prevents the issue.
-> 
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> ---
->  usr/util.h |    4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+This is because the lld name is copied with strncpy function and its
+size argument is the same as buffer size.  In such a case, strncpy()
+can truncate the string without appending a terminating null byte.
 
-Nice catch, thanks!
+As a result, accesses to the lld name in mtask_execute function, for
+instance, strlen(req->lld) or eprintf("...%s\n", req->lld), can
+overrun.
+
+This patch fixes the issue by setting a terminating null byte at the
+end of the lld name buffer before mtask_execute() uses it.
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+---
+ usr/mgmt.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/usr/mgmt.c b/usr/mgmt.c
+index e795555..1eae0c9 100644
+--- a/usr/mgmt.c
++++ b/usr/mgmt.c
+@@ -479,6 +479,8 @@ static tgtadm_err mtask_execute(struct mgmt_task *mtask)
+ 	int lld_no;
+ 	tgtadm_err adm_err = TGTADM_INVALID_REQUEST;
+ 
++	req->lld[TGT_LLD_NAME_LEN - 1] = '\0';
++
+ 	if (!strlen(req->lld))
+ 		lld_no = 0;
+ 	else {
+-- 
+1.7.9.3

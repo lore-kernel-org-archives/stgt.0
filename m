@@ -1,26 +1,37 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] iscsi/conn.c: fix a typo s/sesson/session/
-Date: Tue, 10 Dec 2013 23:29:06 +0900 (JST)
-Message-ID: <20131210.232906.1305564732068186510.fujita.tomonori@lab.ntt.co.jp>
-References: <1386685637-24388-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] bs_sheepdog.c: fix a descriptor leak in connect_to_sdog_tcp()
+Date: Tue, 17 Dec 2013 00:52:45 +0900
+Message-ID: <1387209165-14668-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1386685637-24388-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: konishi.ryusuke@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>, sheepdog@lists.wpkg.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-On Tue, 10 Dec 2013 23:27:17 +0900
-Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> wrote:
+When connect_to_sdoc_tcp function failed to connect a socket due to an
+error other than EINTR, it doesn't free the socket file descriptor.
 
-> This fixes a typo "sesson" in an error message of conn_close function.
-> 
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> ---
->  usr/iscsi/conn.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+This fixes the leak bug.
 
-Applied.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+---
+ usr/bs_sheepdog.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
+index 3edc720..07ad0de 100644
+--- a/usr/bs_sheepdog.c
++++ b/usr/bs_sheepdog.c
+@@ -372,6 +372,7 @@ reconnect:
+ 			if (errno == EINTR)
+ 				goto reconnect;
+ 
++			close(fd);
+ 			break;
+ 		}
+ 
+-- 
+1.7.9.3

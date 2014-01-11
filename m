@@ -1,33 +1,41 @@
-From: nia dev <niadev67@gmail.com>
-Subject: tgt-admin utility not working anymore
-Date: Sat, 11 Jan 2014 16:16:49 -0500
-Message-ID: <CAM0v-CCfGKpHfSLN=EyaLv62eeUWYn6GVNu5b_ewv-ZHdZaD_Q@mail.gmail.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: tgt-admin utility not working anymore
+Date: Sun, 12 Jan 2014 06:32:19 +0900
+Message-ID: <20140112055927M.fujita.tomonori@lab.ntt.co.jp>
+References: <CAM0v-CCfGKpHfSLN=EyaLv62eeUWYn6GVNu5b_ewv-ZHdZaD_Q@mail.gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:date:message-id:subject:from:to:content-type;
-        bh=1DGD53en6aHnrnXBSzkvw87dblHhFLqKAPdZMW3UuKc=;
-        b=JWqu22LYkpqbxp5MrlF6MonxbNV45XIy4F2hltc0MQzFfrFovrpMIlFpGnJJRYQ4wK
-         z3YACn2cC9dzwFA9ASaXtFmhi3hj+Kgeht9q2xywuLthrbVGjujImNdbZJeDdbPLVhfH
-         x69TkJXN3yUhmF5oZPqKtoMDLIJAgwYBINoP30VnI7mL2S+DvKxMSArYBKsyJMWpTz7B
-         dppPSFMTBF0VHpnnAi8XRO4Z/etZjAPwq5Flktaltdm1Ixf6QmhIZx2QRcE77hybMFhi
-         H25L19/ea43HbbXDr5HNbd36J+i0hf6ST7u+wd+fOs2BOG3bX+YoidLW9NYVeR/ZC5gY
-         O1VA==
+In-Reply-To: <CAM0v-CCfGKpHfSLN=EyaLv62eeUWYn6GVNu5b_ewv-ZHdZaD_Q@mail.gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: stgt@vger.kernel.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: niadev67@gmail.com
+Cc: stgt@vger.kernel.org
 
-Hi,
+On Sat, 11 Jan 2014 16:16:49 -0500
+nia dev <niadev67@gmail.com> wrote:
 
-This used to work ... Any idea ?
+> This used to work ... Any idea ?
+> 
+> # tgt-admin --dump
+> -C argument value '0' out of range
+> Try `tgtadm --help' for more information.
+> 
+> All other options produce an error also.
 
-# tgt-admin --dump
--C argument value '0' out of range
-Try `tgtadm --help' for more information.
+How about the following?
 
-All other options produce an error also.
-
-Thanks
+diff --git a/usr/tgtadm.c b/usr/tgtadm.c
+index a46f1a4..7771119 100644
+--- a/usr/tgtadm.c
++++ b/usr/tgtadm.c
+@@ -600,7 +600,7 @@ int main(int argc, char **argv)
+ 			ac_dir = ACCOUNT_TYPE_OUTGOING;
+ 			break;
+ 		case 'C':
+-			rc = str_to_int_gt(optarg, control_port, 0);
++			rc = str_to_int_ge(optarg, control_port, 0);
+ 			if (rc)
+ 				bad_optarg(rc, ch, optarg);
+ 			break;

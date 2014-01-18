@@ -1,84 +1,70 @@
-From: nia dev <niadev67@gmail.com>
-Subject: Re: [sheepdog] [PATCH] bs_sheepdog.c: fix io errors during writing to
- a snapshot
-Date: Sun, 12 Jan 2014 01:43:14 -0500
-Message-ID: <CAM0v-CCyM+ybdOpywxSaFXSL6Anu8ZLHKUfU=wY49303H-y_tw@mail.gmail.com>
-References: <1389099571-10567-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-	<87ppo4c4ej.wl%mitake.hitoshi@gmail.com>
-	<20140107.222139.1568838937885759101.fujita.tomonori@lab.ntt.co.jp>
+From: Zhang Yanfei <zhangyanfei.yes@gmail.com>
+Subject: [PATCH] doc/iscsi: typo fix in doc/README.iscsi
+Date: Sat, 18 Jan 2014 10:59:28 +0800
+Message-ID: <52D9EE10.7020001@gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=3V+bzRGWPtiK891OHo86JOHzT2zTyFtCHJ6l6O3NJ4k=;
-        b=ZTOy1Cwb6tgJivXwQbzF9dapeWjGiYsxVbd6qs/VBWKVY5+kw7LXs4R167aUqo37n3
-         s8EcIIQFeqNT4xpSULTsd7msrJ6+xm/7f4MDEZ7u12KFXfvM6CCUCJmQLI0tbsegS/TK
-         EdlLIAjCJRjtPvh0gj3YIYLUn5JDogIvEGt9atMXAIjvcJXqRk0rLkt/5ycYkdPtHJLV
-         ZSf+uGwFjhS4KW1Frrdsgrgn27Ehvs3XvzckAM94hwb4gEvIpGk5yV5GTT7r7F8bkeO2
-         6AU2r6SRXZF9V0WRspUlAr34A2TQshK979PY8E5mGifjYmc0bizcLhdP3IeaLyj/HSn2
-         DiUg==
-In-Reply-To: <20140107.222139.1568838937885759101.fujita.tomonori@lab.ntt.co.jp>
+        h=message-id:date:from:user-agent:mime-version:to:cc:subject
+         :content-type:content-transfer-encoding;
+        bh=s8EHG43n+LQjI1+sbZlR1YyjoYhOb2Ty/StKoTk7Ed0=;
+        b=UGQ54yQlUHIhiM1queoCNR0lSdyGAjTtw4lOXoV8qcSQClGa0UO+rORTTOPpqIf3kT
+         FIl2YcMqmaO8hmFGN3CNSMsVjf6h4zHXOCvzjTCxbV7O3K6duJ7f4CmGBI5TqzgLU1d1
+         ZJWC3xyqkdOByNQ8EPDKRmc1QsiohBYz1kOBesFA72bubHPC/82a0K48VSJLo3nJTDXy
+         oJRc2XB2mmfSaLUQ2UOoft6SjgYVYTO8oUlp3YGD3MtxrZVPW9nStr1rGYfAmAUzJu3E
+         9vtsC6HUX3TXT+m3gXHdb+kn5A/XpXMPKLQ32nOQKJiQ3i6xU3GRo/t2VQqLIg3TI5TO
+         txuw==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: mitake.hitoshi@gmail.com, konishi.ryusuke@lab.ntt.co.jp, stgt@vger.kernel.org, mitake.hitoshi@lab.ntt.co.jp, sheepdog@lists.wpkg.org
+To: fujita.tomonori@lab.ntt.co.jp
+Cc: stgt@vger.kernel.org, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
 
-Works now :-) Thanks !!!
+From: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
 
-On Tue, Jan 7, 2014 at 8:21 AM, FUJITA Tomonori
-<fujita.tomonori@lab.ntt.co.jp> wrote:
-> On Tue, 07 Jan 2014 22:23:00 +0900
-> Hitoshi Mitake <mitake.hitoshi@gmail.com> wrote:
->
->> At Tue,  7 Jan 2014 21:59:31 +0900,
->> Ryusuke Konishi wrote:
->>>
->>> The sheepdog driver fails with io errors when write access is
->>> requested for a snapshot vdi.  The failure happens in create_branch
->>> function:
->>>
->>>  tgtd: read_write_object(684) No object found (oid: 8000000
->>>  000000000, old_oid: 0)
->>>  tgtd: create_branch(1160) reloading new inode object failed
->>>  tgtd: bs_sheepdog_request(1197) creating writable VDI from
->>>  snapshot failed
->>>
->>>  sd 12:0:0:1: [sdb] Unhandled sense code
->>>  sd 12:0:0:1: [sdb] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
->>>  sd 12:0:0:1: [sdb] Sense Key : Medium Error [current]
->>>  sd 12:0:0:1: [sdb] Add. Sense: Unrecovered read error
->>>  sd 12:0:0:1: [sdb] CDB: Write(10): 2a 00 00 00 20 a8 00 00 08 00
->>>  Buffer I/O error on device sdb1, logical block 1041
->>>  lost page write due to I/O error on sdb1
->>>
->>> This turned out to be caused by a race condition among multiple write
->>> requests.  When bs_sheepdog_request() receives a write request for the
->>> snapshot vdi, it tries to change the snapshot to a writable vdi with
->>> the create_branch function.  However, the current implementation of
->>> create_branch() cannot handle concurrent requests exclusively nor
->>> protected from regular io routine (sd_io).
->>>
->>> This fixes the above io-error issue by serializing create_branch()
->>> with a pthread reader/writer lock, and also fixes the race condition
->>> between create_branch() and sd_io() with the lock.
->>>
->>> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
->>> Cc: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
->>> ---
->>>  usr/bs_sheepdog.c |   22 +++++++++++++++++-----
->>>  1 file changed, 17 insertions(+), 5 deletions(-)
->>
->> Ooops, thanks a lot for your fix. It must be a very hard debug and
->> sorry for annoying!
->>
->> Reviewed-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
->
-> Applied, thanks a lot, guys.
-> --
-> To unsubscribe from this list: send the line "unsubscribe stgt" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Signed-off-by: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+---
+ doc/README.iscsi |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/doc/README.iscsi b/doc/README.iscsi
+index 4ff3028..9fc21dd 100644
+--- a/doc/README.iscsi
++++ b/doc/README.iscsi
+@@ -25,7 +25,7 @@ The following example creates a target with id 1 (the iqn is
+ iqn.2001-04.com.example:storage.disk2.amiens.sys1.xyz) and adds a
+ logical unit (backed by /dev/hdc1) with lun 1.
+ 
+-Let's create one target devce.
++Let's create one target device.
+ 
+ host:~/tgt$ su
+ host:~/tgt# ./usr/tgtadm --lld iscsi --op new --mode target --tid 1 -T iqn.2001-04.com.example:storage.disk2.amiens.sys1.xyz
+@@ -113,7 +113,7 @@ Note "ACL information" section. "ALL" means that this target accepts
+ any initiators. The ACL feature also provides the access control based
+ on initiators' addresses.
+ 
+-First, let's remove "ALL" options:
++First, let's remove "ALL" option:
+ 
+ host:~/tgt# ./usr/tgtadm --lld iscsi --op unbind --mode target --tid 1 -I ALL
+ host:~/tgt# ./usr/tgtadm --lld iscsi --op show --mode target
+@@ -224,12 +224,12 @@ IFMarkInt=Reject
+ MaxConnections=1
+ 
+ 
+-You can chage iSCSI parameters like the folloing (e.g. set
++You can change iSCSI parameters like the following (e.g. set
+ MaxRecvDataSegmentLength to 16384):
+ 
+ host:~/tgt# ./usr/tgtadm --lld iscsi --mode target --op update --tid 1 --name MaxRecvDataSegmentLength --value 16384
+ 
+-You can get iSCSI parameters again to see it change:
++You can get iSCSI parameters again to see its change:
+ 
+ host:~/tgt# ./usr/tgtadm --lld iscsi --op show --mode target --tid 1
+ MaxRecvDataSegmentLength=16384
+-- 
+1.7.1

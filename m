@@ -1,21 +1,23 @@
 From: Zhang Yanfei <zhangyanfei.yes@gmail.com>
-Subject: [PATCH 1/2] tgtadm: Correct mode names in the option error message
-Date: Sat, 18 Jan 2014 13:27:15 +0800
-Message-ID: <52DA10B3.7010309@gmail.com>
+Subject: [PATCH 2/2] tgtadm: display unsupported operation name explicitly
+Date: Sat, 18 Jan 2014 13:28:38 +0800
+Message-ID: <52DA1106.5050008@gmail.com>
+References: <52DA10B3.7010309@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=message-id:date:from:user-agent:mime-version:to:cc:subject
-         :content-type:content-transfer-encoding;
-        bh=nNU0KH0gKfo+03B56r0Mo5O/rRl6IYwdVp1fo0R+aQA=;
-        b=dXFdNRsnEBUFfl8bOCwdtGFG6u1mRohX6lgHh7E43yrXMA3KF2MK264+yJ3H4bFMN0
-         Q2hM9ekGie/p+eOJRIfo1hkH/0r+9AfzbBFvtwr86MT27Ej2pi+o+LJVfJwKcLhFIov9
-         YD+aH7hqosTv3jynlGyAdvYbJfKXX8wmZgZBT3HJIDeRhs1ls/H3gOG9Qg8XAJEn01Ny
-         lNjVJPP42QAN+6kbJk8gm+P0k79pMKNFE8R4aA6VL7NDURVontjDJo5O4wTSK6thN3Ec
-         OI+Y0zs/rSLNLG+w4jOHglEgDAcQWrQFXdhS3R3kczklUbzzkw8j1oXC3aWjCGirq6EK
-         Uhxw==
+         :references:in-reply-to:content-type:content-transfer-encoding;
+        bh=gh/tfhOae9yJQk08P70r0xT0hPDmoJU9UpET5F2IUMg=;
+        b=LcaOXBRid/zQBDoj4Ipxw0IBS2T0qaHXup+C5O7K4q8uVrnx2eD9O7puyVCCRWg6L+
+         bnezwmgCD+NHruyw1qUKr4XtoGUU3SDDkXCbMztAzdp+YDhxYSnlzi2hwb8EJv/LraI0
+         WvdXTjhxuO9psxzY8xr7fyK1tAglePpYl0TrK/Z+ZYAihrR2pk8vsKjTRm3p0vYMhi77
+         txLntCC4musEvH0rqYpypDstiYzhuCgcFalHtjQTF+JCB51pLKSndmZCs5ZZA3Z907a/
+         s7O7UhBcd8X31zuDLrtegt79wre6SMH8wIYPnTItcqnvyT9NPrX0smdrTDc5WbWTNmPx
+         OY8A==
+In-Reply-To: <52DA10B3.7010309@gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -24,91 +26,109 @@ Cc: stgt@vger.kernel.org, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
 
 From: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
 
-When an error option is specified for some mode and operation,
-tgtadm outputs an error message which contains the mode name.
-But some of the mode names are obviously wrong so the patch fixes
-them.
+When we specify an unsupported operation type for some mode,
+tgtadm will display the error message which contains the
+unsupported operation type value. The patch changes to
+display the operation name which is more explicit. Also
+change the word 'option' to 'operation'.
 
 Signed-off-by: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
 ---
- usr/tgtadm.c |   16 ++++++++--------
- 1 files changed, 8 insertions(+), 8 deletions(-)
+ usr/tgtadm.c |   26 +++++++++++++++-----------
+ 1 files changed, 15 insertions(+), 11 deletions(-)
 
 diff --git a/usr/tgtadm.c b/usr/tgtadm.c
-index 7771119..d708a65 100644
+index d708a65..cc63fbf 100644
 --- a/usr/tgtadm.c
 +++ b/usr/tgtadm.c
-@@ -739,7 +739,7 @@ int main(int argc, char **argv)
- 		case OP_NEW:
- 			rc = verify_mode_params(argc, argv, "LmoupfC");
- 			if (rc) {
--				eprintf("logicalunit mode: option '-%c' is "
-+				eprintf("account mode: option '-%c' is "
- 					"not allowed/supported\n", rc);
- 				exit(EINVAL);
- 			}
-@@ -752,7 +752,7 @@ int main(int argc, char **argv)
- 		case OP_SHOW:
- 			rc = verify_mode_params(argc, argv, "LmoC");
- 			if (rc) {
--				eprintf("target mode: option '-%c' is not "
-+				eprintf("account mode: option '-%c' is not "
- 					"allowed/supported\n", rc);
- 				exit(EINVAL);
- 			}
-@@ -760,7 +760,7 @@ int main(int argc, char **argv)
- 		case OP_DELETE:
- 			rc = verify_mode_params(argc, argv, "LmouC");
- 			if (rc) {
--				eprintf("target mode: option '-%c' is not "
-+				eprintf("account mode: option '-%c' is not "
- 					"allowed/supported\n", rc);
- 				exit(EINVAL);
- 			}
-@@ -768,7 +768,7 @@ int main(int argc, char **argv)
- 		case OP_BIND:
- 			rc = verify_mode_params(argc, argv, "LmotuOC");
- 			if (rc) {
--				eprintf("target mode: option '-%c' is not "
-+				eprintf("account mode: option '-%c' is not "
- 					"allowed/supported\n", rc);
- 				exit(EINVAL);
- 			}
-@@ -782,7 +782,7 @@ int main(int argc, char **argv)
- 		case OP_UNBIND:
- 			rc = verify_mode_params(argc, argv, "LmotuOC");
- 			if (rc) {
--				eprintf("target mode: option '-%c' is not "
-+				eprintf("account mode: option '-%c' is not "
- 					"allowed/supported\n", rc);
- 				exit(EINVAL);
- 			}
-@@ -817,7 +817,7 @@ int main(int argc, char **argv)
- 		case OP_NEW:
- 			rc = verify_mode_params(argc, argv, "LmofytlbEYCS");
- 			if (rc) {
--				eprintf("target mode: option '-%c' is not "
-+				eprintf("logicalunit mode: option '-%c' is not "
- 					  "allowed/supported\n", rc);
- 				exit(EINVAL);
- 			}
-@@ -833,7 +833,7 @@ int main(int argc, char **argv)
+@@ -493,6 +493,7 @@ int main(int argc, char **argv)
+ 	char *user, *password;
+ 	struct tgtadm_req adm_req = {0}, *req = &adm_req;
+ 	struct concat_buf b;
++	char *op_name;
+ 
+ 	op = tid = mode = -1;
+ 	cid = hostno = sid = 0;
+@@ -503,7 +504,7 @@ int main(int argc, char **argv)
+ 	ac_dir = ACCOUNT_TYPE_INCOMING;
+ 	name = value = path = targetname = address = iqnname = NULL;
+ 	targetOps = portalOps = bstype = bsopts = NULL;
+-	bsoflags = blocksize = user = password = NULL;
++	bsoflags = blocksize = user = password = op_name = NULL;
+ 	force = 0;
+ 
+ 	optind = 1;
+@@ -516,6 +517,7 @@ int main(int argc, char **argv)
+ 			break;
+ 		case 'o':
+ 			op = str_to_op(optarg);
++			op_name = optarg;
+ 			break;
+ 		case 'm':
+ 			mode = str_to_mode(optarg);
+@@ -653,7 +655,8 @@ int main(int argc, char **argv)
  		case OP_STATS:
- 			rc = verify_mode_params(argc, argv, "LmotlC");
- 			if (rc) {
--				eprintf("target mode: option '-%c' is not "
-+				eprintf("logicalunit mode: option '-%c' is not "
- 					  "allowed/supported\n", rc);
+ 			break;
+ 		default:
+-			eprintf("option %d not supported in system mode\n", op);
++			eprintf("operation %s not supported in system mode\n",
++				op_name);
+ 			exit(EINVAL);
+ 			break;
+ 		}
+@@ -709,8 +712,8 @@ int main(int argc, char **argv)
+ 			}
+ 			if (!address && !iqnname && !hostno) {
+ 				eprintf("%s operation requires"
+-					" initiator-address, initiator-name or bus\n",
+-					op == OP_BIND ? "bind" : "unbind");
++					" initiator-address, initiator-name"
++					"or bus\n", op_name);
  				exit(EINVAL);
  			}
-@@ -905,7 +905,7 @@ int main(int argc, char **argv)
- 		case OP_SHOW:
- 			rc = verify_mode_params(argc, argv, "LmoC");
- 			if (rc) {
--				eprintf("system mode: option '-%c' is not "
-+				eprintf("lld mode: option '-%c' is not "
- 					"allowed/supported\n", rc);
- 				exit(EINVAL);
+ 			break;
+@@ -728,7 +731,8 @@ int main(int argc, char **argv)
  			}
+ 			break;
+ 		default:
+-			eprintf("option %d not supported in target mode\n", op);
++			eprintf("operation %s not supported in target mode\n",
++				op_name);
+ 			exit(EINVAL);
+ 			break;
+ 		}
+@@ -794,8 +798,8 @@ int main(int argc, char **argv)
+ 				tid = GLOBAL_TID;
+ 			break;
+ 		default:
+-			eprintf("option %d not supported in account mode\n",
+-				op);
++			eprintf("operation %s not supported in account mode\n",
++				op_name);
+ 			exit(EINVAL);
+ 			break;
+ 		}
+@@ -847,8 +851,8 @@ int main(int argc, char **argv)
+ 			}
+ 			break;
+ 		default:
+-			eprintf("option %d not supported in "
+-				"logicalunit mode\n", op);
++			eprintf("operation %s not supported in "
++				"logicalunit mode\n", op_name);
+ 			exit(EINVAL);
+ 			break;
+ 		}
+@@ -891,8 +895,8 @@ int main(int argc, char **argv)
+ 			}
+ 			break;
+ 		default:
+-			eprintf("option %d not supported in "
+-					"portal mode\n", op);
++			eprintf("operation %s not supported in portal mode\n",
++				op_name);
+ 			exit(EINVAL);
+ 			break;
+ 		}
 -- 
 1.7.1

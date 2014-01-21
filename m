@@ -1,32 +1,38 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/2] tgtadm: Correct mode names in the option error
- message
-Date: Sat, 18 Jan 2014 15:22:59 +0900
-Message-ID: <20140118144930U.fujita.tomonori@lab.ntt.co.jp>
-References: <52DA10B3.7010309@gmail.com>
+From: Alban Rrustemi <alban@fonleap.com>
+Subject: segfault in tgtd
+Date: Tue, 21 Jan 2014 11:29:26 +0000
+Message-ID: <CAMHDSMzjsJWtkkK0NBm48+iukgKLzDiB-j22viuJ=GwnrCXqJA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <52DA10B3.7010309@gmail.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=fonleap.com; s=google;
+        h=mime-version:date:message-id:subject:from:to:content-type;
+        bh=pugTzjmldSajhMrDDLHmoGGG+mWHXoAb+zZVsOMOBEE=;
+        b=g/3JjXbo6S6RGu5vMQcxVnCTvgugFMBKKhj5SBCcb4yqNf01bs0SvtwtE0Bck5VxYu
+         KlS0Qpz367CEqY/rWToO28OVaVURKB4wnW8/hAhwNuZ++OMhdljaYTPWXfjpsIzNMnwR
+         ApRFPrKbnRCmhHk1V09IR/o5FBRg0EU+fZtvA=
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: zhangyanfei.yes@gmail.com
-Cc: fujita.tomonori@lab.ntt.co.jp, stgt@vger.kernel.org, zhangyanfei@cn.fujitsu.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt <stgt@vger.kernel.org>
 
-On Sat, 18 Jan 2014 13:27:15 +0800
-Zhang Yanfei <zhangyanfei.yes@gmail.com> wrote:
+Hello there,
 
-> From: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
-> 
-> When an error option is specified for some mode and operation,
-> tgtadm outputs an error message which contains the mode name.
-> But some of the mode names are obviously wrong so the patch fixes
-> them.
-> 
-> Signed-off-by: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
-> ---
->  usr/tgtadm.c |   16 ++++++++--------
->  1 files changed, 8 insertions(+), 8 deletions(-)
+We've been evaluating the tgt version 1.0.38 on a 64bit Linux kernel
+(version 3.2.0-39-generic) in an Ubuntu installation. Occasionally, we
+get a segmentation fault in tgtd and it's not clear what went wrong or
+how to get more information in order to investigate the root cause.
 
-Both look good. Applied, thanks!
+All I get to see is lines like the ones below in the kernel log:
+Jan 21 07:03:40 test-machine kernel: [2744939.501604] tgtd[12887]:
+segfault at 0 ip 00000000004076aa sp 00007fffe0bcfa40 error 6 in
+tgtd[400000+43000]
+Jan 21 07:04:04 test-machine kernel: [2744963.554504] init: tgt main
+process (12887) killed by SEGV signal
+
+Is there any documentation out there or any other type of information
+on some tgt diagnostics I could use to investigate this?
+
+Thanks,
+Alban

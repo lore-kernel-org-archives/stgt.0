@@ -1,125 +1,36 @@
-From: Steven Graf <sgraf@resolutech.net>
-Subject: New to working with stgt
-Date: Wed, 22 Jan 2014 19:52:23 -0500
-Message-ID: <52E067C7.8010701@resolutech.net>
-Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha1; boundary="------------ms020507080802080805010105"
+From: Artyom Pervukhin <artyom@evasive.ru>
+Subject: tgtadm/tgtd management issue: buffer size truncated sometimes
+Date: Thu, 23 Jan 2014 16:51:17 +0400
+Message-ID: <96DAABF5-8A43-4969-8708-5751A053FBEE@evasive.ru>
+Mime-Version: 1.0 (Mac OS X Mail 7.1 \(1827\))
+Content-Transfer-Encoding: 8BIT
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=resolutech.net; h=
-	message-id:date:from:mime-version:to:subject:content-type; s=
-	mesmtp; bh=l4b5AHRrHBl7NZLO5Fn9X8Zc2fY=; b=W0LcsB3vepr1zTU9G3+Jz
-	uwo9TAx504FXd+mldocByT4y16rt+7DM+ryJ/LZk20WfAAWyuHvYhxO+4gvEQcGM
-	GYPqVZcbXQUOT8THk+mV7HQxX5pDx3BafMYTkJ6Vn08AJWUz+o7hMMePhEY2pj+x
-	p2hVMytXBMNRkovKcdXhfE=
-DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=
-	messagingengine.com; h=message-id:date:from:mime-version:to
-	:subject:content-type; s=smtpout; bh=l4b5AHRrHBl7NZLO5Fn9X8Zc2fY
-	=; b=tkgYjtC5Pm/9p4yY/n5k+tb0h3TWgSNuv5zwdQs8l8NEUoPd2Kn/24CG/Lb
-	wCo6VJ22SeeYqbsu+UzUAjspia8sDefFssR3B05UokD034ZKW0AhxFwbFz1fARI7
-	H5SRj2552q1eaMG4knnveOsJFJ5vQWPESb6c8N5YNi5LhHOs=
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
 To: stgt@vger.kernel.org
 
-This is a cryptographically signed message in MIME format.
+Hi,
 
---------------ms020507080802080805010105
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+I cannot find any information regarding practical limits on amount of iSCSI targets supported by tgtd. Trying to use tgtd with many targets (hundreds of, say 400-500), I've experienced some issues in its management interface (tgtadm <-> tgtd).
 
-Hello Everyone,
+Each target has only one disk attached, the greater target count is, the higher probability of experiencing the bug. Sometimes command showing all targets returns incomplete output, as if it was randomly stripped.
 
-I am new to the list and I have recently just started working with the
-stgt framework.  I've been grokking the code and the documentation, but
-I'd appreciate any insight or advice you may be able to lend.  My
-objective is to use the rbd backend, but have a user-space driver that
-speaks native SCSI (block device).  I am looking at the existing
-implementation that uses iSCSI, and I have that all working with my Ceph
-back-end, but for performance reasons I'd like to eliminate the overhead
-of the network (currently I have everything going over localhost, which
-is good for a PoC, but insufficient for our big data tasks).
+# tgtadm -C 0 --op show --mode target | grep -c ^Target                                                                                                   
+301
+# tgtadm -C 0 --op show --mode target | grep -c ^Target                                                                                                   
+300
 
-Thanks!
---=20
-Steven Graf
-President
-Resolutech, LLC
+# tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
+317914
+# tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
+316690
+# tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
+317914
+# tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
+310695
 
+The closest description to this bug I've managed to find is this thread: http://lists.wpkg.org/pipermail/stgt/2012-July/005324.html (op had the same symptoms).
 
---------------ms020507080802080805010105
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
+I was able to reproduce this bug on tgt 1.0.4 (Debian Squeeze), 1.0.17 (Debian Wheezy), 1.0.43 (latest so far). Tested on linux kernels 2.6.32, 3.2.0 (both amd64).
 
-MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIKSzCC
-BRowggQCoAMCAQICEG0Z6qcZT2ozIuYiMnqqcd4wDQYJKoZIhvcNAQEFBQAwga4xCzAJBgNV
-BAYTAlVTMQswCQYDVQQIEwJVVDEXMBUGA1UEBxMOU2FsdCBMYWtlIENpdHkxHjAcBgNVBAoT
-FVRoZSBVU0VSVFJVU1QgTmV0d29yazEhMB8GA1UECxMYaHR0cDovL3d3dy51c2VydHJ1c3Qu
-Y29tMTYwNAYDVQQDEy1VVE4tVVNFUkZpcnN0LUNsaWVudCBBdXRoZW50aWNhdGlvbiBhbmQg
-RW1haWwwHhcNMTEwNDI4MDAwMDAwWhcNMjAwNTMwMTA0ODM4WjCBkzELMAkGA1UEBhMCR0Ix
-GzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UE
-ChMRQ09NT0RPIENBIExpbWl0ZWQxOTA3BgNVBAMTMENPTU9ETyBDbGllbnQgQXV0aGVudGlj
-YXRpb24gYW5kIFNlY3VyZSBFbWFpbCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-ggEBAJKEhFtLV5jUXi+LpOFAyKNTWF9mZfEyTvefMn1V0HhMVbdClOD5J3EHxcZppLkyxPFA
-GpDMJ1Zifxe1cWmu5SAb5MtjXmDKokH2auGj/7jfH0htZUOMKi4rYzh337EXrMLaggLW1DJq
-1GdvIBOPXDX65VSAr9hxCh03CgJQU2yVHakQFLSZlVkSMf8JotJM3FLb3uJAAVtIaN3FSrTg
-7SQfOq9xXwfjrL8UO7AlcWg99A/WF1hGFYE8aIuLgw9teiFX5jSw2zJ+40rhpVJyZCaRTqWS
-D//gsWD9Gm9oUZljjRqLpcxCm5t9ImPTqaD8zp6Q30QZ9FxbNboW86eb/8ECAwEAAaOCAUsw
-ggFHMB8GA1UdIwQYMBaAFImCZ33EnSZwAEu0UEh83j2uBG59MB0GA1UdDgQWBBR6E04AdFvG
-eGNkJ8Ev4qBbvHnFezAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBADARBgNV
-HSAECjAIMAYGBFUdIAAwWAYDVR0fBFEwTzBNoEugSYZHaHR0cDovL2NybC51c2VydHJ1c3Qu
-Y29tL1VUTi1VU0VSRmlyc3QtQ2xpZW50QXV0aGVudGljYXRpb25hbmRFbWFpbC5jcmwwdAYI
-KwYBBQUHAQEEaDBmMD0GCCsGAQUFBzAChjFodHRwOi8vY3J0LnVzZXJ0cnVzdC5jb20vVVRO
-QWRkVHJ1c3RDbGllbnRfQ0EuY3J0MCUGCCsGAQUFBzABhhlodHRwOi8vb2NzcC51c2VydHJ1
-c3QuY29tMA0GCSqGSIb3DQEBBQUAA4IBAQCF1r54V1VtM39EUv5C1QaoAQOAivsNsv1Kv/av
-QUn1G1rF0q0bc24+6SZ85kyYwTAo38v7QjyhJT4KddbQPTmGZtGhm7VNm2+vKGwdr+XqdFqo
-2rHA8XV6L566k3nK/uKRHlZ0sviN0+BDchvtj/1gOSBH+4uvOmVIPJg9pSW/ve9g4EnlFsjr
-P0OD8ODuDcHTzTNfm9C9YGqzO/761Mk6PB/tm/+bSTO+Qik5g+4zaS6CnUVNqGnagBsePdIa
-XXxHmaWbCG0SmYbWXVcHG6cwvktJRLiQfsrReTjrtDP6oDpdJlieYVUYtCHVmdXgQ0BCML7q
-peeU0rD+83X5f27nMIIFKTCCBBGgAwIBAgIQf4e4LraqByclcbQtwHo3lTANBgkqhkiG9w0B
-AQUFADCBkzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G
-A1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxOTA3BgNVBAMTMENP
-TU9ETyBDbGllbnQgQXV0aGVudGljYXRpb24gYW5kIFNlY3VyZSBFbWFpbCBDQTAeFw0xMzA5
-MjQwMDAwMDBaFw0xNDA5MjQyMzU5NTlaMCUxIzAhBgkqhkiG9w0BCQEWFHNncmFmQHJlc29s
-dXRlY2gubmV0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvM3lav1SjW+kVClB
-oBonrPDc4aH5wfb1KmuscRYRE+7tB7bU5PEwaMjlBDzFttP6OmD3IAoon8agv8YZc+maXMOw
-q8D2JvUfNUMwfoE5q6q8XLsoFyEOuMRiTEDhVfhscdS8FZkVs0XCKjXObxUeHFaspifwX+yH
-u5u5f5tBuCzOoxKzrP3nlaf3I7ycS7IW9q4dGVVgyIlqS/WyjIFXqK5duSZzwri1w+KCX2aa
-65ijc0Ttkj26PR5j1wmGf78wo42TR8Kzelbyo1VOu1dnmdmTVwGKMKi/qrJUxqTv5I1DmJfG
-16GWOblpLkApNvLXPW/QfJLq4ULwjSjdnb7AdQIDAQABo4IB5DCCAeAwHwYDVR0jBBgwFoAU
-ehNOAHRbxnhjZCfBL+KgW7x5xXswHQYDVR0OBBYEFJyemVU1Hf2k2+uhQC0zEb+KmnBrMA4G
-A1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMCAGA1UdJQQZMBcGCCsGAQUFBwMEBgsrBgEE
-AbIxAQMFAjARBglghkgBhvhCAQEEBAMCBSAwRgYDVR0gBD8wPTA7BgwrBgEEAbIxAQIBAQEw
-KzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLm5ldC9DUFMwVwYDVR0fBFAw
-TjBMoEqgSIZGaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09NT0RPQ2xpZW50QXV0aGVudGlj
-YXRpb25hbmRTZWN1cmVFbWFpbENBLmNybDCBiAYIKwYBBQUHAQEEfDB6MFIGCCsGAQUFBzAC
-hkZodHRwOi8vY3J0LmNvbW9kb2NhLmNvbS9DT01PRE9DbGllbnRBdXRoZW50aWNhdGlvbmFu
-ZFNlY3VyZUVtYWlsQ0EuY3J0MCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5jb21vZG9jYS5j
-b20wHwYDVR0RBBgwFoEUc2dyYWZAcmVzb2x1dGVjaC5uZXQwDQYJKoZIhvcNAQEFBQADggEB
-AFeNDWERDQWpyKeRjC/PWOXvxTehUAOIjFtN8slcXxdspITrep67XpB5gDimZqi8RXatx45A
-9hHUL9wEVx68qg/eeI1dRpq/2vFIL3EMYDcUG1fxvq8M45EgB76ynBSz/4O8l0Oty2QyLGL8
-MCmGWbcrRZt9ixaI2hDwkLI/cqRTwPjIUAbpg5eZ95LCthRYdB8Haw4Vk7PtpO060cpr3rj/
-l25pV4yTOZTNs1wmDK3tB4uloRh6w3ttC3RkCBVFUBdRSo6TbPamYwMtrJjENlu892Q8lSjz
-vJuLra9xPnerLWCAA39O37KlFUT9K9Xt5EQKrUJsBBq5Un0eZK4xwVAxggQZMIIEFQIBATCB
-qDCBkzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE
-BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxOTA3BgNVBAMTMENPTU9E
-TyBDbGllbnQgQXV0aGVudGljYXRpb24gYW5kIFNlY3VyZSBFbWFpbCBDQQIQf4e4LraqBycl
-cbQtwHo3lTAJBgUrDgMCGgUAoIICRTAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqG
-SIb3DQEJBTEPFw0xNDAxMjMwMDUyMjNaMCMGCSqGSIb3DQEJBDEWBBS+uwytY3aRmz/Qq6r1
-z2n1QrqQ5DBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjALBglghkgBZQMEAQIwCgYI
-KoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqG
-SIb3DQMCAgEoMIG5BgkrBgEEAYI3EAQxgaswgagwgZMxCzAJBgNVBAYTAkdCMRswGQYDVQQI
-ExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxGjAYBgNVBAoTEUNPTU9E
-TyBDQSBMaW1pdGVkMTkwNwYDVQQDEzBDT01PRE8gQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFu
-ZCBTZWN1cmUgRW1haWwgQ0ECEH+HuC62qgcnJXG0LcB6N5UwgbsGCyqGSIb3DQEJEAILMYGr
-oIGoMIGTMQswCQYDVQQGEwJHQjEbMBkGA1UECBMSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYD
-VQQHEwdTYWxmb3JkMRowGAYDVQQKExFDT01PRE8gQ0EgTGltaXRlZDE5MDcGA1UEAxMwQ09N
-T0RPIENsaWVudCBBdXRoZW50aWNhdGlvbiBhbmQgU2VjdXJlIEVtYWlsIENBAhB/h7gutqoH
-JyVxtC3AejeVMA0GCSqGSIb3DQEBAQUABIIBAImAae7BYBc5h6mhwzTd/VDjO3FusVPbDKET
-iPg/IV9wCeLnrG3thM9KmLa4CPz9s09C8eNfi7/7Tqn/R6uhRYcZrGUXHr16FS9UTIwQC9qx
-Cj2eSLeSjl5L4fJh4O68hgM0V8hJn/485zoK4GREDBtXvpRiunf2A6xReUaeg9c2HouGuAbb
-yJxbba/+PIgyd/J6jKcO6LyFBN8szOa2QO+Qdf7Zn11qlRDZw8tnAPReP2BL9DqOcOj5aLSL
-XvKPnWDvAqgaS6LjLhH8ZZ0BruEokCHO5Zt9a/L50LhrmHh4yzxGJbOdtvkVQEQzZJr3SeFm
-BBo6k6uDxdy1ISGTRhIAAAAAAAA=
---------------ms020507080802080805010105--

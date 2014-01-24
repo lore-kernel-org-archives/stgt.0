@@ -1,62 +1,51 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: tgtadm/tgtd management issue: buffer size truncated sometimes
-Date: Fri, 24 Jan 2014 14:11:52 +0900 (JST)
-Message-ID: <20140124.141152.1568838937885768338.fujita.tomonori@lab.ntt.co.jp>
-References: <96DAABF5-8A43-4969-8708-5751A053FBEE@evasive.ru>
+Subject: Re: [PATCH 1/2] Fix bs_rbd.c slurp_to_semi() not consuming
+ terminating semicolon
+Date: Fri, 24 Jan 2014 14:13:11 +0900 (JST)
+Message-ID: <20140124.141311.1305564732068171074.fujita.tomonori@lab.ntt.co.jp>
+References: <1390356859-7557-1-git-send-email-thomas@belton.co.nz>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <96DAABF5-8A43-4969-8708-5751A053FBEE@evasive.ru>
+In-Reply-To: <1390356859-7557-1-git-send-email-thomas@belton.co.nz>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: artyom@evasive.ru
+To: thomas@belton.co.nz, dan.mick@inktank.com
 Cc: stgt@vger.kernel.org
 
-Hi,
+CC'ed to Dan, the author of rbd support.
 
-On Thu, 23 Jan 2014 16:51:17 +0400
-Artyom Pervukhin <artyom@evasive.ru> wrote:
+On Wed, 22 Jan 2014 15:14:18 +1300
+Thomas Matysik <thomas@belton.co.nz> wrote:
 
-> I cannot find any information regarding practical limits on amount
-> of iSCSI targets supported by tgtd. Trying to use tgtd with many
-> targets (hundreds of, say 400-500), I've experienced some issues in
-> its management interface (tgtadm <-> tgtd).
-
-We use int for the target number. Except for that, there is no limit.
-
-
-> Each target has only one disk attached, the greater target count is,
-> the higher probability of experiencing the bug. Sometimes command
-> showing all targets returns incomplete output, as if it was randomly
-> stripped.
->
-> # tgtadm -C 0 --op show --mode target | grep -c ^Target                                                                                                   
-> 301
-> # tgtadm -C 0 --op show --mode target | grep -c ^Target                                                                                                   
-> 300
+> slurp_to_semi() would not consume the terminating semicolon on a
+> option specified in --bsopts, so any options other than the first
+> would be ignored as invalid.
 > 
-> # tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
-> 317914
-> # tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
-> 316690
-> # tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
-> 317914
-> # tgtadm -C 0 --op show --mode target | wc -c                                                                                                             
-> 310695
+> Signed-off-by: Thomas Matysik <thomas@belton.co.nz>
+> ---
+>  usr/bs_rbd.c | 3 +++
+>  1 file changed, 3 insertions(+)
 > 
-> The closest description to this bug I've managed to find is this thread: http://lists.wpkg.org/pipermail/stgt/2012-July/005324.html (op had the same symptoms).
+> diff --git a/usr/bs_rbd.c b/usr/bs_rbd.c
+> index 3ea9d36..f797fd5 100644
+> --- a/usr/bs_rbd.c
+> +++ b/usr/bs_rbd.c
+> @@ -480,6 +480,9 @@ static char *slurp_to_semi(char **p)
+>  	strncpy(ret, *p, len);
+>  	ret[len] = '\0';
+>  	*p = end;
+> +	// Jump past the semicolon, if we stopped at one
+> +	if (**p == ';')
+> +		*p = end + 1;
+>  	return ret;
+>  }
+>  
+> -- 
+> 1.8.1.2
 > 
-> I was able to reproduce this bug on tgt 1.0.4 (Debian Squeeze), 1.0.17 (Debian Wheezy), 1.0.43 (latest so far). Tested on linux kernels 2.6.32, 3.2.0 (both amd64).
-> 
-
-Hmm, I think that the bug on the thread was fixed. I set up 600
-targets with the latest code and doesn't hit such issue.
-
-root@rose:~# tgtadm --op show --mode target|grep -c ^Target
-600
-root@rose:~# tgtadm --op show --mode target|grep -c ^Target
-600
-root@rose:~# tgtadm --op show --mode target|wc -c
-688313
-root@rose:~# tgtadm --op show --mode target|wc -c
+> --
+> To unsubscribe from this list: send the line "unsubscribe stgt" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html

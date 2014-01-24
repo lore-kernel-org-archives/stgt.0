@@ -1,33 +1,35 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: New to working with stgt
-Date: Fri, 24 Jan 2014 14:19:24 +0900 (JST)
-Message-ID: <20140124.141924.1568838937885762668.fujita.tomonori@lab.ntt.co.jp>
-References: <52E067C7.8010701@resolutech.net>
+Subject: Re: segfault in tgtd
+Date: Fri, 24 Jan 2014 14:27:37 +0900 (JST)
+Message-ID: <20140124.142737.1568838937885766578.fujita.tomonori@lab.ntt.co.jp>
+References: <CAMHDSMzjsJWtkkK0NBm48+iukgKLzDiB-j22viuJ=GwnrCXqJA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <52E067C7.8010701@resolutech.net>
+In-Reply-To: <CAMHDSMzjsJWtkkK0NBm48+iukgKLzDiB-j22viuJ=GwnrCXqJA@mail.gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: sgraf@resolutech.net
+To: alban@fonleap.com
 Cc: stgt@vger.kernel.org
 
-Hi,
+On Tue, 21 Jan 2014 11:29:26 +0000
+Alban Rrustemi <alban@fonleap.com> wrote:
 
-On Wed, 22 Jan 2014 19:52:23 -0500
-Steven Graf <sgraf@resolutech.net> wrote:
+> We've been evaluating the tgt version 1.0.38 on a 64bit Linux kernel
+> (version 3.2.0-39-generic) in an Ubuntu installation. Occasionally, we
+> get a segmentation fault in tgtd and it's not clear what went wrong or
+> how to get more information in order to investigate the root cause.
+> 
+> All I get to see is lines like the ones below in the kernel log:
+> Jan 21 07:03:40 test-machine kernel: [2744939.501604] tgtd[12887]:
+> segfault at 0 ip 00000000004076aa sp 00007fffe0bcfa40 error 6 in
+> tgtd[400000+43000]
+> Jan 21 07:04:04 test-machine kernel: [2744963.554504] init: tgt main
+> process (12887) killed by SEGV signal
+> 
+> Is there any documentation out there or any other type of information
+> on some tgt diagnostics I could use to investigate this?
 
-> I am new to the list and I have recently just started working with the
-> stgt framework.  I've been grokking the code and the documentation, but
-> I'd appreciate any insight or advice you may be able to lend.  My
-> objective is to use the rbd backend, but have a user-space driver that
-> speaks native SCSI (block device).  I am looking at the existing
-
-I'm lost here, user-space driver speaking native SCSI? What SCSI
-transport protocol you use?
-
-> implementation that uses iSCSI, and I have that all working with my Ceph
-> back-end, but for performance reasons I'd like to eliminate the overhead
-> of the network (currently I have everything going over localhost, which
-> is good for a PoC, but insufficient for our big data tasks).
+Unfortunately, I can't tell much with the above. Did you see anything
+in syslog? Anything (workload, etc) changed right before the crash?

@@ -1,64 +1,41 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: segfault in tgtd
-Date: Fri, 24 Jan 2014 17:58:52 +0900 (JST)
-Message-ID: <20140124.175852.474517972.konishi.ryusuke@lab.ntt.co.jp>
-References: <CAMHDSMzjsJWtkkK0NBm48+iukgKLzDiB-j22viuJ=GwnrCXqJA@mail.gmail.com>
-	<20140124.142737.1568838937885766578.fujita.tomonori@lab.ntt.co.jp>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: tgtadm/tgtd management issue: buffer size truncated sometimes
+Date: Fri, 24 Jan 2014 19:21:39 +0900 (JST)
+Message-ID: <20140124.192139.1568838937885768572.fujita.tomonori@lab.ntt.co.jp>
+References: <96DAABF5-8A43-4969-8708-5751A053FBEE@evasive.ru>
+	<20140124.141152.1568838937885768338.fujita.tomonori@lab.ntt.co.jp>
+	<52A65E29-5717-4DEA-BDD4-CB9700D218E0@evasive.ru>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20140124.142737.1568838937885766578.fujita.tomonori@lab.ntt.co.jp>
+In-Reply-To: <52A65E29-5717-4DEA-BDD4-CB9700D218E0@evasive.ru>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: alban@fonleap.com
-Cc: fujita.tomonori@lab.ntt.co.jp, stgt@vger.kernel.org
+Content-Type: Text/Plain; charset="iso-8859-1"
+To: artyom@evasive.ru
+Cc: stgt@vger.kernel.org
 
-Hi Alban,
-On Fri, 24 Jan 2014 14:27:37 +0900 (JST), FUJITA Tomonori wrote:
-> On Tue, 21 Jan 2014 11:29:26 +0000
-> Alban Rrustemi <alban@fonleap.com> wrote:
-> 
->> We've been evaluating the tgt version 1.0.38 on a 64bit Linux kernel
->> (version 3.2.0-39-generic) in an Ubuntu installation. Occasionally, we
->> get a segmentation fault in tgtd and it's not clear what went wrong or
->> how to get more information in order to investigate the root cause.
->> 
->> All I get to see is lines like the ones below in the kernel log:
->> Jan 21 07:03:40 test-machine kernel: [2744939.501604] tgtd[12887]:
->> segfault at 0 ip 00000000004076aa sp 00007fffe0bcfa40 error 6 in
->> tgtd[400000+43000]
->> Jan 21 07:04:04 test-machine kernel: [2744963.554504] init: tgt main
->> process (12887) killed by SEGV signal
->> 
->> Is there any documentation out there or any other type of information
->> on some tgt diagnostics I could use to investigate this?
-> 
-> Unfortunately, I can't tell much with the above. Did you see anything
-> in syslog? Anything (workload, etc) changed right before the crash?
-
-Was there a core file in the root directory or at your home directory
-?
-
-If it exists, you can get backtrace of the segmentation fault with
-gdb, and it may give very helpful information to narrow down the root
-cause of the problem.
-
-Usually, we use gdb for this purpose as follows:
-
- # gdb tgtd /core.12345
-  ...
- (gdb) bt
-
-You may need to install *-dbg package if your tgt has no symbol
-information.
-
-For more details, please see instructions described in the distro
-sites like below:
-
- [1] https://wiki.ubuntu.com/Backtrace 
- [2] https://wiki.ubuntu.com/DebuggingProcedures
-
-
-Regards,
-Ryusuke Konishi
+T24gRnJpLCAyNCBKYW4gMjAxNCAxMjo1MToxMyArMDQwMA0KQXJ0eW9tIFBlcnZ1a2hpbiA8YXJ0
+eW9tQGV2YXNpdmUucnU+IHdyb3RlOg0KDQo+IENhbiB5b3UgcGxlYXNlIHNwZWNpZnkgd2hhdCBs
+aW51eCBkaXN0cmlidXRpb24gYW5kIGxpYnJhcmllcyB2ZXJzaW9uDQo+IGFyZSB5b3UgdXNpbmc/
+DQoNCkRlYmlhbiBzcXVlZXplIGFtZDY0Lg0KDQo+IEmibSBhYmxlIHRvIHJlcHJvZHVjZSB0aGlz
+IGJ1ZyBvbiBjdXJyZW50IHRndCBjb2RlYmFzZSAoMTcyMjJmMmIwMGQyOTM2OGRhMjE0ZTJkNTlj
+YmM5ZTAwZjUzNjA2YikgYnVpbHQgb24gIERlYmlhbiB3aGVlenkgYW1kNjQuIEJ1ZyBmcmVxdWVu
+Y3kgaW5jcmVhc2VzIHdpdGggbnVtYmVyIG9mIHRhcmdldHM6DQo+IA0KPiANCj4gMTAwMCB0YXJn
+ZXRzIChhbGwgbG9hZGVkLCBhcyBgdGd0YWRtIC1DIDAgLS1vcCBzaG93IC0tbW9kZSB0YXJnZXQg
+LS10aWQgMTAwMGAgc2hvd3MgdGFyZ2V0IHNldHRpbmdzKToNCj4gDQo+IHJvb3RAc2FuZGJveDp+
+ICMgZm9yIGkgaW4gJChzZXEgMTAwKSA7IGRvIHRndGFkbSAtQyAwIC0tb3Agc2hvdyAtLW1vZGUg
+dGFyZ2V0IHwgZ3JlcCAtYyBeVGFyZ2V0IDsgZG9uZSB8IHNvcnQgfCB1bmlxIC1jICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICANCj4gICAgIDEwMCA5
+NzgNCj4gcm9vdEBzYW5kYm94On4gIyBmb3IgaSBpbiAkKHNlcSAxMDApIDsgZG8gdGd0YWRtIC1D
+IDAgLS1vcCBzaG93IC0tbW9kZSB0YXJnZXQgfCB3YyAtYyA7IGRvbmUgfCBzb3J0IHwgdW5pcSAt
+YyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgDQo+ICAgICAxMDAgMTAzMzE0MA0KDQpJIGNhbiByZXByb2R1Y2UgdGhlIHNhbWUgcHJv
+YmxlbSB3aXRoIDEwMDAuDQoNCnJvb3RAcm9zZTp+IyBmb3IgaSBpbiAkKHNlcSAxMDApOyBkbyB0
+Z3RhZG0gLS1vcCBzaG93IC0tbW9kZSB0YXJnZXR8Z3JlcCAtYyBeVGFyZ2V0O2RvbmV8c29ydHx1
+bmlxIC1jDQogICAgIDk3IDEwMDANCiAgICAgIDEgOTcyDQogICAgICAxIDk5NQ0KICAgICAgMSA5
+OTcNCg0KU3RyYW5nZWx5LCBsb29rcyBsaWtlIEkgY2FuIGdldCB0aGUgY29ycmVjdCByZXN1bHQg
+d2l0aG91dCAnZ3JlcCc6DQoNCnJvb3RAcm9zZTp+IyBmb3IgaSBpbiAkKHNlcSAxMDApOyBkbyB0
+Z3RhZG0gLS1vcCBzaG93IC0tbW9kZSB0YXJnZXR8cHl0aG9uIC1jICJpbXBvcnQgc3lzOyBwcmlu
+dCBsZW4oW2xpbmUgZm9yIGxpbmUgaW4gc3lzLnN0ZGluIGlmIFwiVGFyZ2V0XCIgaW4gbGluZV0p
+Ijtkb25lfHNvcnR8dW5pcSAtYw0KICAgIDEwMCAxMDAwDQoNCg0K

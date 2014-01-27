@@ -1,154 +1,164 @@
-From: Artyom Pervukhin <artyom@evasive.ru>
-Subject: Re: tgtadm/tgtd management issue: buffer size truncated sometimes
-Date: Mon, 27 Jan 2014 20:12:20 +0400
-Message-ID: <9EDAF161-8C9B-4B6A-BA04-2B93772A7991@evasive.ru>
-References: <52A65E29-5717-4DEA-BDD4-CB9700D218E0@evasive.ru> <20140124.192139.1568838937885768572.fujita.tomonori@lab.ntt.co.jp> <C6A6622D-F621-4889-AE5C-A7F603B84105@evasive.ru> <20140128.004219.1568838937885776146.fujita.tomonori@lab.ntt.co.jp>
-Mime-Version: 1.0 (Mac OS X Mail 7.1 \(1827\))
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Alexey Amerik <alexey.amerik@gmail.com>
+Subject: tgtd tuning, poor performance at low throughput
+Date: Mon, 27 Jan 2014 15:28:36 -0500
+Message-ID: <CAKqJfTvUqO9e8LnZt5ysdZ=gh8sS0XizA-ieJaOgAkbvFm6VaQ@mail.gmail.com>
+Mime-Version: 1.0
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20140128.004219.1568838937885776146.fujita.tomonori@lab.ntt.co.jp>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:from:date:message-id:subject:to:content-type;
+        bh=A6sYFBalHxvsD+cMPqpM7dlvQ7PdUAzoa8O1WUoA2CI=;
+        b=GlVYXGSjudwzb4wOXb0HOKeFIyHc5nUWp87mg5RxuazIm+yjuLUSC1wRQ7zDgQcftE
+         3pNoXiZ+BeboqMGktGeijvj2mxIHRcusjrTFQOqebq6jVXpIVy63V19zhI2V2SBObDTC
+         peba2eYwwWXdNGZ7moYm1YwbghlSL4T9lpqMAJvZh3ir3jjtNsseOoUKkF+7E42onQyG
+         laCRFaJDhafuAegVyVDH5uaK3UtGgJ8aHwT8kJfh4/4b7sU3Jc0kcke8ZGHJcfSxilMY
+         3vN7udjjcbLNULgCuS0RNLyF1JyJm7C/Of5oOZHCz2fBtLAbiNiypBFz+mIdQbI5Nm46
+         Eb3w==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: stgt@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+
+Hi folks,
+
+I'm having high machine load on the tgtd side, and would like to ask
+for help tuning.
+
+background on hardware:
+I have a 10 disk sw-raid10 array setup with mdadm on CentOS 6, 2
+(dual)x6core E5-2620 0 @ 2.00GHz, 32GB ram target machine, dedicated
+gigabit interfaces multipathed, and jumbo frames mtu 9000 between my
+target/switch/initiators.
+
+I plan to use this for KVM storage.  Local IO performance tested with
+bonnie++ is ~ 250MB/sec for random writes, with minimal CPU load
+during the test.
+
+However after I introduced tgtd and iscsi into the mix, even at speeds
+of ~10MB/sec coming from the initiators, my target machine load is
+very high 10-15.  The load seems to be due to tgtd.
+
+Can someone please help me tune tgtd? Thanks in advance!
+
+target.conf:
+
+default-driver iscsi
+<target iqn.2014-01.com.foo.us1.storage1:vmstorage>
+    backing-store /dev/md2
+    initiator-address 192.168.84.29  #kvm5
+    initiator-address 192.168.85.29  #kvm5
+    initiator-address 192.168.84.78  #kvm6
+    initiator-address 192.168.85.78  #kvm6
+    initiator-address 192.168.84.76  #kvm7
+    initiator-address 192.168.85.76  #kvm7
+    write-cache off
+</target>
 
 
-On 27 Jan 2014, at 19:42, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.j=
-p> wrote:
+iscsi initiator side:
 
-> Hi,
->=20
-> On Mon, 27 Jan 2014 18:44:42 +0400
-> Artyom Pervukhin <artyom@evasive.ru> wrote:
->=20
->> I've done some additional stracing on the tgtd's side this time, ple=
-ase see below:
->>=20
->> Testing 300 targets:
->>=20
->> command:
->>=20
->> root@sandbox:~ # tgtadm -C 0 --op show --mode target
->>=20
->> (command shows full output)
->>=20
->> tgtd writes:
->>=20
->> write(10, "\0\0\0\0\305\325\4\0", 8)    =3D 8
->> write(10, "Target 1: iqn.2014-01:d1\n    Sys"..., 316861) =3D 224000
->> write(10, "       State: ready\n    I_T nexu"..., 92861) =3D 92861
->>=20
->> command:
->>=20
->> root@sandbox:~ # tgtadm -C 0 --op show --mode target | wc -c        =
-                                                                       =
-                                =20
->> 316860
->>=20
->> tgtd writes stays the same as above.
->>=20
->>=20
->>=20
->> Testing 900 targets:
->>=20
->> root@sandbox:~ # tgtadm -C 0 --op show --mode target
->>=20
->> (command shows incomplete output)
->>=20
->> tgtd writes:
->>=20
->> write(10, "\0\0\0\0u\205\16\0", 8)      =3D 8
->> write(10, "Target 1: iqn.2014-01:d1\n    Sys"..., 951661) =3D 256000
->> write(10, "a: No\n            Prevent remova"..., 695661) =3D 176000
->> write(10, " Removable media: No\n           "..., 519661) =3D 176000
->> write(10, "T nexus information:\n    LUN inf"..., 343661) =3D 176000
->> write(10, "  Backing store path: None\n     "..., 167661) =3D 167661
->>=20
->> command:
->>=20
->> root@sandbox:~ # tgtadm -C 0 --op show --mode target | wc -c        =
-                                                                       =
-                                =20
->> 929621
->>=20
->> tgtd writes:
->>=20
->> write(10, "\0\0\0\0u\205\16\0", 8)      =3D 8
->> write(10, "Target 1: iqn.2014-01:d1\n    Sys"..., 951661) =3D 944000
->> write(10, "t removal: No\n            Readon"..., 7661) =3D -1 EPIPE=
- (Broken pipe)
->> --- SIGPIPE (Broken pipe) @ 0 (0) ---
->>=20
->>=20
->>=20
->> Seeing this, I assumed the bug is on tgtadm's side.
->=20
-> Thanks a lot for the investigation. The following fixes the problem?
->=20
-> Note that tgtd uses a stream to store what tgtd sends to tgtadm. The
-> buffer of the stream is managed glibc (internally allocated via
-> malloc). That's a limit about how many targets you can see via tgtadm=
-=2E
->=20
->=20
-> diff --git a/usr/tgtadm.c b/usr/tgtadm.c
-> index cc63fbf..8e0d5dd 100644
-> --- a/usr/tgtadm.c
-> +++ b/usr/tgtadm.c
-> @@ -234,7 +234,8 @@ static int ipc_mgmt_connect(int *fd)
-> static int ipc_mgmt_rsp(int fd, struct tgtadm_req *req)
-> {
-> 	struct tgtadm_rsp rsp;
-> -	int err, rest, len;
-> +	int err, len, done;
-> +	char *buf;
->=20
-> retry:
-> 	err =3D recv(fd, &rsp, sizeof(rsp), MSG_WAITALL);
-> @@ -278,23 +279,28 @@ retry:
-> 		}
-> 	}
->=20
-> -	rest =3D rsp.len - sizeof(rsp);
-> -	if (!rest)
-> +	len =3D rsp.len - sizeof(rsp);
-> +	if (!len)
-> 		return 0;
->=20
-> -	while (rest) {
-> -		char buf[BUFSIZE];
-> -		memset(buf, 0, sizeof(buf));
-> -		len =3D min_t(int, sizeof(buf) - 1, rest);
-> -		err =3D read(fd, buf, len);
-> -		if (err <=3D 0) {
-> -			eprintf("\ncan't get the full response, %m\n");
-> -			return errno;
-> +	buf =3D malloc(len);
-> +	done =3D 0;
-> +	while (len > done) {
-> +		int ret;
-> +		ret =3D read(fd, buf + done, len - done);
-> +		if (ret < 0) {
-> +			if (errno =3D=3D EAGAIN)
-> +				continue;
-> +			fprintf(stderr, "failed to read from tgtd, %d", errno);
-> +			break;
-> 		}
-> -		fputs(buf, stdout);
-> -		rest -=3D len;
-> +		done +=3D ret;
-> 	}
->=20
-> +	if (done =3D=3D len)
-> +		fputs(buf, stdout);
-> +	free(buf);
-> +
-> 	return 0;
-> }
->=20
 
-I=92ve just applied this patch and the problem is gone: all tests I=92v=
-e used before are passing.
+[aamerik@kvm5 ~]$ iscsiadm -m session -P 3
+iSCSI Transport Class version 2.0-870
+version 6.2.0-873.10.el6
+Target: iqn.2014-01.com.foo.us1.storage1:vmstorage
+Current Portal: 192.168.84.77:3260,1
+Persistent Portal: 192.168.84.77:3260,1
+**********
+Interface:
+**********
+Iface Name: default
+Iface Transport: tcp
+Iface Initiatorname: iqn.1994-05.com.redhat:65274b4cae8e
+Iface IPaddress: 192.168.84.29
+Iface HWaddress: <empty>
+Iface Netdev: <empty>
+SID: 1
+iSCSI Connection State: Unknown
+iSCSI Session State: LOGGED_IN
+Internal iscsid Session State: Unknown
+*********
+Timeouts:
+*********
+Recovery Timeout: 120
+Target Reset Timeout: 30
+LUN Reset Timeout: 30
+Abort Timeout: 15
+*****
+CHAP:
+*****
+username: <empty>
+password: ********
+username_in: <empty>
+password_in: ********
+************************
+Negotiated iSCSI params:
+************************
+HeaderDigest: None
+DataDigest: None
+MaxRecvDataSegmentLength: 262144
+MaxXmitDataSegmentLength: 8192
+FirstBurstLength: 65536
+MaxBurstLength: 262144
+ImmediateData: Yes
+InitialR2T: Yes
+MaxOutstandingR2T: 1
+************************
+Attached SCSI devices:
+************************
+Host Number: 7 State: running
+scsi7 Channel 00 Id 0 Lun: 0
+scsi7 Channel 00 Id 0 Lun: 1
+Attached scsi disk sdb State: running
+Current Portal: 192.168.85.77:3260,1
+Persistent Portal: 192.168.85.77:3260,1
+**********
+Interface:
+**********
+Iface Name: default
+Iface Transport: tcp
+Iface Initiatorname: iqn.1994-05.com.redhat:65274b4cae8e
+Iface IPaddress: 192.168.85.29
+Iface HWaddress: <empty>
+Iface Netdev: <empty>
+SID: 2
+iSCSI Connection State: Unknown
+iSCSI Session State: LOGGED_IN
+Internal iscsid Session State: Unknown
+*********
+Timeouts:
+*********
+Recovery Timeout: 120
+Target Reset Timeout: 30
+LUN Reset Timeout: 30
+Abort Timeout: 15
+*****
+CHAP:
+*****
+username: <empty>
+password: ********
+username_in: <empty>
+password_in: ********
+************************
+Negotiated iSCSI params:
+************************
+HeaderDigest: None
+DataDigest: None
+MaxRecvDataSegmentLength: 262144
+MaxXmitDataSegmentLength: 8192
+FirstBurstLength: 65536
+MaxBurstLength: 262144
+ImmediateData: Yes
+InitialR2T: Yes
+MaxOutstandingR2T: 1
+************************
+Attached SCSI devices:
+************************
+Host Number: 8 State: running
+scsi8 Channel 00 Id 0 Lun: 0
+scsi8 Channel 00 Id 0 Lun: 1
+Attached scsi disk sdc State: running
 
-Thanks a lot!
+-- 
+Alexey Amerik

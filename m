@@ -1,168 +1,152 @@
-From: Alban Rrustemi <alban@fonleap.com>
-Subject: Re: segfault in tgtd
-Date: Fri, 24 Jan 2014 11:44:01 +0000
-Message-ID: <CAMHDSMwHUTp_ixGJ6DXqRC2wZM_xLcpoxCUTj44fwVN9=1mQow@mail.gmail.com>
-References: <CAMHDSMzjsJWtkkK0NBm48+iukgKLzDiB-j22viuJ=GwnrCXqJA@mail.gmail.com>
-	<20140124.142737.1568838937885766578.fujita.tomonori@lab.ntt.co.jp>
-	<20140124.175852.474517972.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
+From: Artyom Pervukhin <artyom@evasive.ru>
+Subject: Re: tgtadm/tgtd management issue: buffer size truncated sometimes
+Date: Mon, 27 Jan 2014 18:44:42 +0400
+Message-ID: <C6A6622D-F621-4889-AE5C-A7F603B84105@evasive.ru>
+References: <96DAABF5-8A43-4969-8708-5751A053FBEE@evasive.ru> <20140124.141152.1568838937885768338.fujita.tomonori@lab.ntt.co.jp> <52A65E29-5717-4DEA-BDD4-CB9700D218E0@evasive.ru> <20140124.192139.1568838937885768572.fujita.tomonori@lab.ntt.co.jp>
+Mime-Version: 1.0 (Mac OS X Mail 7.1 \(1827\))
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=fonleap.com; s=google;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=JQdqQ8vyJq+7pmCO+9pRgvekFuP25ooQHhDkPyWJB3g=;
-        b=FaYziLmLJJ/usuzJB3jCrGhsZEFVH0vXxfkntJ2CuYJ3Yz/hViuHlV+BVPSJKyUs3l
-         Zek8YoF7PnSuedYWOOU6ISml3+Ca0U4GPAPQuEga3knvetHkm+wt1v37RjJhss0Mwb60
-         /9Exrfr32pOZf6tVxxZlgXHB5scAsqbliod9k=
-In-Reply-To: <20140124.175852.474517972.konishi.ryusuke@lab.ntt.co.jp>
+In-Reply-To: <20140124.192139.1568838937885768572.fujita.tomonori@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Cc: fujita.tomonori@lab.ntt.co.jp, stgt <stgt@vger.kernel.org>
-
-Hi Fujita, Ryusuke,
-
-I can't find any core files anywhere. On the other hand, syslog reports this:
-
-Jan 24 15:27:25 test-machine tgtd: abort_task_set(1325) found 0 0
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found fd1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found fc1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found fb1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found fa1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f91b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f81b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f71b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f61b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f51b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f41b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f31b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f21b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f11b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found f01b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found ef1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found ee1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found ed1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found ec1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found eb1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found ea1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e91b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e81b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e71b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e61b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e51b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e41b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e31b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e11b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found e01b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found df1b0000 6
-Jan 24 15:27:25 test-machine tgtd: abort_cmd(1301) found d61b0000 6
-Jan 24 15:27:45 test-machine tgtd: conn_close(103) connection closed,
-0xed3ec0 26
-Jan 24 15:27:45 test-machine tgtd: conn_close(109) sesson 0xdda890 1
-Jan 24 15:27:48 test-machine tgtd: tgt_event_modify(241) Cannot find event 11
-Jan 24 15:27:48 test-machine tgtd: iscsi_event_modify(557)
-tgt_event_modify failed
-Jan 24 15:27:53 test-machine tgtd: tgt_event_modify(241) Cannot find event 11
-Jan 24 15:27:53 test-machine tgtd: iscsi_event_modify(557)
-tgt_event_modify failed
-Jan 24 15:27:58 test-machine tgtd: tgt_event_modify(241) Cannot find event 11
-Jan 24 15:27:58 test-machine tgtd: iscsi_event_modify(557)
-tgt_event_modify failed
-Jan 24 15:28:03 test-machine tgtd: tgt_event_modify(241) Cannot find event 11
-Jan 24 15:28:03 test-machine tgtd: iscsi_event_modify(557)
-tgt_event_modify failed
-Jan 24 15:28:05 test-machine tgtd: conn_close(92) already closed 0xed3ec0 25
-Jan 24 15:28:08 test-machine tgtd: tgt_event_modify(241) Cannot find event 11
-Jan 24 15:28:08 test-machine tgtd: iscsi_event_modify(557)
-tgt_event_modify failed
-Jan 24 15:28:13 test-machine tgtd: iscsi_event_modify(557)
-tgt_event_modify failed
-Jan 24 15:28:18 test-machine tgtd: iscsi_tcp_nop_work_handler(110) tcp
-connection timed out after 6 failed NOP-OUT
-Jan 24 15:28:24 test-machine tgtd: tgtd logger exits abnormally, pid:3794
-Jan 24 15:28:24 test-machine kernel: [3033879.644595] tgtd[3792]:
-segfault at 0 ip 00000000004076aa sp 00007fffdee18b10 error 6 in
-tgtd[400000+43000]
-Jan 24 15:29:26 test-machine kernel: [3033940.814673] init: tgt main
-process (3792) killed by SEGV signal
-Jan 24 15:29:26 test-machine kernel: [3033940.814709] init: tgt main
-process ended, respawning
-Jan 24 15:29:26 test-machine tgtd: semkey 0x610f435c
-Jan 24 15:29:26 test-machine tgtd: tgtd daemon started, pid:15001
-Jan 24 15:29:26 test-machine tgtd: tgtd logger started, pid:15003 debug:0
-Jan 24 15:29:27 test-machine tgtd: iser_ib_init(3349) Failed to
-initialize RDMA; load kernel modules?
-Jan 24 15:29:27 test-machine tgtd: work_timer_start(150) use signal
-based scheduler
-Jan 24 15:29:27 test-machine tgtd: bs_init(316) use signalfd notification
-
-I should point out that after iSCSI targets are created the following
-commands are executed:
-sudo tgtadm --op update --mode target --tid 1 -n nop_count -v 6
-sudo tgtadm --op update --mode target --tid 1 -n nop_interval -v 5
-
-Thanks for your help.
-
-Alban
+Content-Type: text/plain; charset="iso-8859-1"
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: stgt@vger.kernel.org
 
 
-On Fri, Jan 24, 2014 at 8:58 AM, Ryusuke Konishi
-<konishi.ryusuke@lab.ntt.co.jp> wrote:
-> Hi Alban,
-> On Fri, 24 Jan 2014 14:27:37 +0900 (JST), FUJITA Tomonori wrote:
->> On Tue, 21 Jan 2014 11:29:26 +0000
->> Alban Rrustemi <alban@fonleap.com> wrote:
->>
->>> We've been evaluating the tgt version 1.0.38 on a 64bit Linux kernel
->>> (version 3.2.0-39-generic) in an Ubuntu installation. Occasionally, we
->>> get a segmentation fault in tgtd and it's not clear what went wrong or
->>> how to get more information in order to investigate the root cause.
->>>
->>> All I get to see is lines like the ones below in the kernel log:
->>> Jan 21 07:03:40 test-machine kernel: [2744939.501604] tgtd[12887]:
->>> segfault at 0 ip 00000000004076aa sp 00007fffe0bcfa40 error 6 in
->>> tgtd[400000+43000]
->>> Jan 21 07:04:04 test-machine kernel: [2744963.554504] init: tgt main
->>> process (12887) killed by SEGV signal
->>>
->>> Is there any documentation out there or any other type of information
->>> on some tgt diagnostics I could use to investigate this?
->>
->> Unfortunately, I can't tell much with the above. Did you see anything
->> in syslog? Anything (workload, etc) changed right before the crash?
->
-> Was there a core file in the root directory or at your home directory
-> ?
->
-> If it exists, you can get backtrace of the segmentation fault with
-> gdb, and it may give very helpful information to narrow down the root
-> cause of the problem.
->
-> Usually, we use gdb for this purpose as follows:
->
->  # gdb tgtd /core.12345
->   ...
->  (gdb) bt
->
-> You may need to install *-dbg package if your tgt has no symbol
-> information.
->
-> For more details, please see instructions described in the distro
-> sites like below:
->
->  [1] https://wiki.ubuntu.com/Backtrace
->  [2] https://wiki.ubuntu.com/DebuggingProcedures
->
->
-> Regards,
-> Ryusuke Konishi
+On 24 Jan 2014, at 14:21, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.j=
+p> wrote:
+
+> On Fri, 24 Jan 2014 12:51:13 +0400
+> Artyom Pervukhin <artyom@evasive.ru> wrote:
+>=20
+>> Can you please specify what linux distribution and libraries version
+>> are you using?
+>=20
+> Debian squeeze amd64.
+>=20
+>> I=A2m able to reproduce this bug on current tgt codebase (17222f2b00=
+d29368da214e2d59cbc9e00f53606b) built on  Debian wheezy amd64. Bug freq=
+uency increases with number of targets:
+>>=20
+>>=20
+>> 1000 targets (all loaded, as `tgtadm -C 0 --op show --mode target --=
+tid 1000` shows target settings):
+>>=20
+>> root@sandbox:~ # for i in $(seq 100) ; do tgtadm -C 0 --op show --mo=
+de target | grep -c ^Target ; done | sort | uniq -c                    =
+                                =20
+>>    100 978
+>> root@sandbox:~ # for i in $(seq 100) ; do tgtadm -C 0 --op show --mo=
+de target | wc -c ; done | sort | uniq -c                              =
+                               =20
+>>    100 1033140
+>=20
+> I can reproduce the same problem with 1000.
+>=20
+> root@rose:~# for i in $(seq 100); do tgtadm --op show --mode target|g=
+rep -c ^Target;done|sort|uniq -c
+>     97 1000
+>      1 972
+>      1 995
+>      1 997
+>=20
+> Strangely, looks like I can get the correct result without 'grep':
+>=20
+> root@rose:~# for i in $(seq 100); do tgtadm --op show --mode target|p=
+ython -c "import sys; print len([line for line in sys.stdin if \"Target=
+\" in line])";done|sort|uniq -c
+>    100 1000
+>=20
+>=20
+
+I've done some additional stracing on the tgtd's side this time, please=
+ see below:
+
+Testing 300 targets:
+
+command:
+
+root@sandbox:~ # tgtadm -C 0 --op show --mode target
+
+(command shows full output)
+
+tgtd writes:
+
+write(10, "\0\0\0\0\305\325\4\0", 8)    =3D 8
+write(10, "Target 1: iqn.2014-01:d1\n    Sys"..., 316861) =3D 224000
+write(10, "       State: ready\n    I_T nexu"..., 92861) =3D 92861
+
+command:
+
+root@sandbox:~ # tgtadm -C 0 --op show --mode target | wc -c           =
+                                                                       =
+                             =20
+316860
+
+tgtd writes stays the same as above.
 
 
 
--- 
-Dr Alban Rrustemi
-Co-founder and Director, Fonleap Ltd
-http://www.fonleap.com
+Testing 900 targets:
+
+root@sandbox:~ # tgtadm -C 0 --op show --mode target
+
+(command shows incomplete output)
+
+tgtd writes:
+
+write(10, "\0\0\0\0u\205\16\0", 8)      =3D 8
+write(10, "Target 1: iqn.2014-01:d1\n    Sys"..., 951661) =3D 256000
+write(10, "a: No\n            Prevent remova"..., 695661) =3D 176000
+write(10, " Removable media: No\n           "..., 519661) =3D 176000
+write(10, "T nexus information:\n    LUN inf"..., 343661) =3D 176000
+write(10, "  Backing store path: None\n     "..., 167661) =3D 167661
+
+command:
+
+root@sandbox:~ # tgtadm -C 0 --op show --mode target | wc -c           =
+                                                                       =
+                             =20
+929621
+
+tgtd writes:
+
+write(10, "\0\0\0\0u\205\16\0", 8)      =3D 8
+write(10, "Target 1: iqn.2014-01:d1\n    Sys"..., 951661) =3D 944000
+write(10, "t removal: No\n            Readon"..., 7661) =3D -1 EPIPE (B=
+roken pipe)
+--- SIGPIPE (Broken pipe) @ 0 (0) ---
+
+
+
+Seeing this, I assumed the bug is on tgtadm's side.
+
+I've written a small program which sends exactly the same command as tg=
+tadm does to tgtd's socket, then reads response back, dumping it to std=
+out (sorry it's in Go, my C ain't good: http://play.golang.org/p/EcFTbo=
+CncF).
+
+Dumping output like this I have no problem receiving full targets list:
+
+root@sandbox:~ # for i in $(seq 1000) ; do ./dump | wc -c ; done | sort=
+ | uniq -c                                                             =
+                            =20
+   1000 951660
+root@sandbox:~ # for i in $(seq 1000) ; do ./dump | grep -c ^Target ; d=
+one | sort | uniq -c                                                   =
+                            =20
+   1000 900
+
+
+Whereas tgtadm shows incomplete output:
+
+root@sandbox:~ # for i in $(seq 1000) ; do tgtadm -C 0 --op show --mode=
+ target | wc -c ; done | sort | uniq -c                                =
+                             =20
+   1000 929621
+root@sandbox:~ # for i in $(seq 1000) ; do tgtadm -C 0 --op show --mode=
+ target | grep -c ^Target ; done | sort | uniq -c                      =
+                             =20
+   1000 880
+

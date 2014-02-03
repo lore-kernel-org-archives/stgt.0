@@ -1,29 +1,32 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] iser: Add Discovery support
-Date: Tue, 28 Jan 2014 19:41:18 +0900
-Message-ID: <20140128190640J.fujita.tomonori@lab.ntt.co.jp>
-References: <1390900679-30187-1-git-send-email-ogerlitz@mellanox.com>
+Subject: 1.0.44 released
+Date: Mon, 3 Feb 2014 16:53:59 +0900
+Message-ID: <20140203165345B.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1390900679-30187-1-git-send-email-ogerlitz@mellanox.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: ogerlitz@mellanox.com
-Cc: fujita.tomonori@lab.ntt.co.jp, stgt@vger.kernel.org, roid@mellanox.com, oren@mellanox.com, nezhinsky@gmail.com
+To: stgt@vger.kernel.org
 
-On Tue, 28 Jan 2014 11:17:59 +0200
-Or Gerlitz <ogerlitz@mellanox.com> wrote:
+Hi,
 
-> Add support to handle TEXT PDU, such as SendTargets which are used i
-> for running iscsi discovery over iser. 
-> 
-> Signed-off-by: Or Gerlitz <ogerlitz@mellanox.com>
-> Signed-off-by: Alexander Nezhinsky <nezhinsky@gmail.com>
-> ---
->  usr/iscsi/iser.c      |    4 ++++
->  usr/iscsi/iser_text.c |   40 +++++++++++++++++++++++++++++++++++++++-
->  2 files changed, 43 insertions(+), 1 deletions(-)
+Here's a new release.
 
-Applied, thanks.
+=
+FUJITA Tomonori (2):
+      tgtadm: fix a bug to read the response buffer
+      tgt 1.0.44
+
+Or Gerlitz (1):
+      iser: Add Discovery support
+
+Ryusuke Konishi (2):
+      bs_sheepdog.c: fix io errors during writing to a snapshot
+      fix befd471ef7dcf46b regression
+
+Zhang Yanfei (3):
+      doc/iscsi: typo fix in doc/README.iscsi
+      tgtadm: Correct mode names in the option error message
+      tgtadm: display unsupported operation name explicitly

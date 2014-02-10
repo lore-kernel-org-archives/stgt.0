@@ -1,42 +1,100 @@
 From: Dan Mick <dan.mick@inktank.com>
-Subject: Re: [PATCH 1/2] Fix bs_rbd.c slurp_to_semi() not consuming terminating
- semicolon
-Date: Mon, 10 Feb 2014 14:12:06 -0800
-Message-ID: <52F94EB6.3030701@inktank.com>
-References: <1390356859-7557-1-git-send-email-thomas@belton.co.nz>
+Subject: Re: [PATCH 2/2] Add "cluster" option to bs_rbd.c to specify cluster
+ name
+Date: Mon, 10 Feb 2014 14:12:46 -0800
+Message-ID: <52F94EDE.70200@inktank.com>
+References: <1390356859-7557-1-git-send-email-thomas@belton.co.nz> <1390356859-7557-2-git-send-email-thomas@belton.co.nz>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1390356859-7557-1-git-send-email-thomas@belton.co.nz>
+In-Reply-To: <1390356859-7557-2-git-send-email-thomas@belton.co.nz>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: Thomas Matysik <thomas@belton.co.nz>, stgt@vger.kernel.org
 
+except for the one if() with no space after the 'if':
+
 Reviewed-by: Dan Mick <dan.mick@inktank.com>
 
 On 01/21/2014 06:14 PM, Thomas Matysik wrote:
-> slurp_to_semi() would not consume the terminating semicolon on a
-> option specified in --bsopts, so any options other than the first
-> would be ignored as invalid.
+> This patch allows the Ceph cluster name to be specified in --bsopts
+> using the 'cluster=' option.
 >
 > Signed-off-by: Thomas Matysik <thomas@belton.co.nz>
 > ---
->   usr/bs_rbd.c | 3 +++
->   1 file changed, 3 insertions(+)
+>   doc/README.rbd |  8 +++++++-
+>   usr/bs_rbd.c   | 20 ++++++++++++++++++--
+>   2 files changed, 25 insertions(+), 3 deletions(-)
+>
+> diff --git a/doc/README.rbd b/doc/README.rbd
+> index 274cc4d..18aeceb 100644
+> --- a/doc/README.rbd
+> +++ b/doc/README.rbd
+> @@ -43,7 +43,13 @@ something like "tgt" so that the name of the ceph client is
+>   for the tgt client compared to others, and sets the default log path, etc.
+>   See the Ceph documentation regarding client names.
+>
+> -To specify both options, separate them with ';', and since you are,
+> +cluster=<cluster name>
+> +
+> +This sets the Ceph cluster name, if you have multiple clusters or
+> +if your cluster name is anything other than "ceph".
+> +This is in turn used by librados to find the conf file and key files.
+> +
+> +To specify multiple options, separate them with ';', and since you are,
+>   make sure to quote the option string to protect the semicolon from
+>   the shell:
 >
 > diff --git a/usr/bs_rbd.c b/usr/bs_rbd.c
-> index 3ea9d36..f797fd5 100644
+> index f797fd5..cbe2585 100644
 > --- a/usr/bs_rbd.c
 > +++ b/usr/bs_rbd.c
-> @@ -480,6 +480,9 @@ static char *slurp_to_semi(char **p)
->   	strncpy(ret, *p, len);
->   	ret[len] = '\0';
->   	*p = end;
-> +	// Jump past the semicolon, if we stopped at one
-> +	if (**p == ';')
-> +		*p = end + 1;
->   	return ret;
->   }
+> @@ -517,17 +517,21 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu, char *bsopts)
+>   	struct active_rbd *rbd = RBDP(lu);
+>   	char *confname = NULL;
+>   	char *clientid = NULL;
+> +	char *clustername = NULL;
+> +	char clientid_full[128];
+>   	char *ignore = NULL;
 >
+>   	dprintf("bs_rbd_init bsopts: \"%s\"\n", bsopts);
+>
+> -	// look for conf= or id=
+> +	// look for conf= or id= or cluster=
+>
+>   	while (bsopts && strlen(bsopts)) {
+>   		if (is_opt("conf", bsopts))
+>   			confname = slurp_value(&bsopts);
+>   		else if (is_opt("id", bsopts))
+>   			clientid = slurp_value(&bsopts);
+> +		else if (is_opt("cluster", bsopts))
+> +			clustername = slurp_value(&bsopts);
+>   		else {
+>   			ignore = slurp_to_semi(&bsopts);
+>   			eprintf("bs_rbd: ignoring unknown option \"%s\"\n",
+> @@ -541,10 +545,22 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu, char *bsopts)
+>   		eprintf("bs_rbd_init: clientid %s\n", clientid);
+>   	if (confname)
+>   		eprintf("bs_rbd_init: confname %s\n", confname);
+> +	if (clustername)
+> +		eprintf("bs_rbd_init: clustername %s\n", clustername);
+>
+>   	eprintf("bs_rbd_init bsopts=%s\n", bsopts);
+>   	/* clientid may be set by -i/--id */
+> -	rados_ret = rados_create(&rbd->cluster, clientid);
+> +	/* If clustername is set, then we use rados_create2, else rados_create */
+> +	if (clustername) {
+> +		/* rados_create2 wants the full client name */
+> +		if(clientid)
+> +			snprintf(clientid_full, sizeof clientid_full, "client.%s", clientid);
+> +		else /* if not specified, default to client.admin */
+> +			snprintf(clientid_full, sizeof clientid_full, "client.admin");
+> +		rados_ret = rados_create2(&rbd->cluster, clustername, clientid_full, 0);
+> +	} else {
+> +		rados_ret = rados_create(&rbd->cluster, clientid);
+> +	}
+>   	if (rados_ret < 0) {
+>   		eprintf("bs_rbd_init: rados_create: %d\n", rados_ret);
+>   		return ret;
 >

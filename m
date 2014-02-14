@@ -1,58 +1,98 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 2/2] Add "cluster" option to bs_rbd.c to specify
- cluster name
-Date: Tue, 11 Feb 2014 09:16:48 +0900 (JST)
-Message-ID: <20140211.091648.722554765817568549.fujita.tomonori@lab.ntt.co.jp>
-References: <1390356859-7557-1-git-send-email-thomas@belton.co.nz>
-	<1390356859-7557-2-git-send-email-thomas@belton.co.nz>
-	<52F94EDE.70200@inktank.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH v4 RFC 3/5] tgtd: add a new option "-T" for specifying a number of threads which send/recv iSCSI PDUs
+Date: Fri, 14 Feb 2014 20:21:31 +0900
+Message-ID: <1392376893-26106-4-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+References: <1392376893-26106-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <52F94EDE.70200@inktank.com>
+In-Reply-To: <1392376893-26106-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: dan.mick@inktank.com
-Cc: thomas@belton.co.nz, stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: mitake.hitoshi@gmail.com, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 
-On Mon, 10 Feb 2014 14:12:46 -0800
-Dan Mick <dan.mick@inktank.com> wrote:
+Currently, nr_iothreads, specified with "-t" option, is used as a
+number of worker threads per logical unit conventionally in some
+backing store drivers.
 
-> except for the one if() with no space after the 'if':
-> 
-> Reviewed-by: Dan Mick <dan.mick@inktank.com>
+This patch adds a new option "-T" to tgtd for specified a number of
+threads which send/recv iSCSI PDUs. Because using the "-t" option for
+this purpose would be introduce inconvenience of performance tuning.
 
-Thanks, applied. checkpatch.pl complains about the that if(). I fixed
-the following warnings:
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+---
+ usr/iscsi/iscsi_tcp.c |    2 ++
+ usr/tgtd.c            |   10 +++++++++-
+ usr/tgtd.h            |    1 +
+ 3 files changed, 12 insertions(+), 1 deletion(-)
 
-fujita@rose:~/git/tgt$ ./scripts/checkpatch.pl ~/2
-ERROR: do not use C99 // comments
-#124: FILE: usr/bs_rbd.c:526:
-+     // look for conf= or id= or cluster=
-
-WARNING: line over 80 characters
-#146: FILE: usr/bs_rbd.c:553:
-+     /* If clustername is set, then we use rados_create2, else
-rados_create */
-
-ERROR: space required before the open parenthesis '('
-#149: FILE: usr/bs_rbd.c:556:
-+     	    if(clientid)
-
-WARNING: line over 80 characters
-#150: FILE: usr/bs_rbd.c:557:
-+		snprintf(clientid_full, sizeof clientid_full,
-"client.%s", clientid);
-
-WARNING: line over 80 characters
-#152: FILE: usr/bs_rbd.c:559:
-+		snprintf(clientid_full, sizeof clientid_full,
-"client.admin");
-
-WARNING: line over 80 characters
-#153: FILE: usr/bs_rbd.c:560:
-+     	    rados_ret = rados_create2(&rbd->cluster, clustername,
-clientid_full, 0);
-
-total: 2 errors, 4 warnings, 59 lines checked
+diff --git a/usr/iscsi/iscsi_tcp.c b/usr/iscsi/iscsi_tcp.c
+index 9a41466..d00265e 100644
+--- a/usr/iscsi/iscsi_tcp.c
++++ b/usr/iscsi/iscsi_tcp.c
+@@ -37,6 +37,8 @@
+ #include "util.h"
+ #include "work.h"
+ 
++int nr_tcp_iothreads = 1;
++
+ static void iscsi_tcp_st_event_handler(int fd, int events, void *data);
+ static void iscsi_tcp_release(struct iscsi_connection *conn);
+ static struct iscsi_task *iscsi_tcp_alloc_task(struct iscsi_connection *conn,
+diff --git a/usr/tgtd.c b/usr/tgtd.c
+index 50e1c83..09c1442 100644
+--- a/usr/tgtd.c
++++ b/usr/tgtd.c
+@@ -55,13 +55,14 @@ static struct option const long_options[] = {
+ 	{"foreground", no_argument, 0, 'f'},
+ 	{"control-port", required_argument, 0, 'C'},
+ 	{"nr_iothreads", required_argument, 0, 't'},
++	{"nr_tcp_iothreads", required_argument, 0, 'T'},
+ 	{"debug", required_argument, 0, 'd'},
+ 	{"version", no_argument, 0, 'V'},
+ 	{"help", no_argument, 0, 'h'},
+ 	{0, 0, 0, 0},
+ };
+ 
+-static char *short_options = "fC:d:t:Vh";
++static char *short_options = "fC:d:t:VhT:";
+ static char *spare_args;
+ 
+ static void usage(int status)
+@@ -77,6 +78,8 @@ static void usage(int status)
+ 		"-f, --foreground        make the program run in the foreground\n"
+ 		"-C, --control-port NNNN use port NNNN for the mgmt channel\n"
+ 		"-t, --nr_iothreads NNNN specify the number of I/O threads\n"
++		"-T, --nr_tcp_iothreads NNNN specify the number of I/O threads"
++		" for send/recv iSCSI PDU\n"
+ 		"-d, --debug debuglevel  print debugging information\n"
+ 		"-V, --version           print version and exit\n"
+ 		"-h, --help              display this help and exit\n",
+@@ -546,6 +549,11 @@ int main(int argc, char **argv)
+ 			if (ret)
+ 				bad_optarg(ret, ch, optarg);
+ 			break;
++		case 'T':
++			ret = str_to_int_gt(optarg, nr_tcp_iothreads, 0);
++			if (ret)
++				bad_optarg(ret, ch, optarg);
++			break;
+ 		case 'd':
+ 			ret = str_to_int_range(optarg, is_debug, 0, 1);
+ 			if (ret)
+diff --git a/usr/tgtd.h b/usr/tgtd.h
+index 8a25521..a708f13 100644
+--- a/usr/tgtd.h
++++ b/usr/tgtd.h
+@@ -257,6 +257,7 @@ enum mgmt_req_result {
+ extern int system_active;
+ extern int is_debug;
+ extern int nr_iothreads;
++extern int nr_tcp_iothreads;
+ extern struct list_head bst_list;
+ 
+ extern int ipc_init(void);
+-- 
+1.7.10.4

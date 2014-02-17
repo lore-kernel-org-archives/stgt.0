@@ -1,7 +1,7 @@
 From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH v4 RFC 0/5] tgtd: offload iSCSI PDU send/recv to worker threads
-Date: Fri, 14 Feb 2014 20:21:28 +0900
-Message-ID: <1392376893-26106-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH] tgtd: refresh ready fds of event loop after event deletion
+Date: Mon, 17 Feb 2014 17:12:18 +0900
+Message-ID: <1392624738-18896-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
@@ -11,50 +11,79 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: mitake.hitoshi@gmail.com, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 
-Current tgtd sends and receives iSCSI PDUs in its main event
-loop. This design can cause bottleneck when many iSCSI clients connect
-to single tgtd process. For example, we need multiple tgtd processes
-for utilizing fast network like 10 GbE because typical single
-processor core isn't fast enough for processing a bunch of requests.
+Current main event loop (event_loop()) of tgtd has a possibility of
+segmentation fault. The problem is caused by the below sequence:
 
-This patchset lets tgtd offload send/recv iSCSI PDUs and digest checking to
-worker threads. The basic strategy of this change is like below:
-1. decompose iscsi_[rt]x_handler()
-2. re-implement single threaded version of iscsi_tcp_event_handler()
-3. implement multi-threaded version of iscsi_tcp_event_handler()
+1. Event A, B are ready so epoll_wait(2) returns.
+2. The handler of the event A is called. In the event handler, the
+   event B is deleted with tgt_event_del()
+3. event_loop() tries to call the handler of the event B. It causes
+   segfault because the event struct is already removed and freed.
 
-This patch also adds a new option "-T" to specify a number of threads which
-send/recieve PDUs. When 1 is passed with the option, the above single threaded
-version will be used, because the multi-threaded version incurs overhead which
-comes from frequent communication between threads in some case. If users don't
-want to use the multi-threaded version, they don't have to use it.
+For avoid this problem, this patch adds a new global variable
+event_need_refresh. If the value of this variable is 1, event_loop()
+calls epoll_wait(2) again for refreshing ready fd list. This patch
+also lets tgt_event_del() to turn on the flag in its tail. With this
+modification, the above segfault is avoided.
 
-Below is a summary of our performance evaluation:
-- 4 physical hosts connected with 10Gbps ethernet
-- 1 tgtd process provides 1 logical unit
-- 16 VMs read 4GB iso file by dd command in parallel
--- average time required to complete the dd command of 16 VMs is a score
---- original tgtd: 93.718 second
---- changed tgtd (with -T 16): 57.449 second
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+---
+ usr/tgtd.c |   10 ++++++++++
+ usr/tgtd.h |    2 ++
+ 2 files changed, 12 insertions(+)
 
-The above scores show that this patchset can improve performance of parallel
-access of initiators. This patchset is not so heavily tested yet. I'd like to
-hear your opinion about the design.
-
-Hitoshi Mitake (5):
-  tgtd: add helper functions for checking iostate of iscsi connections
-  tgtd: decompose iscsi_[rt]x_handler()
-  tgtd: add a new option "-T" for specifying a number of threads which
-    send/recv iSCSI PDUs
-  tgtd: implement a deferred event modification mechanism
-  tgtd: offload iSCSI PDU send/recv to worker threads
-
- usr/iscsi/iscsi_tcp.c |  405 +++++++++++++++++++++++++++++++++++++++++++++++--
- usr/iscsi/iscsid.c    |  101 ++++++++----
- usr/iscsi/iscsid.h    |   11 +-
- usr/tgtd.c            |   10 +-
- usr/tgtd.h            |    1 +
- 5 files changed, 483 insertions(+), 45 deletions(-)
-
+diff --git a/usr/tgtd.c b/usr/tgtd.c
+index 09c1442..c758458 100644
+--- a/usr/tgtd.c
++++ b/usr/tgtd.c
+@@ -215,6 +215,8 @@ static struct event_data *tgt_event_lookup(int fd)
+ 	return NULL;
+ }
+ 
++int event_need_refresh;
++
+ void tgt_event_del(int fd)
+ {
+ 	struct event_data *tev;
+@@ -232,6 +234,8 @@ void tgt_event_del(int fd)
+ 
+ 	list_del(&tev->e_list);
+ 	free(tev);
++
++	event_need_refresh = 1;
+ }
+ 
+ int tgt_event_modify(int fd, int events)
+@@ -419,6 +423,7 @@ retry:
+ 	sched_remains = tgt_exec_scheduled();
+ 	timeout = sched_remains ? 0 : -1;
+ 
++refresh:
+ 	nevent = epoll_wait(ep_fd, events, ARRAY_SIZE(events), timeout);
+ 	if (nevent < 0) {
+ 		if (errno != EINTR) {
+@@ -429,6 +434,11 @@ retry:
+ 		for (i = 0; i < nevent; i++) {
+ 			tev = (struct event_data *) events[i].data.ptr;
+ 			tev->handler(tev->fd, events[i].events, tev->data);
++
++			if (event_need_refresh) {
++				event_need_refresh = 0;
++				goto refresh;
++			}
+ 		}
+ 	}
+ 
+diff --git a/usr/tgtd.h b/usr/tgtd.h
+index a708f13..91dd7b4 100644
+--- a/usr/tgtd.h
++++ b/usr/tgtd.h
+@@ -406,4 +406,6 @@ struct service_action *
+ find_service_action(struct service_action *service_action,
+ 		    uint32_t action);
+ 
++extern int event_need_refresh;
++
+ #endif
 -- 
 1.7.10.4

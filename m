@@ -1,33 +1,52 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] iscsi: fix leak of session->initiator_alias
-Date: Sun, 23 Feb 2014 21:55:12 +0900
-Message-ID: <20140223215255T.fujita.tomonori@lab.ntt.co.jp>
-References: <1392988502-8734-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] tgtd: fix internal error of __inaccount_bind()
+Date: Mon, 24 Feb 2014 15:43:26 +0900
+Message-ID: <1393224206-21585-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1392988502-8734-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: konishi.ryusuke@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-On Fri, 21 Feb 2014 22:15:02 +0900
-Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> wrote:
+When trying to bind 32 accounts to the same target, tgtadm outputs
+"unknown error" and exits returing status code 22 (EINVAL).
 
-> session->initiator_alias is not freed in error paths of
-> session_create() and even in the normal path of session_destroy().
-> 
-> This fixes these leak bugs.
-> 
-> Note that we don't have to do a null check for
-> session->initiator_alias before calling free(session->initiator_alias)
-> because free() function simply ignores NULL pointer.
-> 
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> ---
->  usr/iscsi/session.c |    5 +++--
->  1 file changed, 3 insertions(+), 2 deletions(-)
+This is because __inaccount_bind() function of tgtd does not increment
+target->account.nr_inaccount when it doubles maximum number of
+accounts for the target, and therefore it tries to allocate an aid
+slot on target->account.in_aids[] array even though no free aid slot
+is available there.
 
-Applied, thanks a lot!
+This fixes the bug.
+
+Reported-by: Satoshi Yoshida <yoshida.satoshi@po.ntts.co.jp>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+---
+ usr/target.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/usr/target.c b/usr/target.c
+index f4c5b4e..b6f324c 100644
+--- a/usr/target.c
++++ b/usr/target.c
+@@ -1581,7 +1581,6 @@ static tgtadm_err __inaccount_bind(struct target *target, int aid)
+ 		}
+ 
+ 		target->account.in_aids[i] = aid;
+-		target->account.nr_inaccount++;
+ 	} else {
+ 		int new_max = target->account.max_inaccount << 1;
+ 		int *buf;
+@@ -1597,6 +1596,7 @@ static tgtadm_err __inaccount_bind(struct target *target, int aid)
+ 		target->account.in_aids[target->account.max_inaccount] = aid;
+ 		target->account.max_inaccount = new_max;
+ 	}
++	target->account.nr_inaccount++;
+ 
+ 	return TGTADM_SUCCESS;
+ }
+-- 
+1.7.9.3

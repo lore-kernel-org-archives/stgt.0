@@ -1,32 +1,49 @@
-From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-Subject: [PATCH] Fix ReportSupportedOpcode command to set the opcode
-Date: Mon, 24 Feb 2014 19:15:08 -0800
-Message-ID: <1393298109-16052-1-git-send-email-ronniesahlberg@gmail.com>
+From: Or Gerlitz <ogerlitz@mellanox.com>
+Subject: iscsi: Move two messages to be logged as debug and not as errors
+Date: Tue, 25 Feb 2014 14:53:58 +0200
+Message-ID: <1393332838-12900-1-git-send-email-ogerlitz@mellanox.com>
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=from:to:cc:subject:date:message-id;
-        bh=gJXEF2w6s/THtTnOJyBJXKLi5wW0Yz7gWt21rJOPb2Q=;
-        b=MEmnWE7wGpjVR38n7/I6OZtmCySXDMp0XhHWO79/1U5MyW99LhZGPBdjQwe8whlH89
-         MBh+d7wzEs8z1vWxfKq2Vm9f16U5cCXmcvT1U5igiCSCYx9PiJvaAL8wn4ppiL3mSaUt
-         e8rZm1AyBCFm4IAgJoMv73Pu7GSy+pzenNFNEpW1LXHfVD55sg+t0eDAh4qQSmI+QZ1E
-         hAwOnQEkBzfIpCgnoEWp9Uev8aY/rxkowGl5FxGMUE2QaplfBiU0+B8L8SdvO+R77nGJ
-         zBIx6Jnfp1bL1x40Wm7rtdrW/Rd8+eA6nc59XkaI2cgY5S6T3G+oog3Pj+npXethHEnS
-         srGQ==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: stgt@vger.kernel.org
-Cc: fujita.tomonori@lab.ntt.co.jp
+To: fujita.tomonori@lab.ntt.co.jp
+Cc: stgt@vger.kernel.org, Or Gerlitz <ogerlitz@mellanox.com>, Dennis Cullison <Dennis.Cullison@Teradata.com>
 
-List, Tomo
+Move two messages which are printed when connections are close from error
+to debug level.
 
-Please find a small patch to fix the REPORT SUPPORTED OPCODES command.
-The first byte of the CDB USAGE FIELD should be the opcode number itself and not 0xFF.
-There is also a test for this in libiscsi which is referenced from the commit message.
-Commit message also references the relevant part of SPC which describes this byte.
+Without this change, a message currently gets logged every time an automatic
+discovery process runs on the initiator node when using the discovery database.
+When using multiple Control Ports, there are a lot of messages getting logged.
+These essentially flood the /var/log/messages file on the initiator.
 
-regards
-ronnie sahlberg
+Signed-off-by: Dennis Cullison <Dennis.Cullison@Teradata.com>
+Signed-off-by: Or Gerlitz <ogerlitz@mellanox.com>
+---
+ usr/iscsi/conn.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/usr/iscsi/conn.c b/usr/iscsi/conn.c
+index bb18ac0..4cef6fd 100644
+--- a/usr/iscsi/conn.c
++++ b/usr/iscsi/conn.c
+@@ -100,13 +100,13 @@ void conn_close(struct iscsi_connection *conn)
+ 		eprintf("failed to close a connection, %p %u %s\n",
+ 			conn, conn->refcount, strerror(errno));
+ 	else
+-		eprintf("connection closed, %p %u\n", conn, conn->refcount);
++		dprintf("connection closed, %p %u\n", conn, conn->refcount);
+ 
+ 	/* may not have been in FFP yet */
+ 	if (!conn->session)
+ 		goto done;
+ 
+-	eprintf("session %p %d\n", conn->session, conn->session->refcount);
++	dprintf("session %p %d\n", conn->session, conn->session->refcount);
+ 
+ 	/*
+ 	 * We just closed the ep so we are not going to send/recv anything.
+-- 
+1.7.1

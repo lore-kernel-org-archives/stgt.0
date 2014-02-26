@@ -1,26 +1,36 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] tgtd: let event_need_refresh be a static variable
-Date: Wed, 26 Feb 2014 15:03:52 +0900
-Message-ID: <20140226150118R.fujita.tomonori@lab.ntt.co.jp>
-References: <1393392915-7682-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: Re: [PATCH] tgtd: fix internal error of __inaccount_bind()
+Date: Wed, 26 Feb 2014 17:11:34 +0900 (JST)
+Message-ID: <20140226.171134.1568838937885763670.fujita.tomonori@lab.ntt.co.jp>
+References: <1393224206-21585-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1393392915-7682-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+In-Reply-To: <1393224206-21585-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: mitake.hitoshi@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org, mitake.hitoshi@gmail.com
+To: konishi.ryusuke@lab.ntt.co.jp
+Cc: stgt@vger.kernel.org
 
-On Wed, 26 Feb 2014 14:35:15 +0900
-Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp> wrote:
+On Mon, 24 Feb 2014 15:43:26 +0900
+Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> wrote:
 
-> The variable don't have to be visible from other source files.
+> When trying to bind 32 accounts to the same target, tgtadm outputs
+> "unknown error" and exits returing status code 22 (EINVAL).
 > 
-> Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+> This is because __inaccount_bind() function of tgtd does not increment
+> target->account.nr_inaccount when it doubles maximum number of
+> accounts for the target, and therefore it tries to allocate an aid
+> slot on target->account.in_aids[] array even though no free aid slot
+> is available there.
+> 
+> This fixes the bug.
+> 
+> Reported-by: Satoshi Yoshida <yoshida.satoshi@po.ntts.co.jp>
+> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 > ---
->  usr/tgtd.c |    2 +-
+>  usr/target.c |    2 +-
 >  1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks,
+Looks good, thanks a lot!

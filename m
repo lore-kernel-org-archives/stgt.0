@@ -1,85 +1,85 @@
-From: Or Gerlitz <ogerlitz@mellanox.com>
-Subject: spc: Support NAA IEEE Registered Extended field in VPD page 0x83
-Date: Tue, 25 Feb 2014 14:54:13 +0200
-Message-ID: <1393332853-12965-1-git-send-email-ogerlitz@mellanox.com>
+From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH v3] tgtd: refresh ready fds of event loop after event deletion
+Date: Wed, 26 Feb 2014 14:13:22 +0900
+Message-ID: <1393391602-6801-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: fujita.tomonori@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org, Dennis Cullison <Dennis.Cullison@Teradata.com>, Or Gerlitz <ogerlitz@mellanox.com>
+To: stgt@vger.kernel.org
+Cc: mitake.hitoshi@gmail.com, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 
-From: Dennis Cullison <Dennis.Cullison@Teradata.com>
+Current main event loop (event_loop()) of tgtd has a possibility of
+segmentation fault. The problem is caused by the below sequence:
 
-Enables support for the NAA IEEE Registered Extended field in the
-inquiry VPD page 0x83. This field is used by multi-pathing
-software for device persistency.
+1. Event A, B are ready so epoll_wait(2) returns.
+2. The handler of the event A is called. In the event handler, the
+   event B is deleted with tgt_event_del()
+3. event_loop() tries to call the handler of the event B. It causes
+   segfault because the event struct is already removed and freed.
 
-Signed-off-by: Dennis Cullison <Dennis.Cullison@Teradata.com>
-Signed-off-by: Or Gerlitz <ogerlitz@mellanox.com>
+For avoid this problem, this patch adds a new global variable
+event_need_refresh. If the value of this variable is 1, event_loop()
+calls epoll_wait(2) again for refreshing ready fd list. This patch
+also lets tgt_event_del() to turn on the flag in its tail.
+
+For example, we can produce segfault of tgtd under heavy load. Below
+is a backtrace obtained from the core file:
+ (gdb) bt
+ #0  0x0000000000000000 in ?? ()
+ #1  0x0000000000411419 in event_loop () at tgtd.c:414
+ #2  0x0000000000411b65 in main (argc=<value optimized out>, argv=<value optimized out>) at tgtd.c:591
+
+To be honest, I still don't find an event handler which calls
+tgt_event_del() for other fds. But with this modification, the above
+segfault is avoided. The change seems to be effective.
+
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 ---
+v3:
+ - update commit log for backtrace
+ - remove needless extern declaration in tgtd.h
 
-Hi Tomo, 
+v2: use the existing label "retry" instead of adding a new label
 
-This fix is from Dennis Cullison who asked me to assist in submission
+ usr/tgtd.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-Or.
-
- usr/spc.c |   26 +++++++++++++++++++++++++-
- 1 files changed, 25 insertions(+), 1 deletions(-)
-
-diff --git a/usr/spc.c b/usr/spc.c
-index 29f39a9..0dd590f 100644
---- a/usr/spc.c
-+++ b/usr/spc.c
-@@ -145,6 +145,12 @@ static void update_vpd_83(struct scsi_lu *lu, void *id)
- 	struct vpd *vpd_pg = lu->attrs.lu_vpd[PCODE_OFFSET(0x83)];
- 	uint8_t	*data = vpd_pg->data;
- 
-+	char *id_str = id;
-+	char subs[] = "0";
-+	unsigned long a = 0;
-+	unsigned long b = 0;
-+	unsigned long c;
-+
- 	data[0] = INQ_CODE_ASCII;
- 	data[1] = DESG_T10;
- 	data[3] = SCSI_ID_LEN;
-@@ -160,6 +166,24 @@ static void update_vpd_83(struct scsi_lu *lu, void *id)
- 
- 	put_unaligned_be64(lu->attrs.numeric_id, data);
- 	data[0] |= NAA_LOCAL << 4;
-+
-+	data += NAA_DESG_LEN;
-+	data[0] = INQ_CODE_BIN;
-+	data[1] = DESG_NAA;
-+	data[3] = NAA_DESG_LEN_EXTD;
-+	data += DESG_HDR_LEN;
-+	while (*id_str) {
-+		subs[0] = *id_str++;
-+		c = a >> 60;
-+		a <<= 4;
-+		b <<= 4;
-+		b |= c;
-+		a |= strtoul(subs, NULL, 16);
-+	}
-+	put_unaligned_be64(b, data);
-+	put_unaligned_be64(a, data + 8);
-+	data[0] &= 0x0F;
-+	data[0] |= NAA_IEEE_REGD_EXTD << 4;
+diff --git a/usr/tgtd.c b/usr/tgtd.c
+index 50e1c83..04b31dc 100644
+--- a/usr/tgtd.c
++++ b/usr/tgtd.c
+@@ -212,6 +212,8 @@ static struct event_data *tgt_event_lookup(int fd)
+ 	return NULL;
  }
  
- static void update_vpd_b2(struct scsi_lu *lu, void *id)
-@@ -2060,7 +2084,7 @@ int spc_lu_init(struct scsi_lu *lu)
++int event_need_refresh;
++
+ void tgt_event_del(int fd)
+ {
+ 	struct event_data *tev;
+@@ -229,6 +231,8 @@ void tgt_event_del(int fd)
  
- 	/* VPD page 0x83 */
- 	pg = PCODE_OFFSET(0x83);
--	lu_vpd[pg] = alloc_vpd(2*DESG_HDR_LEN + NAA_DESG_LEN + SCSI_ID_LEN);
-+	lu_vpd[pg] = alloc_vpd(3*DESG_HDR_LEN + NAA_DESG_LEN + SCSI_ID_LEN + NAA_DESG_LEN_EXTD);
- 	if (!lu_vpd[pg])
- 		return -ENOMEM;
- 	lu_vpd[pg]->vpd_update = update_vpd_83;
+ 	list_del(&tev->e_list);
+ 	free(tev);
++
++	event_need_refresh = 1;
+ }
+ 
+ int tgt_event_modify(int fd, int events)
+@@ -426,6 +430,11 @@ retry:
+ 		for (i = 0; i < nevent; i++) {
+ 			tev = (struct event_data *) events[i].data.ptr;
+ 			tev->handler(tev->fd, events[i].events, tev->data);
++
++			if (event_need_refresh) {
++				event_need_refresh = 0;
++				goto retry;
++			}
+ 		}
+ 	}
+ 
 -- 
-1.7.1
+1.7.10.4

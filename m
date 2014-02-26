@@ -1,36 +1,34 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] tgtd: fix internal error of __inaccount_bind()
-Date: Wed, 26 Feb 2014 17:11:34 +0900 (JST)
-Message-ID: <20140226.171134.1568838937885763670.fujita.tomonori@lab.ntt.co.jp>
-References: <1393224206-21585-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: iscsi: Move two messages to be logged as debug and not as
+ errors
+Date: Wed, 26 Feb 2014 17:15:19 +0900 (JST)
+Message-ID: <20140226.171519.1568838937885769634.fujita.tomonori@lab.ntt.co.jp>
+References: <1393332838-12900-1-git-send-email-ogerlitz@mellanox.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1393224206-21585-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+In-Reply-To: <1393332838-12900-1-git-send-email-ogerlitz@mellanox.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: konishi.ryusuke@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org
+To: ogerlitz@mellanox.com
+Cc: stgt@vger.kernel.org, Dennis.Cullison@Teradata.com
 
-On Mon, 24 Feb 2014 15:43:26 +0900
-Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> wrote:
+On Tue, 25 Feb 2014 14:53:58 +0200
+Or Gerlitz <ogerlitz@mellanox.com> wrote:
 
-> When trying to bind 32 accounts to the same target, tgtadm outputs
-> "unknown error" and exits returing status code 22 (EINVAL).
+> Move two messages which are printed when connections are close from error
+> to debug level.
 > 
-> This is because __inaccount_bind() function of tgtd does not increment
-> target->account.nr_inaccount when it doubles maximum number of
-> accounts for the target, and therefore it tries to allocate an aid
-> slot on target->account.in_aids[] array even though no free aid slot
-> is available there.
+> Without this change, a message currently gets logged every time an automatic
+> discovery process runs on the initiator node when using the discovery database.
+> When using multiple Control Ports, there are a lot of messages getting logged.
+> These essentially flood the /var/log/messages file on the initiator.
 > 
-> This fixes the bug.
-> 
-> Reported-by: Satoshi Yoshida <yoshida.satoshi@po.ntts.co.jp>
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+> Signed-off-by: Dennis Cullison <Dennis.Cullison@Teradata.com>
+> Signed-off-by: Or Gerlitz <ogerlitz@mellanox.com>
 > ---
->  usr/target.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  usr/iscsi/conn.c |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
 
-Looks good, thanks a lot!
+Applied, thanks.

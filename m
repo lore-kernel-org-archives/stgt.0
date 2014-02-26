@@ -1,34 +1,40 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: iscsi: Move two messages to be logged as debug and not as
- errors
-Date: Wed, 26 Feb 2014 17:15:19 +0900 (JST)
-Message-ID: <20140226.171519.1568838937885769634.fujita.tomonori@lab.ntt.co.jp>
-References: <1393332838-12900-1-git-send-email-ogerlitz@mellanox.com>
+Subject: Re: [PATCH] The first byte in CDB USAGE DATA should be the opcode
+ number and not 0xFF
+Date: Wed, 26 Feb 2014 20:23:18 +0900 (JST)
+Message-ID: <20140226.202318.1568838937885768236.fujita.tomonori@lab.ntt.co.jp>
+References: <1393298109-16052-1-git-send-email-ronniesahlberg@gmail.com>
+	<1393298109-16052-2-git-send-email-ronniesahlberg@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1393332838-12900-1-git-send-email-ogerlitz@mellanox.com>
+In-Reply-To: <1393298109-16052-2-git-send-email-ronniesahlberg@gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: ogerlitz@mellanox.com
-Cc: stgt@vger.kernel.org, Dennis.Cullison@Teradata.com
+To: ronniesahlberg@gmail.com
+Cc: stgt@vger.kernel.org
 
-On Tue, 25 Feb 2014 14:53:58 +0200
-Or Gerlitz <ogerlitz@mellanox.com> wrote:
+On Mon, 24 Feb 2014 19:15:09 -0800
+Ronnie Sahlberg <ronniesahlberg@gmail.com> wrote:
 
-> Move two messages which are printed when connections are close from error
-> to debug level.
+> When we build the CDB USAGE DATA field for a REPORT SUPPORTED OPCODES reply
+> we must set the first byte of the field to the opcode itself, and not
+> to 0xFF as we currently do.
 > 
-> Without this change, a message currently gets logged every time an automatic
-> discovery process runs on the initiator node when using the discovery database.
-> When using multiple Control Ports, there are a lot of messages getting logged.
-> These essentially flood the /var/log/messages file on the initiator.
+> SPC4:
+> ...
+> The CDB USAGE DATA field contains information about the CDB for the command being queried.
+> The first byte of the CDB USAGE FIELD field shall contain the operation code for the command being queried.
+> ...
 > 
-> Signed-off-by: Dennis Cullison <Dennis.Cullison@Teradata.com>
-> Signed-off-by: Or Gerlitz <ogerlitz@mellanox.com>
+> A test for this is available in the libiscsi test utility :
+> 
+> ./bin/iscsi-test-cu iscsi://127.0.0.1/iqn.ronnie.test/1 --test=SCSI.ReportSupportedOpcodes.OneCommand
+> 
+> Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
 > ---
->  usr/iscsi/conn.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
+>  usr/scsi.c |  195 ++++++++++++++++++++++++++++++++++++------------------------
+>  1 files changed, 118 insertions(+), 77 deletions(-)
 
 Applied, thanks.

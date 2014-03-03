@@ -1,36 +1,38 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: tgt backend driver for GlusterFS
-Date: Mon, 03 Mar 2014 21:42:46 +0900 (JST)
-Message-ID: <20140303.214246.1682271453232725247.fujita.tomonori@lab.ntt.co.jp>
-References: <774404432.9632772.1393845388741.JavaMail.zimbra@redhat.com>
-	<310162749.9636997.1393846422793.JavaMail.zimbra@redhat.com>
+Subject: 1.0.45 released
+Date: Mon, 3 Mar 2014 23:09:37 +0900
+Message-ID: <20140303230631D.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <310162749.9636997.1393846422793.JavaMail.zimbra@redhat.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: dlambrig@redhat.com
-Cc: stgt@vger.kernel.org
+To: stgt@vger.kernel.org
 
-Hi,
+Enjoy!
 
-On Mon, 3 Mar 2014 06:33:42 -0500 (EST)
-Dan Lambright <dlambrig@redhat.com> wrote:
+=
+FUJITA Tomonori (1):
+      tgt 1.0.45
 
-> I've created a new backend driver for GlusterFS [1] based off
-> bs_rbd.c and bs_rdwr.c. I think
+Hitoshi Mitake (2):
+      tgtd: refresh ready fds of event loop after event deletion
+      tgtd: let event_need_refresh be a static variable
 
-Sounds great. I'm very happy to merge your patch if you submit the
-patch in the following way:
+Or Gerlitz (1):
+      iscsi: Move two messages to be logged as debug and not as errors
 
-https://www.kernel.org/doc/Documentation/SubmittingPatches
+Roi Dayan (1):
+      iser: Fix discovery over iser on non default port
 
-In short,
+Ronnie Sahlberg (1):
+      The first byte in CDB USAGE DATA should be the opcode number and not 0xFF
 
-1. please your patch with your Signed-off-by.
-2. please verify your patch with tgt/scripts/checkpatch.pl (your patch
-has several coding style problems).
+Ryusuke Konishi (2):
+      iscsi: fix leak of session->initiator_alias
+      tgtd: fix internal error of __inaccount_bind()
 
-Thanks!
+Thomas Matysik (2):
+      Fix bs_rbd.c slurp_to_semi() not consuming terminating semicolon
+      Add "cluster" option to bs_rbd.c to specify cluster name

@@ -1,33 +1,36 @@
 From: Or Gerlitz <ogerlitz@mellanox.com>
-Subject: Re: spc: Support NAA IEEE Registered Extended field in VPD page 0x83
-Date: Tue, 4 Mar 2014 10:48:55 +0200
-Message-ID: <53159377.2040209@mellanox.com>
-References: <1393332853-12965-1-git-send-email-ogerlitz@mellanox.com>	<5314B874.40408@mellanox.com> <20140304.072817.1305564732068178449.fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH v3] tgtd: refresh ready fds of event loop after event
+ deletion
+Date: Tue, 4 Mar 2014 17:14:41 +0200
+Message-ID: <5315EDE1.80103@mellanox.com>
+References: <1393391602-6801-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20140304.072817.1305564732068178449.fujita.tomonori@lab.ntt.co.jp>
+In-Reply-To: <1393391602-6801-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, Dennis.Cullison@Teradata.com
-Cc: stgt@vger.kernel.org
+To: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>, stgt@vger.kernel.org
+Cc: mitake.hitoshi@gmail.com, Roi Dayan <roid@mellanox.com>
 
-On 04/03/2014 00:28, FUJITA Tomonori wrote:
-> On Mon, 3 Mar 2014 19:14:28 +0200
-> Or Gerlitz <ogerlitz@mellanox.com> wrote:
+On 26/02/2014 07:13, Hitoshi Mitake wrote:
+> For example, we can produce segfault of tgtd under heavy load. Below
+> is a backtrace obtained from the core file:
+>   (gdb) bt
+>   #0  0x0000000000000000 in ?? ()
+>   #1  0x0000000000411419 in event_loop () at tgtd.c:414
+>   #2  0x0000000000411b65 in main (argc=<value optimized out>, argv=<value optimized out>) at tgtd.c:591
 >
->> On 25/02/2014 14:54, Or Gerlitz wrote:
->>> From: Dennis Cullison <Dennis.Cullison@Teradata.com>
->>>
->>> Enables support for the NAA IEEE Registered Extended field in the
->>> inquiry VPD page 0x83. This field is used by multi-pathing
->>> software for device persistency.
->> Hi Tomo,
->>
->> I didn't see a comment from you on this patch, did you get it?
-> Oops, sorry. I wanted to check the spec then forgot. What pages and spec are related with this patch?
+> To be honest, I still don't find an event handler which calls
+> tgt_event_del() for other fds. But with this modification, the above
+> segfault is avoided. The change seems to be effective.
 
-sure, Dennis, can you please provide the pointer Tomo asks for?
+Just want to make sure I follow --- you do have a way to reproduce the 
+bug, but from code inspection you didn't find an event handler in tgt 
+which calls  tgt_event_del() for "other" fds which is the trigger for 
+the bug, right?
+
+Can you please provide the steps to reproduce the bug?
 
 Or.

@@ -1,103 +1,42 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: spc: Support NAA IEEE Registered Extended field in VPD page
- 0x83
-Date: Sat, 08 Mar 2014 21:40:54 +0900 (JST)
-Message-ID: <20140308.214054.1305564732068200109.fujita.tomonori@lab.ntt.co.jp>
-References: <1393332853-12965-1-git-send-email-ogerlitz@mellanox.com>
+From: Or Gerlitz <ogerlitz@mellanox.com>
+Subject: Re: spc: Support NAA IEEE Registered Extended field in VPD page 0x83
+Date: Tue, 11 Mar 2014 08:14:05 +0200
+Message-ID: <531EA9AD.2050400@mellanox.com>
+References: <1393332853-12965-1-git-send-email-ogerlitz@mellanox.com> <20140308.214054.1305564732068200109.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1393332853-12965-1-git-send-email-ogerlitz@mellanox.com>
+In-Reply-To: <20140308.214054.1305564732068200109.fujita.tomonori@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: ogerlitz@mellanox.com
-Cc: stgt@vger.kernel.org, Dennis.Cullison@Teradata.com
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, Dennis.Cullison@Teradata.com
+Cc: stgt@vger.kernel.org
 
-Sorry for the delay,
+On 08/03/2014 14:40, FUJITA Tomonori wrote:
+>> @@ -160,6 +166,24 @@ static void update_vpd_83(struct scsi_lu *lu, void *id)
+>> >  
+>> >  	put_unaligned_be64(lu->attrs.numeric_id, data);
+>> >  	data[0] |= NAA_LOCAL << 4;
+>> >+
+>> >+	data += NAA_DESG_LEN;
+>> >+	data[0] = INQ_CODE_BIN;
+>> >+	data[1] = DESG_NAA;
+>> >+	data[3] = NAA_DESG_LEN_EXTD;
+>> >+	data += DESG_HDR_LEN;
+>> >+	while (*id_str) {
+>> >+		subs[0] = *id_str++;
+>> >+		c = a >> 60;
+>> >+		a <<= 4;
+>> >+		b <<= 4;
+>> >+		b |= c;
+>> >+		a |= strtoul(subs, NULL, 16);
+> Can you please add comments to explan what the above code is supposed
+> to do? Also the code works on architecture where long is 32bits?
+>
+>
 
-On Tue, 25 Feb 2014 14:54:13 +0200
-Or Gerlitz <ogerlitz@mellanox.com> wrote:
+sure, Dennis will look into this, he said this is going to take few more 
+days, so we'll let you know.
 
-> From: Dennis Cullison <Dennis.Cullison@Teradata.com>
-> 
-> Enables support for the NAA IEEE Registered Extended field in the
-> inquiry VPD page 0x83. This field is used by multi-pathing
-> software for device persistency.
-> 
-> Signed-off-by: Dennis Cullison <Dennis.Cullison@Teradata.com>
-> Signed-off-by: Or Gerlitz <ogerlitz@mellanox.com>
-> ---
-> 
-> Hi Tomo, 
-> 
-> This fix is from Dennis Cullison who asked me to assist in submission
-> 
-> Or.
-> 
->  usr/spc.c |   26 +++++++++++++++++++++++++-
->  1 files changed, 25 insertions(+), 1 deletions(-)
-> 
-> diff --git a/usr/spc.c b/usr/spc.c
-> index 29f39a9..0dd590f 100644
-> --- a/usr/spc.c
-> +++ b/usr/spc.c
-> @@ -145,6 +145,12 @@ static void update_vpd_83(struct scsi_lu *lu, void *id)
->  	struct vpd *vpd_pg = lu->attrs.lu_vpd[PCODE_OFFSET(0x83)];
->  	uint8_t	*data = vpd_pg->data;
->  
-> +	char *id_str = id;
-> +	char subs[] = "0";
-> +	unsigned long a = 0;
-> +	unsigned long b = 0;
-> +	unsigned long c;
-> +
->  	data[0] = INQ_CODE_ASCII;
->  	data[1] = DESG_T10;
->  	data[3] = SCSI_ID_LEN;
-> @@ -160,6 +166,24 @@ static void update_vpd_83(struct scsi_lu *lu, void *id)
->  
->  	put_unaligned_be64(lu->attrs.numeric_id, data);
->  	data[0] |= NAA_LOCAL << 4;
-> +
-> +	data += NAA_DESG_LEN;
-> +	data[0] = INQ_CODE_BIN;
-> +	data[1] = DESG_NAA;
-> +	data[3] = NAA_DESG_LEN_EXTD;
-> +	data += DESG_HDR_LEN;
-> +	while (*id_str) {
-> +		subs[0] = *id_str++;
-> +		c = a >> 60;
-> +		a <<= 4;
-> +		b <<= 4;
-> +		b |= c;
-> +		a |= strtoul(subs, NULL, 16);
-
-Can you please add comments to explan what the above code is supposed
-to do? Also the code works on architecture where long is 32bits?
-
-
-> +	}
-> +	put_unaligned_be64(b, data);
-> +	put_unaligned_be64(a, data + 8);
-> +	data[0] &= 0x0F;
-> +	data[0] |= NAA_IEEE_REGD_EXTD << 4;
->  }
->  
->  static void update_vpd_b2(struct scsi_lu *lu, void *id)
-> @@ -2060,7 +2084,7 @@ int spc_lu_init(struct scsi_lu *lu)
->  
->  	/* VPD page 0x83 */
->  	pg = PCODE_OFFSET(0x83);
-> -	lu_vpd[pg] = alloc_vpd(2*DESG_HDR_LEN + NAA_DESG_LEN + SCSI_ID_LEN);
-> +	lu_vpd[pg] = alloc_vpd(3*DESG_HDR_LEN + NAA_DESG_LEN + SCSI_ID_LEN + NAA_DESG_LEN_EXTD);
->  	if (!lu_vpd[pg])
->  		return -ENOMEM;
->  	lu_vpd[pg]->vpd_update = update_vpd_83;
-> -- 
-> 1.7.1
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe stgt" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Or.

@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH] iscsi: fix leak of task for delayed management request
-Date: Tue, 18 Mar 2014 11:19:58 +0900
-Message-ID: <1395109198-15307-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] iscsi: fix segfault at iscsi_scsi_cmd_done()
+Date: Tue, 18 Mar 2014 12:27:24 +0900
+Message-ID: <1395113244-20488-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
@@ -11,54 +11,50 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-Fix the following crash of tgtd which occured when removing a target
-with --force option:
+When enabling ping-nop of iscsi by setting valid values to
+nop_interval and nop_count parameters, tgtd crashed with the following
+segmentation fault at iscsi_scsi_cmd_done() function:
 
-  conn_close(90) already closed 0x2058598 1
-  iscsi_target_destroy(416) bug still have sessions 91
+ Program terminated with signal 11, Segmentation fault.
+ #0  __list_add (nid=<value optimized out>, result=<value optimized out>,
+     scmd=0x980f20) at ./list.h:67
+ 67              prev->next = new;
+ (gdb) bt
+ #0  __list_add (nid=<value optimized out>, result=<value optimized out>,
+     scmd=0x980f20) at ./list.h:67
+ #1  list_add_tail (nid=<value optimized out>, result=<value optimized out>,
+     scmd=0x980f20) at ./list.h:77
+ #2  iscsi_scsi_cmd_done (nid=<value optimized out>,
+     result=<value optimized out>, scmd=0x980f20) at iscsi/iscsid.c:1270
+ #3  0x000000000042b69d in bs_sig_request_done (fd=<value optimized out>,
+     events=<value optimized out>, data=<value optimized out>) at bs.c:212
+ #4  0x0000000000414231 in event_loop () at tgtd.c:432
+ #5  0x000000000041490a in main (argc=<value optimized out>,
+     argv=<value optimized out>) at tgtd.c:620
 
-This crash happens if a task remains after the following calls of
-conn_close() function for every connection on the target.
+This segfault is caused by forcible destruction of tcp connection
+using iscsi_tcp_release() within iscsi_tcp_nop_work_handler().
 
-  list_for_each_entry_safe(session, stmp, &target->sessions_list, slist) {
-          list_for_each_entry_safe(conn, ctmp, &session->conn_list, clist) {
-                  conn_close(conn);
-          }
-  }
-
-The leaked task turned out to be a task for handling ABORT_TASK
-management request which was delayed due to a flying io.  The delayed
-management request is attached to cmd->mreq of the io command and is
-completed by iscsi_tm_done() function.  However, this function fails
-with the following error and leaks the task if associated connection
-(task->conn) is already closed:
-
- tgt_event_modify(245) Cannot find event 25
- iscsi_event_modify(560) tgt_event_modify failed
-
-This fixes the issue by freeing task in iscsi_tm_done() if state of
-the connection is STATE_CLOSE.
+This patch fixes it by closing connection cleanly there with
+conn_close() function.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- usr/iscsi/iscsid.c |    5 +++++
- 1 file changed, 5 insertions(+)
+ usr/iscsi/iscsi_tcp.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/usr/iscsi/iscsid.c b/usr/iscsi/iscsid.c
-index 30bd13f..f0abe39 100644
---- a/usr/iscsi/iscsid.c
-+++ b/usr/iscsi/iscsid.c
-@@ -1428,6 +1428,11 @@ static int iscsi_tm_done(struct mgmt_req *mreq)
- 		task->result = ISCSI_TMF_RSP_REJECTED;
- 		break;
- 	}
-+
-+	if (task->conn->state == STATE_CLOSE) {
-+		iscsi_free_task(task);
-+		return 0;
-+	}
- 	list_add_tail(&task->c_list, &task->conn->tx_clist);
- 	task->conn->tp->ep_event_modify(task->conn, EPOLLIN | EPOLLOUT);
- 	return 0;
+diff --git a/usr/iscsi/iscsi_tcp.c b/usr/iscsi/iscsi_tcp.c
+index 4a9532a..4cc2cf4 100644
+--- a/usr/iscsi/iscsi_tcp.c
++++ b/usr/iscsi/iscsi_tcp.c
+@@ -108,7 +108,7 @@ static void iscsi_tcp_nop_work_handler(void *data)
+ 		if (tcp_conn->nop_inflight_count > tcp_conn->nop_count) {
+ 			eprintf("tcp connection timed out after %d failed " \
+ 				"NOP-OUT\n", tcp_conn->nop_count);
+-			iscsi_tcp_release(&tcp_conn->iscsi_conn);
++			conn_close(&tcp_conn->iscsi_conn);
+ 			/* cant/shouldnt delete tcp_conn from within the loop */
+ 			break;
+ 		}
 -- 
 1.7.9.3

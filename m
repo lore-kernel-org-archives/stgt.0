@@ -1,36 +1,40 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: 1.0.46 released
-Date: Wed, 2 Apr 2014 11:02:56 +0900
-Message-ID: <20140402105611T.fujita.tomonori@lab.ntt.co.jp>
+From: Jelle de Jong <jelledejong@powercraft.nl>
+Subject: debian tgt packages release schedules
+Date: Fri, 04 Apr 2014 12:10:46 +0200
+Message-ID: <533E8526.2030803@powercraft.nl>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"
 To: stgt@vger.kernel.org
 
-Hi,
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-The highlight is that one critical bug (leads to tgt crash) was fixed
-and gluster backing store support was added.
+Hello everyone,
 
-Have fun!
+I been using tgt with pacemaker for a few years now on production and
+testing machines. Sometimes my tgt deamon hangs or my corosync wont stop.
 
-=
-Andy Grover (1):
-      Fix segfault if device_type set to pt but bstype not sg or bsg
+https://packages.debian.org/sid/tgt
 
-Dan Lambright (1):
-      Add support for gluster backing store
+I am using tgt version 1.0.17 and saw version 1.0.46 was just released.
 
-Dennis Cullison (1):
-      spc: Support NAA IEEE Registered Extended field in VPD page 0x83
+How important are the changes between these versions for production
+systems and how can we get newer versions of tgt available as debian
+package?
 
-FUJITA Tomonori (1):
-      tgt 1.0.46
+Kind regards,
 
-Ryusuke Konishi (3):
-      tgtd: fix leak of task_in_scsi flag
-      iscsi: fix leak of task for delayed management request
-      iscsi: fix segfault at iscsi_scsi_cmd_done()
+Jelle de Jong
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iJwEAQECAAYFAlM+hSIACgkQ1WclBW9j5HkKHQP/R0zWXgP3zUuiY2VEEXqvj2Dd
+MvpXNRUvRk8uMnKMm2D8nrmabX0ioAf3RmHKwlMPoELDtZpz0YA1n5+eCROe6lFF
+2A6EFnAjajD1buQAYu/cQrW9CypysEuzozpCSqtbM57K+ZjjIJclQqZe4rZcA3qE
+46Tucb/hG6kSYC70mEQ=
+=g3Ku
+-----END PGP SIGNATURE-----

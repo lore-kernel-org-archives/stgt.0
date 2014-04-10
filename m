@@ -1,7 +1,7 @@
 From: Roi Dayan <roid@mellanox.com>
-Subject: [PATCH] Update debian build to use local docbook-xsl for generating docs
-Date: Thu, 10 Apr 2014 17:49:02 +0300
-Message-ID: <1397141342-5259-1-git-send-email-roid@mellanox.com>
+Subject: [PATCH] iser: fix a warning about container_of being redefined
+Date: Thu, 10 Apr 2014 18:40:51 +0300
+Message-ID: <1397144451-4393-1-git-send-email-roid@mellanox.com>
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
@@ -11,107 +11,68 @@ Content-Transfer-Encoding: 7bit
 To: fujita.tomonori@lab.ntt.co.jp
 Cc: stgt@vger.kernel.org, Roi Dayan <roid@mellanox.com>
 
-Building debian package procedure generates a lot of errors generating
-the docs and takes forever to finish.
-This patch will change the procedure to use local available docbook-xsl.
-Added build dependency for docbook-xsl and updated debian build script to
-set it as build dependency.
+container_of is being defined in list.h and verbs.h differently.
+To keep tgtd toe use the container_of from list.h as today, Instead of
+wrapping ifndef which exists in verbs.h I moved the inclusion of verbs
+to after list.h
 
 Signed-off-by: Roi Dayan <roid@mellanox.com>
 ---
- scripts/deb/control                                |    2 +-
- ...001-Use-local-docbook-for-generating-docs.patch |   70 ++++++++++++++++++++
- 2 files changed, 71 insertions(+), 1 deletions(-)
- create mode 100644 scripts/deb/patches/0001-Use-local-docbook-for-generating-docs.patch
+ usr/iscsi/iser.c      |    4 +---
+ usr/iscsi/iser.h      |    3 +++
+ usr/iscsi/iser_text.c |    2 --
+ 3 files changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/scripts/deb/control b/scripts/deb/control
-index 7bdfc8d..549a8e3 100644
---- a/scripts/deb/control
-+++ b/scripts/deb/control
-@@ -4,7 +4,7 @@ Section: net
- Priority: optional
- Standards-Version: 3.9.1
- Build-Depends: debhelper (>= 8), dpkg-dev (>= 1.13.19), bash-completion,
--    librdmacm-dev, libibverbs-dev, xsltproc
-+    librdmacm-dev, libibverbs-dev, xsltproc, docbook-xsl
- Homepage: http://stgt.berlios.de/
+diff --git a/usr/iscsi/iser.c b/usr/iscsi/iser.c
+index 7a0d20c..d748184 100644
+--- a/usr/iscsi/iser.c
++++ b/usr/iscsi/iser.c
+@@ -30,18 +30,16 @@
+ #include <assert.h>
+ #include <netdb.h>
+ #include <sys/epoll.h>
+-#include <infiniband/verbs.h>
+-#include <rdma/rdma_cma.h>
+ #include <sys/ipc.h>
+ #include <sys/shm.h>
  
- Package: tgt
-diff --git a/scripts/deb/patches/0001-Use-local-docbook-for-generating-docs.patch b/scripts/deb/patches/0001-Use-local-docbook-for-generating-docs.patch
-new file mode 100644
-index 0000000..ac788af
---- /dev/null
-+++ b/scripts/deb/patches/0001-Use-local-docbook-for-generating-docs.patch
-@@ -0,0 +1,70 @@
-+From 1edc4f6428dfdbd86a2d47177148e12fd617c3b1 Mon Sep 17 00:00:00 2001
-+From: Roi Dayan <roid@mellanox.com>
-+Date: Thu, 10 Apr 2014 17:36:45 +0300
-+Subject: [PATCH] Use local docbook for generating docs
+ #include "util.h"
+ #include "iscsid.h"
+ #include "target.h"
+-#include "iser.h"
+ #include "driver.h"
+ #include "scsi.h"
+ #include "work.h"
++#include "iser.h"
+ 
+ #if defined(HAVE_VALGRIND) && !defined(NDEBUG)
+ #include <valgrind/memcheck.h>
+diff --git a/usr/iscsi/iser.h b/usr/iscsi/iser.h
+index 4e4c8f2..48d0a8c 100644
+--- a/usr/iscsi/iser.h
++++ b/usr/iscsi/iser.h
+@@ -25,6 +25,9 @@
+ 
+ #include "iscsid.h"
+ 
++#include <infiniband/verbs.h>
++#include <rdma/rdma_cma.h>
 +
-+Signed-off-by: Roi Dayan <roid@mellanox.com>
-+---
-+ doc/Makefile | 24 ++++++++++++------------
-+ 1 file changed, 12 insertions(+), 12 deletions(-)
-+
-+diff --git a/doc/Makefile b/doc/Makefile
-+index 0516dc8..e56695d 100644
-+--- a/doc/Makefile
-++++ b/doc/Makefile
-+@@ -34,40 +34,40 @@ clean:
-+ 	-rm -f manpages htmlpages
-+ 
-+ manpages/tgtd.8: tgtd.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl $<
-+ 
-+ htmlpages/tgtd.8.html: tgtd.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl $<
-+ 
-+ manpages/tgtadm.8: tgtadm.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl $<
-+ 
-+ htmlpages/tgtadm.8.html: tgtadm.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl $<
-+ 
-+ manpages/tgt-admin.8: tgt-admin.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl $<
-+ 
-+ htmlpages/tgt-admin.8.html: tgt-admin.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl $<
-+ 
-+ manpages/tgtimg.8: tgtimg.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl $<
-+ 
-+ htmlpages/tgtimg.8.html: tgtimg.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl $<
-+ 
-+ manpages/targets.conf.5: targets.conf.5.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl $<
-+ 
-+ htmlpages/targets.conf.5.html: targets.conf.5.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl $<
-+ 
-+ manpages/tgt-setup-lun.8: tgt-setup-lun.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl $<
-+ 
-+ htmlpages/tgt-setup-lun.8.html: tgt-setup-lun.8.xml
-+-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-++	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ /usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl $<
-+ 
-+ xmlman: $(XMLMAN)
-+ 
-+-- 
-+1.8.1.2
-+
+ extern short control_port;
+ 
+ /*
+diff --git a/usr/iscsi/iser_text.c b/usr/iscsi/iser_text.c
+index 16520cb..8180dbc 100644
+--- a/usr/iscsi/iser_text.c
++++ b/usr/iscsi/iser_text.c
+@@ -31,8 +31,6 @@
+ #include <assert.h>
+ #include <netdb.h>
+ #include <sys/epoll.h>
+-#include <infiniband/verbs.h>
+-#include <rdma/rdma_cma.h>
+ 
+ #include "util.h"
+ #include "iscsid.h"
 -- 
 1.7.8.2

@@ -1,78 +1,33 @@
-From: Roi Dayan <roid@mellanox.com>
-Subject: [PATCH] iser: fix a warning about container_of being redefined
-Date: Thu, 10 Apr 2014 18:40:51 +0300
-Message-ID: <1397144451-4393-1-git-send-email-roid@mellanox.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH] Update debian build to use local docbook-xsl for
+ generating docs
+Date: Fri, 11 Apr 2014 05:10:45 +0900 (JST)
+Message-ID: <20140411.051045.1568838937885789964.fujita.tomonori@lab.ntt.co.jp>
+References: <1397141342-5259-1-git-send-email-roid@mellanox.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
+In-Reply-To: <1397141342-5259-1-git-send-email-roid@mellanox.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: fujita.tomonori@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org, Roi Dayan <roid@mellanox.com>
+Content-Type: Text/Plain; charset="us-ascii"
+To: roid@mellanox.com
+Cc: stgt@vger.kernel.org
 
-container_of is being defined in list.h and verbs.h differently.
-To keep tgtd toe use the container_of from list.h as today, Instead of
-wrapping ifndef which exists in verbs.h I moved the inclusion of verbs
-to after list.h
+On Thu, 10 Apr 2014 17:49:02 +0300
+Roi Dayan <roid@mellanox.com> wrote:
 
-Signed-off-by: Roi Dayan <roid@mellanox.com>
----
- usr/iscsi/iser.c      |    4 +---
- usr/iscsi/iser.h      |    3 +++
- usr/iscsi/iser_text.c |    2 --
- 3 files changed, 4 insertions(+), 5 deletions(-)
+> Building debian package procedure generates a lot of errors generating
+> the docs and takes forever to finish.
+> This patch will change the procedure to use local available docbook-xsl.
+> Added build dependency for docbook-xsl and updated debian build script to
+> set it as build dependency.
+> 
+> Signed-off-by: Roi Dayan <roid@mellanox.com>
+> ---
+>  scripts/deb/control                                |    2 +-
+>  ...001-Use-local-docbook-for-generating-docs.patch |   70 ++++++++++++++++++++
+>  2 files changed, 71 insertions(+), 1 deletions(-)
+>  create mode 100644 scripts/deb/patches/0001-Use-local-docbook-for-generating-docs.patch
 
-diff --git a/usr/iscsi/iser.c b/usr/iscsi/iser.c
-index 7a0d20c..d748184 100644
---- a/usr/iscsi/iser.c
-+++ b/usr/iscsi/iser.c
-@@ -30,18 +30,16 @@
- #include <assert.h>
- #include <netdb.h>
- #include <sys/epoll.h>
--#include <infiniband/verbs.h>
--#include <rdma/rdma_cma.h>
- #include <sys/ipc.h>
- #include <sys/shm.h>
- 
- #include "util.h"
- #include "iscsid.h"
- #include "target.h"
--#include "iser.h"
- #include "driver.h"
- #include "scsi.h"
- #include "work.h"
-+#include "iser.h"
- 
- #if defined(HAVE_VALGRIND) && !defined(NDEBUG)
- #include <valgrind/memcheck.h>
-diff --git a/usr/iscsi/iser.h b/usr/iscsi/iser.h
-index 4e4c8f2..48d0a8c 100644
---- a/usr/iscsi/iser.h
-+++ b/usr/iscsi/iser.h
-@@ -25,6 +25,9 @@
- 
- #include "iscsid.h"
- 
-+#include <infiniband/verbs.h>
-+#include <rdma/rdma_cma.h>
-+
- extern short control_port;
- 
- /*
-diff --git a/usr/iscsi/iser_text.c b/usr/iscsi/iser_text.c
-index 16520cb..8180dbc 100644
---- a/usr/iscsi/iser_text.c
-+++ b/usr/iscsi/iser_text.c
-@@ -31,8 +31,6 @@
- #include <assert.h>
- #include <netdb.h>
- #include <sys/epoll.h>
--#include <infiniband/verbs.h>
--#include <rdma/rdma_cma.h>
- 
- #include "util.h"
- #include "iscsid.h"
--- 
-1.7.8.2
+Sounds reasonable. Applied, thanks.

@@ -1,54 +1,34 @@
-From: Lee Duncan <lduncan@suse.com>
-Subject: tgtadm delete without lld specified?
-Date: Wed, 16 Apr 2014 16:40:09 -0700
-Message-ID: <534F14D9.8090507@suse.com>
+From: Hitoshi Mitake <mitake.hitoshi@gmail.com>
+Subject: RFC: using launchpad as a public issue tracker of tgt
+Date: Thu, 17 Apr 2014 15:51:24 +0900
+Message-ID: <CAE1WaK+=WY4ehxQH+9hO3OHhpVvuZB8vO6KgwEatUtF_Xqvy2g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:date:message-id:subject:from:to:content-type;
+        bh=HwtA8vXRNBmaEUo6QvfrS7E1mhqVY7bUi9d98sAG7js=;
+        b=zdenH1nX6Bdjf07OQ/azOsAW3Bw3N3ka2EbXbp+xAgll9WiV82aTBMVuSFUsmGpckD
+         I+26VRbhgIRaGlIM7UMtdY7irIgViHV9j+pGZjhokEd9+4xy7kzG7l/c4TLrdw/eC3zd
+         ZEYChu3Cy/b3BuWRI78eylmCRgP+kAbnOr8KNNlvbYfu8s2T7DxvbS13j4m8JrNn0OXj
+         UlgKe5qvZsZbnlJvnTnZpNzp1nNryHEt2MirWyvOlW+cKdaoZKHn3UOJS03LZ8jt48bk
+         9uiX0D1ti9KgdSc0RsUCkhGUbQX2rNJ+lbMAB4gzkkNwKdgvcXWYEH2kFrAbE7R2edA7
+         6AYg==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: stgt@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+To: stgt <stgt@vger.kernel.org>
 
-I am debugging a problem on SUSE 11 SP3, with tgt 0.9.10.
+Hi tgt list,
 
-I am creating two iSCSI targets using targets.conf. Neither target
-specifies a low-level driver, and there is no default-driver specified
-either.
+It seems that tgt doesn't have a public issue tracker. I'd like to
+propose laucnhpad for this purpose:
+https://launchpad.net/tgt-project
 
-The targets looks something like this:
+I think we should have a place for correcting and maintaining issues.
+It would make grasping the status of development easier. I'd like to
+hear your comments.
 
-<target iqn....t1>
-    backing-store /dev/some-device
-    vendor_id someid
-    product_id volume-num1
-</target>
-
-I create two of these targets, t1, and t2, then I using open-iscsi to
-login to the first target, t1, then logout.
-
-Then I run "tgt-admin --delete "iqn...t1". As you know, this just runs
-"tgtadm --op delete --mode target --tid=<tid-of-t1>". No low-level
-driver is specified.
-
-Then I try to login to the second target, t2, using open-iscsi, and
-the login hangs. This is because tgtd has died.
-
-Further analysis shows that tgtd dies because when it tries to look up
-the iscsi target structure for t2, the t1 entry is still around. And
-when the code tries to get the name of this no-longer-existing target,
-it gets NULL and tries to compare that with the iqn name being
-added. This makes strcmp() very unhappy.
-
-I find that if I manually specify the lld either on the command line
-of "tgtadm", or in one of the config files, then this problem goes
-away.
-
-It looks like when I don't specify any LLD the upper-level code
-defaults to low-lever-driver zero! This seems like a bug to me.
-
-Shouldn't the "tgtadm" command enforce specifying the low-level
-driver?
--- 
-Lee Duncan
-SUSE Labs
+Thanks,
+Hitoshi

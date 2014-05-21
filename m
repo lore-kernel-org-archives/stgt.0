@@ -1,63 +1,103 @@
-From: Jelle de Jong <jelledejong@powercraft.nl>
-Subject: Re: stgt.sourceforge.net downloads link empty and debian package
- request
-Date: Mon, 12 May 2014 11:11:56 +0200
-Message-ID: <5370905C.3050208@powercraft.nl>
-References: <536B5349.2010405@powercraft.nl> <0EDDC5059DB4EF40B6A1F123199EED539612AEC9@MTLDAG01.mtl.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: [PATCH] systemd notification support
+Date: Wed, 21 May 2014 11:43:27 +0900
+Message-ID: <1400640207-2743-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <0EDDC5059DB4EF40B6A1F123199EED539612AEC9@MTLDAG01.mtl.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Roi Dayan <roid@mellanox.com>, "stgt@vger.kernel.org" <stgt@vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: Apollon Oikonomopoulos <apoikos@debian.org>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+From: Apollon Oikonomopoulos <apoikos@debian.org>
 
-Hi Roi,
+tgtd may take some time to initialize before accepting management
+commands. Since management commands are used to bring the targets up
+during service startup, we have to make sure that tgtd is responsive
+before proceeding. To this end, we add a call to sd_notify(3) right
+before entering the event loop to signal systemd (if applicable) that
+the main process is ready.
 
-On 08/05/14 15:45, Roi Dayan wrote:
-> Do you mean "make deb" fails? Which packages missing? Can you show
-> the log/output ?
+Systemd support with the relevant includes and linker flags is optional,
+controlled by the SD_NOTIFY make flag.
 
-I was revering to a package request to update the official debian
-package at: http://packages.qa.debian.org/t/tgt.html
+Signed-off-by: Apollon Oikonomopoulos <apoikos@debian.org>
+---
+ Makefile     | 1 +
+ usr/Makefile | 8 ++++++++
+ usr/tgtd.c   | 4 ++++
+ usr/tgtd.h   | 4 ++++
+ 4 files changed, 17 insertions(+)
 
-For interest I downloaded the latest release and tried the make deb
-but it fails for a missing version rule: See my logs:
-http://paste.debian.net/hidden/d3cdf343/
-
-Kind regards,
-
-Jelle de Jong
-
-> -----Original Message----- From: stgt-owner@vger.kernel.org
-> [mailto:stgt-owner@vger.kernel.org] On Behalf Of Jelle de Jong 
-> Sent: Thursday, May 08, 2014 12:50 PM To: stgt@vger.kernel.org 
-> Subject: stgt.sourceforge.net downloads link empty and debian
-> package request
-> 
-> Hello everybody,
-> 
-> The download link on http://stgt.sourceforge.net/ goes to
-> https://github.com/fujita/tgt/downloads which is empty?
-> 
-> I am in need for a debian package for tgtd with the latest version
-> for debian stable, I?m hitting bugs with the version in debian, the
-> ubuntu version is compiled against package versions that are not
-> available in debian stable.
-> 
-> Thank you in advance,
-> 
-> Kind regards,
-> 
-> Jelle de Jong -- To unsubscribe from this list: send the line
-> "unsubscribe stgt" in the body of a message to
-> majordomo@vger.kernel.org More majordomo info at
-> http://vger.kernel.org/majordomo-info.html -- To unsubscribe from
-> this list: send the line "unsubscribe stgt" in the body of a
-> message to majordomo@vger.kernel.org More majordomo info at
-> http://vger.kernel.org/majordomo-info.html
-> 
+diff --git a/Makefile b/Makefile
+index eb56bb5..0b5163b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,6 +13,7 @@ export VERSION PREFIX
+ export ISCSI_RDMA
+ export CEPH_RBD
+ export GLFS_BD
++export SD_NOTIFY
+ 
+ .PHONY: all
+ all: programs doc conf scripts
+diff --git a/usr/Makefile b/usr/Makefile
+index 6234f3f..817a3fb 100644
+--- a/usr/Makefile
++++ b/usr/Makefile
+@@ -21,6 +21,10 @@ ifneq ($(GLFS_BD),)
+ MODULES += bs_glfs.so
+ endif
+ 
++ifneq ($(SD_NOTIFY),)
++CFLAGS += -DUSE_SYSTEMD
++endif
++
+ ifneq ($(shell test -e /usr/include/sys/eventfd.h && test -e /usr/include/libaio.h && echo 1),)
+ CFLAGS += -DUSE_EVENTFD
+ TGTD_OBJS += bs_aio.o
+@@ -47,6 +51,10 @@ CFLAGS += -DBSDIR=\"$(DESTDIR)$(libdir)/backing-store\"
+ 
+ LIBS += -lpthread -ldl
+ 
++ifneq ($(SD_NOTIFY),)
++LIBS += -lsystemd-daemon
++endif
++
+ PROGRAMS += tgtd tgtadm tgtimg
+ TGTD_OBJS += tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o \
+ 		concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o \
+diff --git a/usr/tgtd.c b/usr/tgtd.c
+index 9975e03..23ad413 100644
+--- a/usr/tgtd.c
++++ b/usr/tgtd.c
+@@ -617,6 +617,10 @@ int main(int argc, char **argv)
+ 
+ 	bs_init();
+ 
++#ifdef USE_SYSTEMD
++	sd_notify(0, "READY=1\nSTATUS=Starting event loop...");
++#endif
++
+ 	event_loop();
+ 
+ 	lld_exit();
+diff --git a/usr/tgtd.h b/usr/tgtd.h
+index 8a25521..d8b2ac1 100644
+--- a/usr/tgtd.h
++++ b/usr/tgtd.h
+@@ -5,6 +5,10 @@
+ #include "scsi_cmnd.h"
+ #include "tgtadm_error.h"
+ 
++#ifdef USE_SYSTEMD
++#include <systemd/sd-daemon.h>
++#endif
++
+ struct concat_buf;
+ 
+ #define NR_SCSI_OPCODES		256
+-- 
+1.8.5.2 (Apple Git-48)

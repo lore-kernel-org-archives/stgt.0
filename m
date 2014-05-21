@@ -1,127 +1,94 @@
-From: Steven Graf <sgraf@resolutech.net>
-Subject: Strange behavior from 1.0.46
-Date: Wed, 21 May 2014 14:33:59 -0400
-Message-ID: <537CF197.7070308@resolutech.net>
+From: Andy Grover <agrover@redhat.com>
+Subject: Re: [PATCH] systemd notification support
+Date: Wed, 21 May 2014 14:00:58 -0700
+Message-ID: <537D140A.3000705@redhat.com>
+References: <1400640207-2743-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha1; boundary="------------ms070506050405090205090607"
+Content-Type: multipart/mixed;
+ boundary="------------090407080109030409090105"
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=resolutech.net; h=
-	message-id:date:from:mime-version:to:subject:content-type; s=
-	mesmtp; bh=zeX7yij6+ZysUg7vSO7lJL97PhA=; b=Ba+Qxaxqax+FComv7qXPM
-	kbXFkC1GOxeCdyru1asRrJSyBVuktLUw1gqGVmBtFX81IOgdl1m9leWhTf9bD8pJ
-	70gciCt7Fdf8RKZdySOahnFc5s6QYdApylxkizG1uhTFl5r7l504L7GbCSdz8RKh
-	R9UCc/6O7hSVsJ8oUCuVQE=
-DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=
-	messagingengine.com; h=message-id:date:from:mime-version:to
-	:subject:content-type; s=smtpout; bh=zeX7yij6+ZysUg7vSO7lJL97PhA
-	=; b=d2qCAbND0E04uk7zG6ivgkY4NT4L/P0jQVyUPxpwFSGy3w4iOXAtYaiz/g/
-	Nft12DT74uyEezKQa9IBBe6lgqi2F8CfN7+TDlxYiquc8Vfiy2ts1bC2JF+15a3q
-	XTxASq51mhqWcw0FTUFsFxExdu+QFi3JgzvIDwiiuR8eOBj0=
+In-Reply-To: <1400640207-2743-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-To: stgt@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, stgt@vger.kernel.org
+Cc: Apollon Oikonomopoulos <apoikos@debian.org>
 
-This is a cryptographically signed message in MIME format.
+This is a multi-part message in MIME format.
+--------------090407080109030409090105
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
---------------ms070506050405090205090607
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+On 05/20/2014 07:43 PM, FUJITA Tomonori wrote:
+> From: Apollon Oikonomopoulos <apoikos@debian.org>
+>
+> tgtd may take some time to initialize before accepting management
+> commands. Since management commands are used to bring the targets up
+> during service startup, we have to make sure that tgtd is responsive
+> before proceeding. To this end, we add a call to sd_notify(3) right
+> before entering the event loop to signal systemd (if applicable) that
+> the main process is ready.
+>
+> Systemd support with the relevant includes and linker flags is optional,
+> controlled by the SD_NOTIFY make flag.
+>
+> Signed-off-by: Apollon Oikonomopoulos <apoikos@debian.org>
 
-Hello Everyone,
+Hi Apollon,
 
-I'm working with stgtd 1.0.46 (via Git) on CentOS 6.5 and I am getting
-some inconsistent behavior.  I did my own build with the CEPH_RBD=3D1 fla=
-g
-passed into make.  I then used "make rpm" to generate a RPM that I could
-use to install on some test machines.  What I have found is that on 2 of
-the 3 machines the rbd backing store isn't showing up at all when I run
-"tgtadm --lld iscsi --mode system --op show".  On the 3rd machine
-everything works great.  These were all installed from the exact same
-RPM (MD5s matched).  What's even stranger yet is the tgtd in /usr/sbin
-are all different sizes but all banner back with a --version as 1.0.46.
+Fedora tgtd pkg maintainer here.
 
-Thoughts?
+Better systemd integration seems like a good way to go. BTW I feel deep 
+shame about the systemd service file that Fedora is currently using 
+(attached), especially the sleep. Does this or another change perhaps 
+result in a better way to integrate tgt with systemd?
 
---=20
-Steven Graf
-President
-Resolutech, LLC
+Do we need two service files or something?
+
+It would be great if tgt could use the same service file(s) on all 
+systemd-enabled distros, and these could be included with tgtd.
+
+Regards -- Andy
 
 
---------------ms070506050405090205090607
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
+--------------090407080109030409090105
+Content-Type: text/plain; charset=UTF-8;
+ name="tgtd.service"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="tgtd.service"
 
-MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIKSzCC
-BRowggQCoAMCAQICEG0Z6qcZT2ozIuYiMnqqcd4wDQYJKoZIhvcNAQEFBQAwga4xCzAJBgNV
-BAYTAlVTMQswCQYDVQQIEwJVVDEXMBUGA1UEBxMOU2FsdCBMYWtlIENpdHkxHjAcBgNVBAoT
-FVRoZSBVU0VSVFJVU1QgTmV0d29yazEhMB8GA1UECxMYaHR0cDovL3d3dy51c2VydHJ1c3Qu
-Y29tMTYwNAYDVQQDEy1VVE4tVVNFUkZpcnN0LUNsaWVudCBBdXRoZW50aWNhdGlvbiBhbmQg
-RW1haWwwHhcNMTEwNDI4MDAwMDAwWhcNMjAwNTMwMTA0ODM4WjCBkzELMAkGA1UEBhMCR0Ix
-GzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UE
-ChMRQ09NT0RPIENBIExpbWl0ZWQxOTA3BgNVBAMTMENPTU9ETyBDbGllbnQgQXV0aGVudGlj
-YXRpb24gYW5kIFNlY3VyZSBFbWFpbCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
-ggEBAJKEhFtLV5jUXi+LpOFAyKNTWF9mZfEyTvefMn1V0HhMVbdClOD5J3EHxcZppLkyxPFA
-GpDMJ1Zifxe1cWmu5SAb5MtjXmDKokH2auGj/7jfH0htZUOMKi4rYzh337EXrMLaggLW1DJq
-1GdvIBOPXDX65VSAr9hxCh03CgJQU2yVHakQFLSZlVkSMf8JotJM3FLb3uJAAVtIaN3FSrTg
-7SQfOq9xXwfjrL8UO7AlcWg99A/WF1hGFYE8aIuLgw9teiFX5jSw2zJ+40rhpVJyZCaRTqWS
-D//gsWD9Gm9oUZljjRqLpcxCm5t9ImPTqaD8zp6Q30QZ9FxbNboW86eb/8ECAwEAAaOCAUsw
-ggFHMB8GA1UdIwQYMBaAFImCZ33EnSZwAEu0UEh83j2uBG59MB0GA1UdDgQWBBR6E04AdFvG
-eGNkJ8Ev4qBbvHnFezAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBADARBgNV
-HSAECjAIMAYGBFUdIAAwWAYDVR0fBFEwTzBNoEugSYZHaHR0cDovL2NybC51c2VydHJ1c3Qu
-Y29tL1VUTi1VU0VSRmlyc3QtQ2xpZW50QXV0aGVudGljYXRpb25hbmRFbWFpbC5jcmwwdAYI
-KwYBBQUHAQEEaDBmMD0GCCsGAQUFBzAChjFodHRwOi8vY3J0LnVzZXJ0cnVzdC5jb20vVVRO
-QWRkVHJ1c3RDbGllbnRfQ0EuY3J0MCUGCCsGAQUFBzABhhlodHRwOi8vb2NzcC51c2VydHJ1
-c3QuY29tMA0GCSqGSIb3DQEBBQUAA4IBAQCF1r54V1VtM39EUv5C1QaoAQOAivsNsv1Kv/av
-QUn1G1rF0q0bc24+6SZ85kyYwTAo38v7QjyhJT4KddbQPTmGZtGhm7VNm2+vKGwdr+XqdFqo
-2rHA8XV6L566k3nK/uKRHlZ0sviN0+BDchvtj/1gOSBH+4uvOmVIPJg9pSW/ve9g4EnlFsjr
-P0OD8ODuDcHTzTNfm9C9YGqzO/761Mk6PB/tm/+bSTO+Qik5g+4zaS6CnUVNqGnagBsePdIa
-XXxHmaWbCG0SmYbWXVcHG6cwvktJRLiQfsrReTjrtDP6oDpdJlieYVUYtCHVmdXgQ0BCML7q
-peeU0rD+83X5f27nMIIFKTCCBBGgAwIBAgIQf4e4LraqByclcbQtwHo3lTANBgkqhkiG9w0B
-AQUFADCBkzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G
-A1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxOTA3BgNVBAMTMENP
-TU9ETyBDbGllbnQgQXV0aGVudGljYXRpb24gYW5kIFNlY3VyZSBFbWFpbCBDQTAeFw0xMzA5
-MjQwMDAwMDBaFw0xNDA5MjQyMzU5NTlaMCUxIzAhBgkqhkiG9w0BCQEWFHNncmFmQHJlc29s
-dXRlY2gubmV0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvM3lav1SjW+kVClB
-oBonrPDc4aH5wfb1KmuscRYRE+7tB7bU5PEwaMjlBDzFttP6OmD3IAoon8agv8YZc+maXMOw
-q8D2JvUfNUMwfoE5q6q8XLsoFyEOuMRiTEDhVfhscdS8FZkVs0XCKjXObxUeHFaspifwX+yH
-u5u5f5tBuCzOoxKzrP3nlaf3I7ycS7IW9q4dGVVgyIlqS/WyjIFXqK5duSZzwri1w+KCX2aa
-65ijc0Ttkj26PR5j1wmGf78wo42TR8Kzelbyo1VOu1dnmdmTVwGKMKi/qrJUxqTv5I1DmJfG
-16GWOblpLkApNvLXPW/QfJLq4ULwjSjdnb7AdQIDAQABo4IB5DCCAeAwHwYDVR0jBBgwFoAU
-ehNOAHRbxnhjZCfBL+KgW7x5xXswHQYDVR0OBBYEFJyemVU1Hf2k2+uhQC0zEb+KmnBrMA4G
-A1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMCAGA1UdJQQZMBcGCCsGAQUFBwMEBgsrBgEE
-AbIxAQMFAjARBglghkgBhvhCAQEEBAMCBSAwRgYDVR0gBD8wPTA7BgwrBgEEAbIxAQIBAQEw
-KzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLm5ldC9DUFMwVwYDVR0fBFAw
-TjBMoEqgSIZGaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09NT0RPQ2xpZW50QXV0aGVudGlj
-YXRpb25hbmRTZWN1cmVFbWFpbENBLmNybDCBiAYIKwYBBQUHAQEEfDB6MFIGCCsGAQUFBzAC
-hkZodHRwOi8vY3J0LmNvbW9kb2NhLmNvbS9DT01PRE9DbGllbnRBdXRoZW50aWNhdGlvbmFu
-ZFNlY3VyZUVtYWlsQ0EuY3J0MCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5jb21vZG9jYS5j
-b20wHwYDVR0RBBgwFoEUc2dyYWZAcmVzb2x1dGVjaC5uZXQwDQYJKoZIhvcNAQEFBQADggEB
-AFeNDWERDQWpyKeRjC/PWOXvxTehUAOIjFtN8slcXxdspITrep67XpB5gDimZqi8RXatx45A
-9hHUL9wEVx68qg/eeI1dRpq/2vFIL3EMYDcUG1fxvq8M45EgB76ynBSz/4O8l0Oty2QyLGL8
-MCmGWbcrRZt9ixaI2hDwkLI/cqRTwPjIUAbpg5eZ95LCthRYdB8Haw4Vk7PtpO060cpr3rj/
-l25pV4yTOZTNs1wmDK3tB4uloRh6w3ttC3RkCBVFUBdRSo6TbPamYwMtrJjENlu892Q8lSjz
-vJuLra9xPnerLWCAA39O37KlFUT9K9Xt5EQKrUJsBBq5Un0eZK4xwVAxggQZMIIEFQIBATCB
-qDCBkzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE
-BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxOTA3BgNVBAMTMENPTU9E
-TyBDbGllbnQgQXV0aGVudGljYXRpb24gYW5kIFNlY3VyZSBFbWFpbCBDQQIQf4e4LraqBycl
-cbQtwHo3lTAJBgUrDgMCGgUAoIICRTAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqG
-SIb3DQEJBTEPFw0xNDA1MjExODMzNTlaMCMGCSqGSIb3DQEJBDEWBBTLSQ5QuHh0dPyhl3aa
-hnKlNIphAzBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjALBglghkgBZQMEAQIwCgYI
-KoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqG
-SIb3DQMCAgEoMIG5BgkrBgEEAYI3EAQxgaswgagwgZMxCzAJBgNVBAYTAkdCMRswGQYDVQQI
-ExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxGjAYBgNVBAoTEUNPTU9E
-TyBDQSBMaW1pdGVkMTkwNwYDVQQDEzBDT01PRE8gQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFu
-ZCBTZWN1cmUgRW1haWwgQ0ECEH+HuC62qgcnJXG0LcB6N5UwgbsGCyqGSIb3DQEJEAILMYGr
-oIGoMIGTMQswCQYDVQQGEwJHQjEbMBkGA1UECBMSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYD
-VQQHEwdTYWxmb3JkMRowGAYDVQQKExFDT01PRE8gQ0EgTGltaXRlZDE5MDcGA1UEAxMwQ09N
-T0RPIENsaWVudCBBdXRoZW50aWNhdGlvbiBhbmQgU2VjdXJlIEVtYWlsIENBAhB/h7gutqoH
-JyVxtC3AejeVMA0GCSqGSIb3DQEBAQUABIIBAJc5KagK7ZGDWKmn/Z+S5JQeASWB80ig4B7x
-BwRZsIFdqEGr12A5c59Z/K0ECQ/POtjFhkDD7TXVESV8GxpSoTpa3ZzW8BpviQfgl/nq0L6r
-kZXWzX7ODnPR/alrj7VbVTQGu5gGn7Ek71c8QT1V76hOVI1G3gjvnKC1w3hNhc4TtE8r6dkJ
-yRFEfw+SVqIcR7W3dGaFJcDOJ3yuEsl7+kozeS3Uo4sLUCY/5qDen8y7VAeq5RXQ2zngYN3s
-d+ZRG1thya249Svr30zongeK2EkvmRMEPc0V1o7WsuQH0odIbXa6fTf4MAIZa1sRCJcmUHsB
-a5HEAA5cFCZakUsz6uYAAAAAAAA=
---------------ms070506050405090205090607--
+[Unit]
+Description=tgtd iSCSI target daemon
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/sysconfig/tgtd
+
+ExecStart=/usr/sbin/tgtd -f $TGTD_OPTS
+# see bz 848942. workaround for a race for now.
+ExecStartPost=/bin/sleep 5
+# Put tgtd into "offline" state until all the targets are configured.
+# We don't want initiators to (re)connect and fail the connection
+# if it's not ready.
+ExecStartPost=/usr/sbin/tgtadm --op update --mode sys --name State -v offline
+# Configure the targets.
+ExecStartPost=/usr/sbin/tgt-admin -e -c $TGTD_CONFIG
+# Put tgtd into "ready" state.
+ExecStartPost=/usr/sbin/tgtadm --op update --mode sys --name State -v ready
+
+# Update configuration for targets. Only targets which
+# are not in use will be updated.
+ExecReload=/usr/sbin/tgt-admin --update ALL -c $TGTD_CONFIG
+
+# NOTE: Shutdown of the iscsi target may cause data corruption
+# for initiators that are connected.
+ExecStop=/usr/sbin/tgtadm --op update --mode sys --name State -v offline
+# Remove all targets. It only removes targets which are not in use.
+ExecStop=/usr/sbin/tgt-admin --update ALL -c /dev/null
+# tgtd will exit if all targets were removed
+ExecStop=/usr/sbin/tgtadm --op delete --mode system
+
+[Install]
+WantedBy=multi-user.target
+
+--------------090407080109030409090105--

@@ -1,69 +1,80 @@
-From: Apollon Oikonomopoulos <apoikos@debian.org>
-Subject: Re: [PATCH] systemd notification support
-Date: Thu, 22 May 2014 01:00:24 +0300
-Message-ID: <20140521220023.GA22673@marvin.ws.skroutz.gr>
-References: <1400640207-2743-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
- <537D140A.3000705@redhat.com>
-Mime-Version: 1.0
+From: Roi Dayan <roid@mellanox.com>
+Subject: [PATCH 1/2] iser: make membuf size configurable
+Date: Sun, 25 May 2014 14:10:25 +0300
+Message-ID: <1401016226-3404-2-git-send-email-roid@mellanox.com>
+References: <1401016226-3404-1-git-send-email-roid@mellanox.com>
 Return-path: <stgt-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <537D140A.3000705@redhat.com>
+In-Reply-To: <1401016226-3404-1-git-send-email-roid@mellanox.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andy Grover <agrover@redhat.com>
-Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, stgt@vger.kernel.org
+To: fujita.tomonori@lab.ntt.co.jp
+Cc: stgt@vger.kernel.org, Roi Dayan <roid@mellanox.com>
 
-Hi Andy,
+membuf size is the max size of one rdma buffer used.
+The default is still 512 as was but a user can now change it
+to 1024 for example to be able to use bigger block sizes.
 
-On 14:00 Wed 21 May     , Andy Grover wrote:
-> Hi Apollon,
-> 
-> Fedora tgtd pkg maintainer here.
-> 
-> Better systemd integration seems like a good way to go. BTW I feel deep
-> shame about the systemd service file that Fedora is currently using
-> (attached), especially the sleep. Does this or another change perhaps result
-> in a better way to integrate tgt with systemd?
+Signed-off-by: Roi Dayan <roid@mellanox.com>
+---
+ usr/iscsi/iser.c |   15 +++++++++++----
+ 1 files changed, 11 insertions(+), 4 deletions(-)
 
-The sleep statement is precisely what I wanted to get rid of when I was 
-writing our own service file[1]. I've currently set it to an 
-aggressive-but-works-for-me value of 0.2 seconds but I really don't like 
-it at all.
-
-When the service type is set to `notify', systemd will wait for the main 
-process specified by ExecStart to send a readiness notification before 
-proceeding with any ExecStartPost directives and so it seems to be the 
-"correct" way to solve the race. Since the modifications required to use 
-sd_notify(3) are really minor and the interface very simple, I think 
-it's worth enabling it.
-
-A working alternative would be to bind the IPC unix socket in systemd 
-and pass it down to tgtd using socket activation and sd_listen_fds(3), 
-but this requires more extensive patching of tgtd and is IMHO a bit of 
-an ugly workaround, because the IPC interface is meant to be internal to 
-tgt.
-
-> Do we need two service files or something?
-
-Without readiness notification, systemd assumes that the service is 
-ready as soon as the process has been spawned (and could really make no 
-other assumption in a reliable manner). This means that having two 
-services with a dependency wouldn't solve the race either. Apart from 
-the issue at hand, the two services idea has occurred to me as well, but 
-I see no real advantage in e.g. being able to stop just the targets 
-without stopping tgtd. Do you have a specific use-case in mind?
-
-> 
-> It would be great if tgt could use the same service file(s) on all
-> systemd-enabled distros, and these could be included with tgtd.
-
-I totally agree. Seeing that our service files are similar[1] (with the 
-exception of us forcing all targets cleared during shutdown), I don't 
-think that's something impossible to achieve.
-
-Regards,
-Apollon
-
-[1] http://anonscm.debian.org/gitweb/?p=collab-maint/tgt.git;a=blob;f=debian/tgt.service;h=00232c4fd308d68288c75d23af515984aca394bf;hb=HEAD
+diff --git a/usr/iscsi/iser.c b/usr/iscsi/iser.c
+index d748184..35c6faa 100644
+--- a/usr/iscsi/iser.c
++++ b/usr/iscsi/iser.c
+@@ -76,7 +76,7 @@ char *iser_portal_addr;
+  */
+ #define MAX_WQE 1800
+ 
+-#define RDMA_TRANSFER_SIZE  (512 * 1024)
++#define DEFAULT_RDMA_TRANSFER_SIZE  (512 * 1024)
+ 
+ #define MAX_POLL_WC 32
+ 
+@@ -97,7 +97,7 @@ static size_t buf_pool_sz_mb = DEFAULT_POOL_SIZE_MB;
+ static int cq_vector = -1;
+ 
+ static int membuf_num;
+-static size_t membuf_size = RDMA_TRANSFER_SIZE;
++static size_t membuf_size = DEFAULT_RDMA_TRANSFER_SIZE;
+ 
+ static int iser_conn_get(struct iser_conn *conn);
+ static int iser_conn_getn(struct iser_conn *conn, int n);
+@@ -1166,8 +1166,7 @@ int iser_login_complete(struct iscsi_connection *iscsi_conn)
+ 
+ 	/* How much data to grab in an RDMA operation, read or write */
+ 	/* ToDo: fix iscsi login code, broken handling of MAX_XMIT_DL */
+-	iscsi_conn->session_param[ISCSI_PARAM_MAX_XMIT_DLENGTH].val =
+-		RDMA_TRANSFER_SIZE;
++	iscsi_conn->session_param[ISCSI_PARAM_MAX_XMIT_DLENGTH].val = membuf_size;
+ out:
+ 	return err;
+ }
+@@ -3492,6 +3491,7 @@ static const char *lld_param_nop = "nop";
+ static const char *lld_param_on = "on";
+ static const char *lld_param_off = "off";
+ static const char *lld_param_pool_sz_mb = "pool_sz_mb";
++static const char *lld_param_buf_sz_kb = "buf_sz_kb";
+ static const char *lld_param_cq_vector = "cq_vector";
+ 
+ static int iser_param_parser(char *p)
+@@ -3531,6 +3531,13 @@ static int iser_param_parser(char *p)
+ 			buf_pool_sz_mb = atoi(q);
+ 			if (buf_pool_sz_mb < 128)
+ 				buf_pool_sz_mb = 128;
++		} else if (!strncmp(p, lld_param_buf_sz_kb,
++				    strlen(lld_param_buf_sz_kb))) {
++			q = p + strlen(lld_param_buf_sz_kb) + 1;
++			membuf_size = atoi(q);
++			if (membuf_size < 1)
++				membuf_size = 1;
++			membuf_size = membuf_size * 1024;
+ 		} else if (!strncmp(p, lld_param_cq_vector,
+ 				    strlen(lld_param_cq_vector))) {
+ 			q = p + strlen(lld_param_cq_vector) + 1;
+-- 
+1.7.1

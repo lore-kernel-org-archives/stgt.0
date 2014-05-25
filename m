@@ -1,40 +1,29 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 0/2] iser: configurable bufsize and ipv6 support
+Subject: Re: [PATCH] systemd notification support
 Date: Sun, 25 May 2014 20:18:02 +0900
-Message-ID: <20140525201416N.fujita.tomonori@lab.ntt.co.jp>
-References: <1401016226-3404-1-git-send-email-roid@mellanox.com>
+Message-ID: <20140525201621G.fujita.tomonori@lab.ntt.co.jp>
+References: <1400640207-2743-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<537D140A.3000705@redhat.com>
+	<20140521220023.GA22673@marvin.ws.skroutz.gr>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1401016226-3404-1-git-send-email-roid@mellanox.com>
+In-Reply-To: <20140521220023.GA22673@marvin.ws.skroutz.gr>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: roid@mellanox.com
-Cc: fujita.tomonori@lab.ntt.co.jp, stgt@vger.kernel.org
+To: apoikos@debian.org
+Cc: agrover@redhat.com, fujita.tomonori@lab.ntt.co.jp, stgt@vger.kernel.org
 
-On Sun, 25 May 2014 14:10:24 +0300
-Roi Dayan <roid@mellanox.com> wrote:
+On Thu, 22 May 2014 01:00:24 +0300
+Apollon Oikonomopoulos <apoikos@debian.org> wrote:
 
-> Hi,
+> > It would be great if tgt could use the same service file(s) on all
+> > systemd-enabled distros, and these could be included with tgtd.
 > 
-> The first patch is to make the rdma buf size configurable
-> which will allow to support bigger block sizes if required
-> or to allocate less memory if there is no need to support high block sizes.
-> i.e. always 1K-4K IOPs.
-> 
-> The second patch adds support for portals which adds IPv6 support.
-> 
-> Thanks,
-> Roi
-> 
-> 
-> Roi Dayan (2):
->   iser: make membuf size configurable
->   iser: add portals support
-> 
->  usr/iscsi/iser.c |  125 ++++++++++++++++++++++++++++++++++++++++++------------
->  usr/iscsi/iser.h |    8 +++
->  2 files changed, 105 insertions(+), 28 deletions(-)
+> I totally agree. Seeing that our service files are similar[1] (with the 
+> exception of us forcing all targets cleared during shutdown), I don't 
+> think that's something impossible to achieve.
 
-Applied, thanks a lot!
+Integrating nicely with systemd sounds great. Looking forward to
+the further patches ;)

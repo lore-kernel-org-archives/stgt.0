@@ -1,72 +1,166 @@
-From: Or Gerlitz <ogerlitz@mellanox.com>
-Subject: Re: scsi_id not valid in iscsi node
-Date: Sun, 15 Jun 2014 09:23:14 +0300
-Message-ID: <539D3BD2.4070904@mellanox.com>
-References: <CAN+bsqg+rrCRHci=8K8_Az6EjONByTuadOGw-NfXdgjQSAvT_A@mail.gmail.com> <1401745421.32085.12.camel@haakon3.risingtidesystems.com> <20140603060910.GA1436@marvin.ws.skroutz.gr>
+From: "Hullinger, Jason (Cloud Services)" <jason.hullinger@hp.com>
+Subject: Re: tgtd buffer overflow and command injection vulnerabilities
+Date: Mon, 16 Jun 2014 20:06:32 +0000
+Message-ID: <CFC49B25.128EF%jason.hullinger@hp.com>
+References: <CFBCA7D8.12705%jason.hullinger@hp.com>
+ <20140614.222901.1568838937885774892.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: multipart/signed; protocol="application/pkcs7-signature";
+	micalg=sha256; boundary="B_3485768786_891610"
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20140603060910.GA1436@marvin.ws.skroutz.gr>
+In-Reply-To: <20140614.222901.1568838937885774892.fujita.tomonori@lab.ntt.co.jp>
+Content-Language: en-US
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-To: Apollon Oikonomopoulos <apoikos@debian.org>, "Nicholas A. Bellinger" <nab@linux-iscsi.org>
-Cc: lingli tang <tanglingli001@gmail.com>, STGT-Devel <stgt@vger.kernel.org>, "Cullison, Dennis" <Dennis.Cullison@Teradata.com>
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
-On 03/06/2014 09:09, Apollon Oikonomopoulos wrote:
-> On 14:43 Mon 02 Jun     , Nicholas A. Bellinger wrote:
->> Forwarding to the correct stgt-devel list..
->>
->> On Fri, 2014-05-30 at 17:38 +0800, lingli tang wrote:
->>> [...]
->>> 1. [...] cpu=EF=BC=88%user,%sys,%iowait,%idle=EF=BC=89,memory(Total=
-=EF=BC=8Cused, free,
->>> buffer, cache), IOPS(read request, write request), Througthput(read
->>> kb, write kb)=EF=BC=8C
->>>
->>> we use tgtd 1.0.47 to export a disk and use iscsiadm to load it.
->>> but the ID_SERIAL of this disk is not the same with scsi_id of expo=
-rt disk.
->>> if we use tgtd 1.0.24 it is the same.
->>> after iscsiadm log in, we check the ID_SERIAL of this disk using
->>> =E2=80=9Cudevadm info --query=3Dall --path=3D/block/sdb=E2=80=9D=EF=
-=BC=9A
->>>      E: ID_SERIAL_RAW=3D360000000000000000e001000c00000e0
->>>      E: ID_SERIAL=3D360000000000000000e001000c00000e0
->>>      E: ID_SERIAL_SHORT=3D60000000000000000e001000c00000e0
->>>
->>> but with tgtd 1.0.24, it is correct:
->>>      E: ID_SERIAL_RAW=3D1test1-iscsi-iser
->>>      E: ID_SERIAL=3D1test1-iscsi-iser
->>>      E: ID_SERIAL_SHORT=3Dtest1-iscsi-iser
->>>
->>> test environment rhel6.2
-> We were debugging the exact same thing yesterday, after our persisten=
-t
-> links under /dev stopped working, so here's the short version of the
-> story:
->
-> Commit 6402eb8 added an NAA local designator (WWN) field to tgt's 0x8=
-3
-> VPD (the Device Identification page), and commit 8141d67b further add=
-ed
-> an extended WWN. All three identifiers are sent out in tgt's 0x83 VPD=
-,
-> but udev's scsi_id helper always picks the binary WWN by preference a=
-nd
-> uses it as ID_SERIAL, i.e. ignores the ASCII T10 (ID_SERIAL) identifi=
-er
-> present in the VPD. If you use sg_inq from the sg3-utils package you
-> will get both.
->
-> I'm not sure tgt can do much more than make both NAA identifiers
-> optional, the issue seems to lie with udev at this point.
->
->
+--B_3485768786_891610
+Content-type: text/plain;
+	charset="US-ASCII"
+Content-transfer-encoding: 7bit
 
-I added Dennis who is the author of commit 8141d67b -- he made the=20
-following comment: "[...] This is most likely an issue with udev. Most=20
-of the udev tools look at Inquiry VPD 0x83 before looking at VPD 0x80. =
-=20
-With the NAA pages now defined in VPD 0x83, the tools are using that=20
-information instead of VPD 0x80."
+Hi,
+
+Thanks for the clarification, and I see you are using a domain socket at
+/var/run/tgtd.ipc_abstract_namespace.X Since the overflow occurs in a
+function that is expected to do arbitrary commands it's sort of redundant
+as a security issue. It is a bug though and will cause the process to
+break so it should still be fixed.
+
+Thanks,
+
+Jason Hullinger
+
+On 6/14/14, 6:29 AM, "FUJITA Tomonori" <fujita.tomonori@lab.ntt.co.jp>
+wrote:
+
+>Sorry about the delay,
+>
+>On Tue, 10 Jun 2014 19:17:35 +0000
+>"Hullinger, Jason (Cloud Services)" <jason.hullinger@hp.com> wrote:
+>
+>> The function call_program in the tgtd daemon includes a callback
+>>function
+>> that will run arbitrary commands. Additionally, it does not check that
+>>the
+>
+>Yeah, the feature is intentional:
+>
+>http://www.spinics.net/lists/linux-stgt/msg02065.html
+>
+>No security about tgtadm. A user who can use tgtadm has the root
+>permission. He can do whatever he want to on the machine. He doesn't
+>need to use a security hole in tgtd and tgtadm.
+>
+>Of course, we care about security about iscsi and isns ports.
+
+--B_3485768786_891610
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIIVXwYJKoZIhvcNAQcCoIIVUDCCFUwCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0B
+BwGgghJ/MIIH+TCCBuGgAwIBAgIQbdIXbocPnX0Z/YJTB2NJqDANBgkqhkiG9w0BAQUFADCB
+9zELMAkGA1UEBhMCVVMxIDAeBgNVBAoTF0hld2xldHQtUGFja2FyZCBDb21wYW55MR8wHQYD
+VQQLExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMTswOQYDVQQLEzJUZXJtcyBvZiB1c2UgYXQg
+aHR0cHM6Ly93d3cudmVyaXNpZ24uY29tL3JwYSAoYykwOTE1MDMGA1UECxMsQ2xhc3MgMiBN
+YW5hZ2VkIFBLSSBJbmRpdmlkdWFsIFN1YnNjcmliZXIgQ0ExMTAvBgNVBAMTKENvbGxhYm9y
+YXRpb24gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgRzIwHhcNMTQwMTA5MDAwMDAwWhcNMTYw
+MTA5MjM1OTU5WjCBnDEgMB4GA1UEChQXSGV3bGV0dC1QYWNrYXJkIENvbXBhbnkxJjAkBgNV
+BAsUHUVtcGxveW1lbnQgU3RhdHVzIC0gRW1wbG95ZWVzMQ8wDQYDVQQLEwZTL01JTUUxGDAW
+BgNVBAMTD0phc29uIEh1bGxpbmdlcjElMCMGCSqGSIb3DQEJARYWamFzb24uaHVsbGluZ2Vy
+QGhwLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALegybjU91d0HIv1vQdC
+JZR5sOec+Zc0grWfabV6Z/DZ9vJGdAaGvQjazwDNHmLdNoIdnMJbdcyYdclFVK1R1Cba2O/A
+TJs0w8PYGbPkdd8pUSh0kisxRXgxWX+TfiNZW+x3/c7bDhs0IdAUXD3aj3cGE6pQkOukXgII
+iw4x06WQ1iR07gvIu2eTZlvuJ0P4+GRTU1N3N7OKwJOvMPtVWhhaSc5PB8vwkWcNsE0XftGj
+nrUkP9ot9sNmJdsMHdOYBe2DlkPAjqlEIRvVOiYwRVgZI77WKOv8RvruxM33fAQH2xz/F9Fy
+4CoyTb43DaTr+guY5KEosBPdw8metWgIaa8CAwEAAaOCA9gwggPUMD0GA1UdEQQ2MDSBFmph
+c29uLmh1bGxpbmdlckBocC5jb22BGmphc29uLmxlZS5odWxsaW5nZXJAaHAuY29tMAwGA1Ud
+EwEB/wQCMAAwDgYDVR0PAQH/BAQDAgWgMFkGA1UdHwRSMFAwTqBMoEqGSGh0dHA6Ly9vbnNp
+dGVjcmwudmVyaXNpZ24uY29tL0hld2xldHRQYWNrYXJkQ29tcGFueVNNSU1FRzIvTGF0ZXN0
+Q1JMLmNybDAfBgNVHSMEGDAWgBQifdOkq1esVn+pf0FEGpW8W/ir7jAdBgNVHQ4EFgQUgjmF
+GxjNLuu7rplihsON0I/PFNIwggEyBggrBgEFBQcBAQSCASQwggEgMCcGCCsGAQUFBzABhhto
+dHRwOi8vaHAtb2NzcC52ZXJpc2lnbi5jb20wgfQGCCsGAQUFBzACpIHnMIHkMTEwLwYDVQQD
+EyhDb2xsYWJvcmF0aW9uIENlcnRpZmljYXRpb24gQXV0aG9yaXR5IEcyMTAwLgYDVQQLEydD
+bGFzcyAyIE9uU2l0ZSBJbmRpdmlkdWFsIFN1YnNjcmliZXIgQ0ExOjA4BgNVBAsTMVRlcm1z
+IG9mIHVzZSBhdCBodHRwczovL3d3dy52ZXJpc2lnbi5jb20vcnBhKGMpMDkxHzAdBgNVBAsT
+FlZlcmlTaWduIFRydXN0IE5ldHdvcmsxIDAeBgNVBAoTF0hld2xldHQtUGFja2FyZCBDb21w
+YW55MIIBPQYDVR0gBIIBNDCCATAwggEsBgtghkgBhvhFAQcXAjCCARswKAYIKwYBBQUHAgEW
+HGh0dHBzOi8vd3d3LnZlcmlzaWduLmNvbS9ycGEwge4GCCsGAQUFBwICMIHhMB4WF0hld2xl
+dHQtUGFja2FyZCBDb21wYW55MAMCAQIagb5BdXRob3JpdHkgdG8gYmluZCBIUCBkb2VzIG5v
+dCBjb3JyZXNwb25kIHdpdGggdXNlIG9yIHBvc3Nlc3Npb24gb2YgdGhpcyBjZXJ0aWZpY2F0
+ZS4gSXNzdWVkIHRvIGZhY2lsaXRhdGUgY29tbXVuaWNhdGlvbiB3aXRoIEhQLiBWZXJpU2ln
+bidzIENQUyBpbmNvcnAuIEJ5IHJlZmVyZW5jZSBsaWFiLiBsdGQuIChjKTk3IFZlcmlTaWdu
+MBYGA1UdJQEB/wQMMAoGCCsGAQUFBwMEMEsGCSqGSIb3DQEJDwQ+MDwwDgYIKoZIhvcNAwIC
+AgCAMA4GCCqGSIb3DQMCAgIAQDAOBggqhkiG9w0DBAICAIAwCgYIKoZIhvcNAwcwDQYJKoZI
+hvcNAQEFBQADggEBABoMjaPydf4XW8CiI1XsxTG2n5vCZfXKXc/dR0MEJqCT/ZrYrNe3ahFs
+zVYMoLFk8sWCqgZsmpJ7OigWnVS0JMN/txBsQ6YT/z3h8SkCPba8AAX8OykkMgqLeiUnCNpg
+ArpBgyT944JSmx+OSFDfjFpoNYiG3AJ5EGiwx+n3NMz523KU0gw7XHajFn2v7IhbA16oV/Ya
+vsWkeUwBJBF6rnWD366R23LUokkafW3h6/UQYr1GIFPqqgRgTZ0bI/JLYfnEAA27Ok/2bSGk
+hKS77HcUyZZpyE89FfT0kB+VlcBHxG6lYz24ax2c6tKqVmHp/7vCgw7fENKGXQYjhRWE4T8w
+ggZhMIIFSaADAgECAhA7VxO2sCE1+15GdcpsssThMA0GCSqGSIb3DQEBBQUAMIHKMQswCQYD
+VQQGEwJVUzEXMBUGA1UEChMOVmVyaVNpZ24sIEluYy4xHzAdBgNVBAsTFlZlcmlTaWduIFRy
+dXN0IE5ldHdvcmsxOjA4BgNVBAsTMShjKSAxOTk5IFZlcmlTaWduLCBJbmMuIC0gRm9yIGF1
+dGhvcml6ZWQgdXNlIG9ubHkxRTBDBgNVBAMTPFZlcmlTaWduIENsYXNzIDIgUHVibGljIFBy
+aW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHMzAeFw0wOTA5MDIwMDAwMDBaFw0x
+OTA5MDEyMzU5NTlaMIH3MQswCQYDVQQGEwJVUzEgMB4GA1UEChMXSGV3bGV0dC1QYWNrYXJk
+IENvbXBhbnkxHzAdBgNVBAsTFlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOzA5BgNVBAsTMlRl
+cm1zIG9mIHVzZSBhdCBodHRwczovL3d3dy52ZXJpc2lnbi5jb20vcnBhIChjKTA5MTUwMwYD
+VQQLEyxDbGFzcyAyIE1hbmFnZWQgUEtJIEluZGl2aWR1YWwgU3Vic2NyaWJlciBDQTExMC8G
+A1UEAxMoQ29sbGFib3JhdGlvbiBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSBHMjCCASIwDQYJ
+KoZIhvcNAQEBBQADggEPADCCAQoCggEBAKdha2jarqqFZAxLy1DLMOhzIY6J/sotb/5GowNu
+4yK3coUTI+IPjwb3gUx67QO8Pe0cdVCjz+grzmgBOcVLaFvWo2GbTuZHYlBcs1h7G1IEoysv
+sjTuEKB3hM2kIvyVlDmHr/wFeWGCaBAyMrKLBBC0tfzOuIhNlLc6/i8YloXWqkkROI4oG5uA
+8uGsi86gL+X+6CC6yTWekoai4hhgqT/u63pU8kYBV5hF/0ijf2t/ScGaCkjVHSJGMq+8JjSP
+fs8pYXgyYIbpPpGQwA9zV7+BBlTFHzoOVBHYQCdC8ONA+Kaimtno9R9FIqStRBHUU5veEc3x
+PM/Lwz/PnXIDqgsCAwEAAaOCAhIwggIOMBIGA1UdEwEB/wQIMAYBAf8CAQAwcAYDVR0gBGkw
+ZzBlBgtghkgBhvhFAQcXAjBWMCgGCCsGAQUFBwIBFhxodHRwczovL3d3dy52ZXJpc2lnbi5j
+b20vY3BzMCoGCCsGAQUFBwICMB4aHGh0dHBzOi8vd3d3LnZlcmlzaWduLmNvbS9ycGEwNAYD
+VR0fBC0wKzApoCegJYYjaHR0cDovL2NybC52ZXJpc2lnbi5jb20vcGNhMi1nMy5jcmwwDgYD
+VR0PAQH/BAQDAgEGMC4GA1UdEQQnMCWkIzAhMR8wHQYDVQQDExZQcml2YXRlTGFiZWw0LTIw
+NDgtMTQyMB0GA1UdDgQWBBQifdOkq1esVn+pf0FEGpW8W/ir7jCB8AYDVR0jBIHoMIHloYHQ
+pIHNMIHKMQswCQYDVQQGEwJVUzEXMBUGA1UEChMOVmVyaVNpZ24sIEluYy4xHzAdBgNVBAsT
+FlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOjA4BgNVBAsTMShjKSAxOTk5IFZlcmlTaWduLCBJ
+bmMuIC0gRm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxRTBDBgNVBAMTPFZlcmlTaWduIENsYXNz
+IDIgUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHM4IQYXDLSYxf
+mEUp57Cm2VBbejANBgkqhkiG9w0BAQUFAAOCAQEAdoqZeNFwhaMs169I9T6WV8Ogu0yXxIYR
+BUkixQrPwW9OtXymgDUb8uKPHDhicfM8vgAlSh6hEMmWO017rCZoo57pWaN4xkebP44wlsqo
+1ig5VcfN7cnrspDklTA+tP3v8afJxuE2bChgVCeet6BxOr2rvNB1ItdT87KcWxV1COpJqzQu
+U8N8BhR7oPEUiCRtXpFrfmTrYewl1xm1bZk3cAp9CKjDYClVJEwZIgD67DezmWQK+VBk+ofE
+VAv9CNB/TFwrUpV7inKrSbf7FqkIIbwzvIR1If11NWxDmtioyQsoFnO5/5wLQTSsO17YBYLo
+boLVLG3RgY7bX5288HU2WDCCBBkwggMBAhBhcMtJjF+YRSnnsKbZUFt6MA0GCSqGSIb3DQEB
+BQUAMIHKMQswCQYDVQQGEwJVUzEXMBUGA1UEChMOVmVyaVNpZ24sIEluYy4xHzAdBgNVBAsT
+FlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOjA4BgNVBAsTMShjKSAxOTk5IFZlcmlTaWduLCBJ
+bmMuIC0gRm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxRTBDBgNVBAMTPFZlcmlTaWduIENsYXNz
+IDIgUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHMzAeFw05OTEw
+MDEwMDAwMDBaFw0zNjA3MTYyMzU5NTlaMIHKMQswCQYDVQQGEwJVUzEXMBUGA1UEChMOVmVy
+aVNpZ24sIEluYy4xHzAdBgNVBAsTFlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOjA4BgNVBAsT
+MShjKSAxOTk5IFZlcmlTaWduLCBJbmMuIC0gRm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxRTBD
+BgNVBAMTPFZlcmlTaWduIENsYXNzIDIgUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBB
+dXRob3JpdHkgLSBHMzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAK8KDcLVLNtn
+uS3llCfdpb7gsE2Ps2FWPNZ8w/TNPobLooji4dikacW14r/BpkdQXkY5i9WWurVvFL8QzicT
+ngVHmzF6E9gf2dMCN4utLEfwjoEGpw0wDOv3PA8gHdxyRu6lAshbw8lWaUzFGMGRewvVEwCb
+vO/DSD5GYCCFKtWQts2LoMwy3bf9QFWyUBxWrsyNd03HIE2nMXbvaJKKkB4IgVayrWmjUtDL
+HMQjPR+Z/kzoFmOOxgiO9jH20vrldt21HJKjSc3NAc1ozalpuqPrHQ2cpCCmwaDF0UZMF23S
+rGY/lozghNQ2/yJZxfkRYKhfBH3yGvYlQmEPxEq4PokCAwEAATANBgkqhkiG9w0BAQUFAAOC
+AQEANCYVPMCNTUNJHb3pIZLXZpy33sW40ORdX3YiwCb5hDo6+Yy1++xg8ejOBLDI3acDjzDz
+mN+k5qQx39McC0bcciA/ru4FPKQzPws5rHB4c0uZK98wwlSwqDtVof4WKM1CvXRugNsnRKfO
+RF3UG5CYDR5ClLEALATQdKMCBSJjY82DtfvBbWJraXX9XXBBufW/fN++wTJzIiGLWIF7FZF6
+uuNkSLB/+zYl2pXQ8SQUF90YgGtGIzlU9Y5iCQQdlJCmm+Yl4kJFqriQrb4Ij6kLQhiUz3I5
+4bFD4CjPt+dabBNrSbP/4xh8iYszXawz16f52jpVyVgQ+arvWrbPS0vfKjGCAqQwggKgAgEB
+MIIBDDCB9zELMAkGA1UEBhMCVVMxIDAeBgNVBAoTF0hld2xldHQtUGFja2FyZCBDb21wYW55
+MR8wHQYDVQQLExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMTswOQYDVQQLEzJUZXJtcyBvZiB1
+c2UgYXQgaHR0cHM6Ly93d3cudmVyaXNpZ24uY29tL3JwYSAoYykwOTE1MDMGA1UECxMsQ2xh
+c3MgMiBNYW5hZ2VkIFBLSSBJbmRpdmlkdWFsIFN1YnNjcmliZXIgQ0ExMTAvBgNVBAMTKENv
+bGxhYm9yYXRpb24gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgRzICEG3SF26HD519Gf2CUwdj
+SagwDQYJYIZIAWUDBAIBBQCgaTAvBgkqhkiG9w0BCQQxIgQgqkLUo8ce0SWG6NlSPtvatYzW
+7l76anf4gORweB8ZBEcwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUx
+DxcNMTQwNjE2MjAwNjI2WjANBgkqhkiG9w0BAQEFAASCAQAi/LTaS+9rzSAvRDWBRsRCGz+3
+AyFA7BkERbXOVQ8nNLKFHLHCQgpBdvqz75W8/2gu65AubgawahQKw4rY6kwPQEGpuDRIT4ZR
+EZgsQ4KqxsQY/DTsPFjxM67AzveS6XonPLAUpwYpfAaOIaOzKhm2KiprpQjwoEgorAE295o5
+ng4FaZq41hGA2GxpRLSJcCUp1mCORIP+O/HsfkHsaP0wBvwWeN5yZIBPTnPIWblAu2REqOvf
+wlsg7Qqe3ZM00+VS6s5xbDoibNt6ZNeh7QPrre8Spv4v9BmnxOsI0Y5mL3Orvzu2Wt8TZzva
+xuDmxDEtmCrYZOoUDlr+M8FNYx7d
+
+--B_3485768786_891610--

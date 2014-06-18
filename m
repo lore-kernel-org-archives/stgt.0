@@ -1,197 +1,181 @@
-From: "Hullinger, Jason (Cloud Services)" <jason.hullinger@hp.com>
-Subject: Re: tgtd buffer overflow and command injection vulnerabilities
-Date: Tue, 17 Jun 2014 22:17:49 +0000
-Message-ID: <CFC5EC3A.12946%jason.hullinger@hp.com>
-References: <CFBCA7D8.12705%jason.hullinger@hp.com>
- <20140614.222901.1568838937885774892.fujita.tomonori@lab.ntt.co.jp>
- <CFC49B25.128EF%jason.hullinger@hp.com>
+From: Dan Mick <dan.mick@inktank.com>
+Subject: Re: Patch for adding virsecretuuid & cephx_key ids to --bsopts
+Date: Tue, 17 Jun 2014 22:49:05 -0700
+Message-ID: <53A12851.1060107@inktank.com>
+References: <53A0394A.6090208@liquidweb.com> <20140618.003051.1898388363586164151.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature";
-	micalg=sha256; boundary="B_3485863034_5857966"
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <CFC49B25.128EF%jason.hullinger@hp.com>
-Content-Language: en-US
+In-Reply-To: <20140618.003051.1898388363586164151.fujita.tomonori@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, ssullivan@liquidweb.com
+Cc: stgt@vger.kernel.org
 
---B_3485863034_5857966
-Content-type: text/plain;
-	charset="US-ASCII"
-Content-transfer-encoding: 7bit
-
-While looking into making a patch for this issue I have found another
-buffer overflow in iscsi/target.c for the same callback feature in the
-function target_redirected:
-
-char dst[INET6_ADDRSTRLEN], in_buf[1024];
-...
-
-p = in_buf;
-		p += sprintf(p, "%s ", target->redirect_info.callback);
-		p += sprintf(p, "%s ", tgt_targetname(target->tid));
-...
-sprintf(p, "%s", dst);
+I've seen this; I'm traveling/busy this week so will try to give it some 
+thought, but no promises
 
 
-Where target->redirect_info.callback is char buffer set by user input and
-can easily be over 1024 characters. Having gone over these functions I'm
-not exactly clear what it's purpose is, so perhaps someone on the tgt side
-would be better suited to fix these issues. I would recommend not using
-sprintf (or other such unsafe functions) throughout the tgt project and at
-least using snprintf instead.
-
-Thanks,
-
-Jason Hullinger
-
-
-
-On 6/16/14, 1:06 PM, "Hullinger, Jason (Cloud Services)"
-<jason.hullinger@hp.com> wrote:
-
->Hi,
+On 06/17/2014 08:30 AM, FUJITA Tomonori wrote:
+> Added Dan to To:
 >
->Thanks for the clarification, and I see you are using a domain socket at
->/var/run/tgtd.ipc_abstract_namespace.X Since the overflow occurs in a
->function that is expected to do arbitrary commands it's sort of redundant
->as a security issue. It is a bug though and will cause the process to
->break so it should still be fixed.
+> On Tue, 17 Jun 2014 08:49:14 -0400
+> Scott Sullivan <ssullivan@liquidweb.com> wrote:
 >
->Thanks,
->
->Jason Hullinger
->
->On 6/14/14, 6:29 AM, "FUJITA Tomonori" <fujita.tomonori@lab.ntt.co.jp>
->wrote:
->
->>Sorry about the delay,
+>> Hello,
 >>
->>On Tue, 10 Jun 2014 19:17:35 +0000
->>"Hullinger, Jason (Cloud Services)" <jason.hullinger@hp.com> wrote:
+>> Below is a patch that adds two new params to --bsopts for RBD backing
+>> stores (virsecretuuid & cephx_key). This was very useful for me, since
+>> it is nice to be able to give the required authentication detail in
+>> the same place as the id. I have tested and both options work, as well
+>> as the error condition if both options are given (made them conflict).
 >>
->>> The function call_program in the tgtd daemon includes a callback
->>>function
->>> that will run arbitrary commands. Additionally, it does not check that
->>>the
+>> I have verified the patch passes scripts/checkpatch.pl style
+>> guidelines. Is there any interest in applying this patch? Im using
+>> this internally with success; for us at least this is a desirable
+>> thing to have.
 >>
->>Yeah, the feature is intentional:
 >>
->>http://www.spinics.net/lists/linux-stgt/msg02065.html
+>>  From 5359b581c5e7bf434979becaefc53a711ef88432 Mon Sep 17 00:00:00 2001
+>> From: Scott Sullivan <ssullivan@liquidweb.com>
+>> Date: Tue, 17 Jun 2014 08:16:09 -0400
+>> Subject: [PATCH] bsopts: Add virsecretuuid && cephx_key
 >>
->>No security about tgtadm. A user who can use tgtadm has the root
->>permission. He can do whatever he want to on the machine. He doesn't
->>need to use a security hole in tgtd and tgtadm.
+>> Allow passing either a libvirt secret UUID, or a cephx_key to
+>> --bsopts. Options are
+>> conflicting, so error if both options given. This allows one to do
+>> this:
 >>
->>Of course, we care about security about iscsi and isns ports.
-
---B_3485863034_5857966
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-
-MIIVXwYJKoZIhvcNAQcCoIIVUDCCFUwCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0B
-BwGgghJ/MIIH+TCCBuGgAwIBAgIQbdIXbocPnX0Z/YJTB2NJqDANBgkqhkiG9w0BAQUFADCB
-9zELMAkGA1UEBhMCVVMxIDAeBgNVBAoTF0hld2xldHQtUGFja2FyZCBDb21wYW55MR8wHQYD
-VQQLExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMTswOQYDVQQLEzJUZXJtcyBvZiB1c2UgYXQg
-aHR0cHM6Ly93d3cudmVyaXNpZ24uY29tL3JwYSAoYykwOTE1MDMGA1UECxMsQ2xhc3MgMiBN
-YW5hZ2VkIFBLSSBJbmRpdmlkdWFsIFN1YnNjcmliZXIgQ0ExMTAvBgNVBAMTKENvbGxhYm9y
-YXRpb24gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgRzIwHhcNMTQwMTA5MDAwMDAwWhcNMTYw
-MTA5MjM1OTU5WjCBnDEgMB4GA1UEChQXSGV3bGV0dC1QYWNrYXJkIENvbXBhbnkxJjAkBgNV
-BAsUHUVtcGxveW1lbnQgU3RhdHVzIC0gRW1wbG95ZWVzMQ8wDQYDVQQLEwZTL01JTUUxGDAW
-BgNVBAMTD0phc29uIEh1bGxpbmdlcjElMCMGCSqGSIb3DQEJARYWamFzb24uaHVsbGluZ2Vy
-QGhwLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALegybjU91d0HIv1vQdC
-JZR5sOec+Zc0grWfabV6Z/DZ9vJGdAaGvQjazwDNHmLdNoIdnMJbdcyYdclFVK1R1Cba2O/A
-TJs0w8PYGbPkdd8pUSh0kisxRXgxWX+TfiNZW+x3/c7bDhs0IdAUXD3aj3cGE6pQkOukXgII
-iw4x06WQ1iR07gvIu2eTZlvuJ0P4+GRTU1N3N7OKwJOvMPtVWhhaSc5PB8vwkWcNsE0XftGj
-nrUkP9ot9sNmJdsMHdOYBe2DlkPAjqlEIRvVOiYwRVgZI77WKOv8RvruxM33fAQH2xz/F9Fy
-4CoyTb43DaTr+guY5KEosBPdw8metWgIaa8CAwEAAaOCA9gwggPUMD0GA1UdEQQ2MDSBFmph
-c29uLmh1bGxpbmdlckBocC5jb22BGmphc29uLmxlZS5odWxsaW5nZXJAaHAuY29tMAwGA1Ud
-EwEB/wQCMAAwDgYDVR0PAQH/BAQDAgWgMFkGA1UdHwRSMFAwTqBMoEqGSGh0dHA6Ly9vbnNp
-dGVjcmwudmVyaXNpZ24uY29tL0hld2xldHRQYWNrYXJkQ29tcGFueVNNSU1FRzIvTGF0ZXN0
-Q1JMLmNybDAfBgNVHSMEGDAWgBQifdOkq1esVn+pf0FEGpW8W/ir7jAdBgNVHQ4EFgQUgjmF
-GxjNLuu7rplihsON0I/PFNIwggEyBggrBgEFBQcBAQSCASQwggEgMCcGCCsGAQUFBzABhhto
-dHRwOi8vaHAtb2NzcC52ZXJpc2lnbi5jb20wgfQGCCsGAQUFBzACpIHnMIHkMTEwLwYDVQQD
-EyhDb2xsYWJvcmF0aW9uIENlcnRpZmljYXRpb24gQXV0aG9yaXR5IEcyMTAwLgYDVQQLEydD
-bGFzcyAyIE9uU2l0ZSBJbmRpdmlkdWFsIFN1YnNjcmliZXIgQ0ExOjA4BgNVBAsTMVRlcm1z
-IG9mIHVzZSBhdCBodHRwczovL3d3dy52ZXJpc2lnbi5jb20vcnBhKGMpMDkxHzAdBgNVBAsT
-FlZlcmlTaWduIFRydXN0IE5ldHdvcmsxIDAeBgNVBAoTF0hld2xldHQtUGFja2FyZCBDb21w
-YW55MIIBPQYDVR0gBIIBNDCCATAwggEsBgtghkgBhvhFAQcXAjCCARswKAYIKwYBBQUHAgEW
-HGh0dHBzOi8vd3d3LnZlcmlzaWduLmNvbS9ycGEwge4GCCsGAQUFBwICMIHhMB4WF0hld2xl
-dHQtUGFja2FyZCBDb21wYW55MAMCAQIagb5BdXRob3JpdHkgdG8gYmluZCBIUCBkb2VzIG5v
-dCBjb3JyZXNwb25kIHdpdGggdXNlIG9yIHBvc3Nlc3Npb24gb2YgdGhpcyBjZXJ0aWZpY2F0
-ZS4gSXNzdWVkIHRvIGZhY2lsaXRhdGUgY29tbXVuaWNhdGlvbiB3aXRoIEhQLiBWZXJpU2ln
-bidzIENQUyBpbmNvcnAuIEJ5IHJlZmVyZW5jZSBsaWFiLiBsdGQuIChjKTk3IFZlcmlTaWdu
-MBYGA1UdJQEB/wQMMAoGCCsGAQUFBwMEMEsGCSqGSIb3DQEJDwQ+MDwwDgYIKoZIhvcNAwIC
-AgCAMA4GCCqGSIb3DQMCAgIAQDAOBggqhkiG9w0DBAICAIAwCgYIKoZIhvcNAwcwDQYJKoZI
-hvcNAQEFBQADggEBABoMjaPydf4XW8CiI1XsxTG2n5vCZfXKXc/dR0MEJqCT/ZrYrNe3ahFs
-zVYMoLFk8sWCqgZsmpJ7OigWnVS0JMN/txBsQ6YT/z3h8SkCPba8AAX8OykkMgqLeiUnCNpg
-ArpBgyT944JSmx+OSFDfjFpoNYiG3AJ5EGiwx+n3NMz523KU0gw7XHajFn2v7IhbA16oV/Ya
-vsWkeUwBJBF6rnWD366R23LUokkafW3h6/UQYr1GIFPqqgRgTZ0bI/JLYfnEAA27Ok/2bSGk
-hKS77HcUyZZpyE89FfT0kB+VlcBHxG6lYz24ax2c6tKqVmHp/7vCgw7fENKGXQYjhRWE4T8w
-ggZhMIIFSaADAgECAhA7VxO2sCE1+15GdcpsssThMA0GCSqGSIb3DQEBBQUAMIHKMQswCQYD
-VQQGEwJVUzEXMBUGA1UEChMOVmVyaVNpZ24sIEluYy4xHzAdBgNVBAsTFlZlcmlTaWduIFRy
-dXN0IE5ldHdvcmsxOjA4BgNVBAsTMShjKSAxOTk5IFZlcmlTaWduLCBJbmMuIC0gRm9yIGF1
-dGhvcml6ZWQgdXNlIG9ubHkxRTBDBgNVBAMTPFZlcmlTaWduIENsYXNzIDIgUHVibGljIFBy
-aW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHMzAeFw0wOTA5MDIwMDAwMDBaFw0x
-OTA5MDEyMzU5NTlaMIH3MQswCQYDVQQGEwJVUzEgMB4GA1UEChMXSGV3bGV0dC1QYWNrYXJk
-IENvbXBhbnkxHzAdBgNVBAsTFlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOzA5BgNVBAsTMlRl
-cm1zIG9mIHVzZSBhdCBodHRwczovL3d3dy52ZXJpc2lnbi5jb20vcnBhIChjKTA5MTUwMwYD
-VQQLEyxDbGFzcyAyIE1hbmFnZWQgUEtJIEluZGl2aWR1YWwgU3Vic2NyaWJlciBDQTExMC8G
-A1UEAxMoQ29sbGFib3JhdGlvbiBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSBHMjCCASIwDQYJ
-KoZIhvcNAQEBBQADggEPADCCAQoCggEBAKdha2jarqqFZAxLy1DLMOhzIY6J/sotb/5GowNu
-4yK3coUTI+IPjwb3gUx67QO8Pe0cdVCjz+grzmgBOcVLaFvWo2GbTuZHYlBcs1h7G1IEoysv
-sjTuEKB3hM2kIvyVlDmHr/wFeWGCaBAyMrKLBBC0tfzOuIhNlLc6/i8YloXWqkkROI4oG5uA
-8uGsi86gL+X+6CC6yTWekoai4hhgqT/u63pU8kYBV5hF/0ijf2t/ScGaCkjVHSJGMq+8JjSP
-fs8pYXgyYIbpPpGQwA9zV7+BBlTFHzoOVBHYQCdC8ONA+Kaimtno9R9FIqStRBHUU5veEc3x
-PM/Lwz/PnXIDqgsCAwEAAaOCAhIwggIOMBIGA1UdEwEB/wQIMAYBAf8CAQAwcAYDVR0gBGkw
-ZzBlBgtghkgBhvhFAQcXAjBWMCgGCCsGAQUFBwIBFhxodHRwczovL3d3dy52ZXJpc2lnbi5j
-b20vY3BzMCoGCCsGAQUFBwICMB4aHGh0dHBzOi8vd3d3LnZlcmlzaWduLmNvbS9ycGEwNAYD
-VR0fBC0wKzApoCegJYYjaHR0cDovL2NybC52ZXJpc2lnbi5jb20vcGNhMi1nMy5jcmwwDgYD
-VR0PAQH/BAQDAgEGMC4GA1UdEQQnMCWkIzAhMR8wHQYDVQQDExZQcml2YXRlTGFiZWw0LTIw
-NDgtMTQyMB0GA1UdDgQWBBQifdOkq1esVn+pf0FEGpW8W/ir7jCB8AYDVR0jBIHoMIHloYHQ
-pIHNMIHKMQswCQYDVQQGEwJVUzEXMBUGA1UEChMOVmVyaVNpZ24sIEluYy4xHzAdBgNVBAsT
-FlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOjA4BgNVBAsTMShjKSAxOTk5IFZlcmlTaWduLCBJ
-bmMuIC0gRm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxRTBDBgNVBAMTPFZlcmlTaWduIENsYXNz
-IDIgUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHM4IQYXDLSYxf
-mEUp57Cm2VBbejANBgkqhkiG9w0BAQUFAAOCAQEAdoqZeNFwhaMs169I9T6WV8Ogu0yXxIYR
-BUkixQrPwW9OtXymgDUb8uKPHDhicfM8vgAlSh6hEMmWO017rCZoo57pWaN4xkebP44wlsqo
-1ig5VcfN7cnrspDklTA+tP3v8afJxuE2bChgVCeet6BxOr2rvNB1ItdT87KcWxV1COpJqzQu
-U8N8BhR7oPEUiCRtXpFrfmTrYewl1xm1bZk3cAp9CKjDYClVJEwZIgD67DezmWQK+VBk+ofE
-VAv9CNB/TFwrUpV7inKrSbf7FqkIIbwzvIR1If11NWxDmtioyQsoFnO5/5wLQTSsO17YBYLo
-boLVLG3RgY7bX5288HU2WDCCBBkwggMBAhBhcMtJjF+YRSnnsKbZUFt6MA0GCSqGSIb3DQEB
-BQUAMIHKMQswCQYDVQQGEwJVUzEXMBUGA1UEChMOVmVyaVNpZ24sIEluYy4xHzAdBgNVBAsT
-FlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOjA4BgNVBAsTMShjKSAxOTk5IFZlcmlTaWduLCBJ
-bmMuIC0gRm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxRTBDBgNVBAMTPFZlcmlTaWduIENsYXNz
-IDIgUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHMzAeFw05OTEw
-MDEwMDAwMDBaFw0zNjA3MTYyMzU5NTlaMIHKMQswCQYDVQQGEwJVUzEXMBUGA1UEChMOVmVy
-aVNpZ24sIEluYy4xHzAdBgNVBAsTFlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOjA4BgNVBAsT
-MShjKSAxOTk5IFZlcmlTaWduLCBJbmMuIC0gRm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxRTBD
-BgNVBAMTPFZlcmlTaWduIENsYXNzIDIgUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBB
-dXRob3JpdHkgLSBHMzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAK8KDcLVLNtn
-uS3llCfdpb7gsE2Ps2FWPNZ8w/TNPobLooji4dikacW14r/BpkdQXkY5i9WWurVvFL8QzicT
-ngVHmzF6E9gf2dMCN4utLEfwjoEGpw0wDOv3PA8gHdxyRu6lAshbw8lWaUzFGMGRewvVEwCb
-vO/DSD5GYCCFKtWQts2LoMwy3bf9QFWyUBxWrsyNd03HIE2nMXbvaJKKkB4IgVayrWmjUtDL
-HMQjPR+Z/kzoFmOOxgiO9jH20vrldt21HJKjSc3NAc1ozalpuqPrHQ2cpCCmwaDF0UZMF23S
-rGY/lozghNQ2/yJZxfkRYKhfBH3yGvYlQmEPxEq4PokCAwEAATANBgkqhkiG9w0BAQUFAAOC
-AQEANCYVPMCNTUNJHb3pIZLXZpy33sW40ORdX3YiwCb5hDo6+Yy1++xg8ejOBLDI3acDjzDz
-mN+k5qQx39McC0bcciA/ru4FPKQzPws5rHB4c0uZK98wwlSwqDtVof4WKM1CvXRugNsnRKfO
-RF3UG5CYDR5ClLEALATQdKMCBSJjY82DtfvBbWJraXX9XXBBufW/fN++wTJzIiGLWIF7FZF6
-uuNkSLB/+zYl2pXQ8SQUF90YgGtGIzlU9Y5iCQQdlJCmm+Yl4kJFqriQrb4Ij6kLQhiUz3I5
-4bFD4CjPt+dabBNrSbP/4xh8iYszXawz16f52jpVyVgQ+arvWrbPS0vfKjGCAqQwggKgAgEB
-MIIBDDCB9zELMAkGA1UEBhMCVVMxIDAeBgNVBAoTF0hld2xldHQtUGFja2FyZCBDb21wYW55
-MR8wHQYDVQQLExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMTswOQYDVQQLEzJUZXJtcyBvZiB1
-c2UgYXQgaHR0cHM6Ly93d3cudmVyaXNpZ24uY29tL3JwYSAoYykwOTE1MDMGA1UECxMsQ2xh
-c3MgMiBNYW5hZ2VkIFBLSSBJbmRpdmlkdWFsIFN1YnNjcmliZXIgQ0ExMTAvBgNVBAMTKENv
-bGxhYm9yYXRpb24gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgRzICEG3SF26HD519Gf2CUwdj
-SagwDQYJYIZIAWUDBAIBBQCgaTAvBgkqhkiG9w0BCQQxIgQgGrCQz6ODdR/ftO1XmHoUNJNf
-4DBsGfwb9HHLffNH4mwwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUx
-DxcNMTQwNjE3MjIxNzE0WjANBgkqhkiG9w0BAQEFAASCAQAdh6ObFbwSXC9de4Jr5cAbBoal
-Vf5kJoVNFvsFe0vfD9zIvgtggobkwc/YBgse3FQWya4MXkdmbr1MYbTLuygpnGSwqTjxeUFv
-RuxDmCr2gTJjCYRSESkAbSGYA2odng+LsSfMvwthDSc9+RJmKaQkhpUb8wwgLD92uXoHH/N2
-Sssa/A4z5Z3svXqYu3lpo6aVfsre+ZSfuJwHGsjcqM+gRFYsWZC7M5r0aUXezKBkSRLk/szr
-9IczGDv+WSYb2ovWCt9yj698QsPMU9CeBlW41G7IzUg1qVZ7Z7H1kbxggKQzJln4w1s1jt0u
-/JrLU783KU/JKljCZ9dZq79maaeG
-
---B_3485863034_5857966--
+>> --bsopts="conf=/etc/ceph/ceph.conf;id=cephx_user;virsecretuuid=$MY_LIBVIRT_SECRET_UUID"
+>> -OR-
+>> --bsopts="conf=/etc/ceph/ceph.conf;id=cephx_user;cephx_key=$MY_KEY"
+>>
+>> Signed-off-by: Scott Sullivan <ssullivan@liquidweb.com>
+>> ---
+>>   usr/bs_rbd.c | 64
+>>   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>>   1 file changed, 64 insertions(+)
+>>
+>> diff --git a/usr/bs_rbd.c b/usr/bs_rbd.c
+>> index 3a052ed..86857b9 100644
+>> --- a/usr/bs_rbd.c
+>> +++ b/usr/bs_rbd.c
+>> @@ -517,6 +517,9 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>> char *bsopts)
+>>       struct active_rbd *rbd = RBDP(lu);
+>>       char *confname = NULL;
+>>       char *clientid = NULL;
+>> +    char *virsecretuuid = NULL;
+>> +    char *given_cephx_key = NULL;
+>> +    char disc_cephx_key[256];
+>>       char *clustername = NULL;
+>>       char clientid_full[128];
+>>       char *ignore = NULL;
+>> @@ -532,6 +535,10 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>> char *bsopts)
+>>               clientid = slurp_value(&bsopts);
+>>           else if (is_opt("cluster", bsopts))
+>>               clustername = slurp_value(&bsopts);
+>> +        else if (is_opt("virsecretuuid", bsopts))
+>> +            virsecretuuid = slurp_value(&bsopts);
+>> +        else if (is_opt("cephx_key", bsopts))
+>> +            given_cephx_key = slurp_value(&bsopts);
+>>           else {
+>>               ignore = slurp_to_semi(&bsopts);
+>>               eprintf("bs_rbd: ignoring unknown option \"%s\"\n",
+>> @@ -547,6 +554,41 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>> char *bsopts)
+>>           eprintf("bs_rbd_init: confname %s\n", confname);
+>>       if (clustername)
+>>           eprintf("bs_rbd_init: clustername %s\n", clustername);
+>> +    if (virsecretuuid)
+>> +        eprintf("bs_rbd_init: virsecretuuid %s\n", virsecretuuid);
+>> +    if (given_cephx_key)
+>> + eprintf("bs_rbd_init: given_cephx_key %s\n", given_cephx_key);
+>> +
+>> +    /* virsecretuuid && given_cephx_key are conflicting options. */
+>> +    if (virsecretuuid && given_cephx_key) {
+>> + eprintf("Conflicting options virsecretuuid=[%s] cephx_key=[%s]",
+>> +            virsecretuuid, given_cephx_key);
+>> +        goto fail;
+>> +    }
+>> +
+>> +    /* Get stored key from secret uuid. */
+>> +    if (virsecretuuid) {
+>> + char libvir_uuid_file_path_buf[256] = "/etc/libvirt/secrets/";
+>> +        strcat(libvir_uuid_file_path_buf, virsecretuuid);
+>> +        strcat(libvir_uuid_file_path_buf, ".base64");
+>> +
+>> +        FILE *fp;
+>> +        fp = fopen(libvir_uuid_file_path_buf , "r");
+>> +        if (fp == NULL) {
+>> +            eprintf("bs_rbd_init: Unable to read %s\n",
+>> +                libvir_uuid_file_path_buf);
+>> +            goto fail;
+>> +        }
+>> +        if (fgets(disc_cephx_key, 256, fp) == NULL) {
+>> +            eprintf("bs_rbd_init: Unable to read %s\n",
+>> +                libvir_uuid_file_path_buf);
+>> +            goto fail;
+>> +        }
+>> +        fclose(fp);
+>> +        strtok(disc_cephx_key, "\n");
+>> +
+>> +        eprintf("bs_rbd_init: disc_cephx_key %s\n", disc_cephx_key);
+>> +    }
+>>
+>>       eprintf("bs_rbd_init bsopts=%s\n", bsopts);
+>>       /*
+>> @@ -570,6 +612,7 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>> char *bsopts)
+>>           eprintf("bs_rbd_init: rados_create: %d\n", rados_ret);
+>>           return ret;
+>>       }
+>> +
+>>       /*
+>>        * Read config from environment, then conf file(s) which may
+>>        * be set by conf=
+>> @@ -584,6 +627,23 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>> char *bsopts)
+>>           eprintf("bs_rbd_init: rados_conf_read_file: %d\n", rados_ret);
+>>           goto fail;
+>>       }
+>> +
+>> +    /* Set given key */
+>> +    if (virsecretuuid) {
+>> + if (rados_conf_set(rbd->cluster, "key", disc_cephx_key) < 0) {
+>> +            eprintf("bs_rbd_init: failed to set cephx_key: %s\n",
+>> +                disc_cephx_key);
+>> +            goto fail;
+>> +        }
+>> +    }
+>> +    if (given_cephx_key) {
+>> + if (rados_conf_set(rbd->cluster, "key", given_cephx_key) < 0) {
+>> +            eprintf("bs_rbd_init: failed to set cephx_key: %s\n",
+>> +                given_cephx_key);
+>> +            goto fail;
+>> +        }
+>> +    }
+>> +
+>>       rados_ret = rados_connect(rbd->cluster);
+>>       if (rados_ret < 0) {
+>>           eprintf("bs_rbd_init: rados_connect: %d\n", rados_ret);
+>> @@ -595,6 +655,10 @@ fail:
+>>           free(confname);
+>>       if (clientid)
+>>           free(clientid);
+>> +    if (virsecretuuid)
+>> +        free(virsecretuuid);
+>> +    if (given_cephx_key)
+>> +        free(given_cephx_key);
+>>
+>>       return ret;
+>>   }
+>> -- 
+>> 1.7.10.4
+>>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe stgt" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html

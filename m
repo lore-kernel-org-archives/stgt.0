@@ -1,8 +1,8 @@
-From: Jelle de Jong <jelledejong@powercraft.nl>
-Subject: Re: what do these abort_cmd(1324) and abort_task_set(1348) messages
- in the logs mean?
-Date: Fri, 27 Jun 2014 12:50:53 +0200
-Message-ID: <53AD4C8D.5040906@powercraft.nl>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: what do these abort_cmd(1324) and abort_task_set(1348)
+ messages in the logs mean?
+Date: Fri, 27 Jun 2014 20:57:48 +0900 (JST)
+Message-ID: <20140627.205748.1568838937885792032.fujita.tomonori@lab.ntt.co.jp>
 References: <53A01747.3010708@powercraft.nl>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -10,32 +10,19 @@ Return-path: <stgt-owner@vger.kernel.org>
 In-Reply-To: <53A01747.3010708@powercraft.nl>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: stgt@vger.kernel.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: jelledejong@powercraft.nl
+Cc: stgt@vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Tue, 17 Jun 2014 12:24:07 +0200
+Jelle de Jong <jelledejong@powercraft.nl> wrote:
 
-On 17/06/14 12:24, Jelle de Jong wrote:
-> What do these tgtd messages mean? Is something wrong? Why are they
-> there?
+> What do these tgtd messages mean? Is something wrong? Why are they there?
 > 
 > http://paste.debian.net/105427/
 
-Anyone that can shed some light on this, my logs are flooded with
-these messages.
+A SCSI command was aborted for some reason (e.g. the time-out
+of a SCSI command due to the overloaded iscsi target).
 
-Is this a bug, is it fixed in a newer release?
-
-Kind regards,
-
-Jelle de Jong
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iJwEAQECAAYFAlOtTIkACgkQ1WclBW9j5HmfhwP9H0bk8B2mLZ7iq1FnlnotlKGo
-tdU6YPJqG2VHFg7g9l9B2FgdOScZkNdULxQdbLT5foFJ+VBwKQ3cb5bUYNUB3vBh
-gA+wsIgmVPQNgKQm3iSzPD+WCU3BeddEKrqs35Bfto91EcaxqyYTbjDfBipMBw9/
-VKzle1Ja8sS8kPvZhWU=
-=6f6z
------END PGP SIGNATURE-----
+The cricial bug about this was fixed in 1.0.48. I would recommend you
+to update tgt if you use the older version.

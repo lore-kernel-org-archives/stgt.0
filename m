@@ -1,28 +1,41 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: what do these abort_cmd(1324) and abort_task_set(1348)
- messages in the logs mean?
-Date: Fri, 27 Jun 2014 20:57:48 +0900 (JST)
-Message-ID: <20140627.205748.1568838937885792032.fujita.tomonori@lab.ntt.co.jp>
-References: <53A01747.3010708@powercraft.nl>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Hitoshi Mitake <mitake.hitoshi@gmail.com>
+Subject: [PATCH 0/3] various update for sheepdog driver
+Date: Sun,  6 Jul 2014 23:30:29 +0900
+Message-ID: <1404657032-17629-1-git-send-email-mitake.hitoshi@gmail.com>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <53A01747.3010708@powercraft.nl>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=from:to:cc:subject:date:message-id;
+        bh=7j41xzLSCqnWSpd+ltN+khe6q8O1WchkzvHMNl2walY=;
+        b=kXIfVwFUJRXq11hXdQ/oHno8ZgfpQmxhZp/eqFzd8forPd9/xdVz72CEsQo8qxYlJy
+         MEQuKyVMNTH8Pm7ACJPvS8n6eo8bzyZKvDbocK5cQJ37wGxLaXFOzXk89QGhbSrhhsn6
+         6QGMdUaibEa9rJaqppSSmxdRHvMS8C1wImVjBfMgcnygN2/IYCQjAnFD9rKD+jL+eVTm
+         4aJs2McAhsubJNPxv1pGRM9Urvpk7aNIP87ORJAc09pjNExpAs0FTLwuc9YoRZdbFsum
+         D8i09rCDUCDJkLpU90E/HRB5YOaChp+LySTQYMFZYS6hh9Wy6UfdmkUQ8rSDKLahENj7
+         23GQ==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jelledejong@powercraft.nl
-Cc: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: sheepdog@lists.wpkg.org, Hitoshi Mitake <mitake.hitoshi@gmail.com>
 
-On Tue, 17 Jun 2014 12:24:07 +0200
-Jelle de Jong <jelledejong@powercraft.nl> wrote:
+This patchset contain some update for sheepdog driver. The most
+important one is the first patch. With this patch, iSCSI target with
+sheepdog virtual disk can enable caching feature of sheepdog.
 
-> What do these tgtd messages mean? Is something wrong? Why are they there?
-> 
-> http://paste.debian.net/105427/
+Others are mainly for documenting purpose.
 
-A SCSI command was aborted for some reason (e.g. the time-out
-of a SCSI command due to the overloaded iscsi target).
+Hitoshi Mitake (3):
+  sheepdog: turn on cache flag of write request
+  sheepdog: update layout of inode object header
+  sheepdog: add documentation
 
-The cricial bug about this was fixed in 1.0.48. I would recommend you
-to update tgt if you use the older version.
+ doc/README.sheepdog | 100 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ usr/bs_sheepdog.c   |  29 +++++++++++++--
+ 2 files changed, 126 insertions(+), 3 deletions(-)
+ create mode 100644 doc/README.sheepdog
+
+-- 
+1.9.1

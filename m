@@ -1,18 +1,18 @@
 From: Dongliang Ma <mdl13412@gmail.com>
 Subject: [tgt] [PATCH] Fix shmat() wrong return value test method
-Date: Tue,  8 Jul 2014 18:07:09 +0800 (CST)
-Message-ID: <20140708100709.695A7199A8DB@localhost.localhost>
+Date: Tue,  8 Jul 2014 19:54:34 +0800 (CST)
+Message-ID: <20140708115434.4A9BD199D497@localhost.localhost>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=from:to:subject:message-id:date;
         bh=q0/6fFIyJL5IZIeSDL1R7vRBB7IY1aDbiQujJYHneLc=;
-        b=dbfeDpic/+zQBa6zCjWbK+9dUZtUZrtdrv9JzixU02kFGUI5dP3SVnONOC3BiWNWr8
-         XgsONMDlNgXgk3TG7ccTkRGLYB0msrW6Cav6gQQ3QFo0FlVHJy2GIYRnt6iYRlWQ1Yni
-         HN/IA2YQpA77jcUWzmbMnoeAQU9Qca3sBdyxtNRHdNTtXEFMRYVdsd+RKuvgGj38CPvF
-         CdbR+5epCwILFheN1STnVlzwYkKmIJOlmGmCK72INbSksHXudstAFfzjqfcT/l3rS3pq
-         DEDmmr/Ybbe3G+3tyPA0t+SknT+E3i7uEQt0HG5kFClNdmQQU03NYYoUuvfUwIuHf5YV
-         Btyw==
+        b=VFJs9zTXvjIMjbMPN+2iFZQUakwuq4iPSmbg9ZpRcOQG+ENdTeWqn5qsJ8CnH5WpOq
+         GKIKJXq1gkhgr4C6M5J4XKfvgJrrX13oR8zCYpbn0wRz8ShuEjECdmBIVGXjWUyKcb/m
+         RvUdrrITXfnF96Eevy8RWUADVaMxla1w0YT4u3+Xi6e5n+sSKhwQAnZNEGzV7q4C3GBK
+         X7+LQDO4gl37sZt6Uw/UfNnCyzsPOROVAKDsFACgPHR1liFGrFIVY2BxWWSJwTu24efY
+         xFvTaK17AmHy6H+DvO8s2kPQdXHztDMD5J1uuM7Dp8zqLwefltkLOS733zEFvkzF7dM6
+         Vtgg==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 MIME-Version: 1.0

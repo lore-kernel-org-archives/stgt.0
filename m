@@ -1,75 +1,188 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: what do these abort_cmd(1324) and abort_task_set(1348)
- messages in the logs mean?
-Date: Thu, 10 Jul 2014 09:14:35 +0900 (JST)
-Message-ID: <20140710.091435.1305564732068198316.fujita.tomonori@lab.ntt.co.jp>
-References: <53BD4E8E.9030900@powercraft.nl>
-	<20140709.231656.1568838937885785702.fujita.tomonori@lab.ntt.co.jp>
-	<53BD52AE.6030206@powercraft.nl>
+From: Scott Sullivan <ssullivan@liquidweb.com>
+Subject: Re: Patch for adding virsecretuuid & cephx_key ids to --bsopts
+Date: Mon, 21 Jul 2014 15:34:46 -0400
+Message-ID: <53CD6B56.3030605@liquidweb.com>
+References: <53A0394A.6090208@liquidweb.com> <20140618.003051.1898388363586164151.fujita.tomonori@lab.ntt.co.jp> <53A12851.1060107@inktank.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <53BD52AE.6030206@powercraft.nl>
+In-Reply-To: <53A12851.1060107@inktank.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jelledejong@powercraft.nl
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Dan Mick <dan.mick@inktank.com>, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 Cc: stgt@vger.kernel.org
 
-On Wed, 09 Jul 2014 16:33:18 +0200
-Jelle de Jong <jelledejong@powercraft.nl> wrote:
+On 06/18/2014 01:49 AM, Dan Mick wrote:
+> I've seen this; I'm traveling/busy this week so will try to give it 
+> some thought, but no promises
 
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
-> 
-> Dear FUJITA,
-> 
-> On 09/07/14 16:16, FUJITA Tomonori wrote:
->> On Wed, 09 Jul 2014 16:15:42 +0200 Jelle de Jong
->> <jelledejong@powercraft.nl> wrote:
->> 
->>> -----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1
->>> 
->>> Dear FUJITA,
->>> 
->>> On 27/06/14 13:57, FUJITA Tomonori wrote:
->>>> On Tue, 17 Jun 2014 12:24:07 +0200 Jelle de Jong 
->>>> <jelledejong@powercraft.nl> wrote:
->>>> 
->>>>> What do these tgtd messages mean? Is something wrong? Why
->>>>> are they there?
->>>>> 
->>>>> http://paste.debian.net/105427/
->>>> 
->>>> A SCSI command was aborted for some reason (e.g. the time-out
->>>> of a SCSI command due to the overloaded iscsi target).
->>>> 
->>>> The cricial bug about this was fixed in 1.0.48. I would
->>>> recommend you to update tgt if you use the older version.
->>> 
->>> I upgraded to version 1.0.48 about a week ago for further
->>> testing, I also added a complete new network path, with new
->>> network cards and direct connections, but I keep getting these
->>> same errors:
->>> 
->>> http://paste.debian.net/108884/
->>> 
->>> Is this a bug in tgtd? Is there some tgtd option or environment 
->>> variable that I can set to get more information.
->> 
->> It's not a bug. It's just a message tells that SCSI command
->> time-out happens for some reasons.
-> 
-> Can you help me with some more information to solve the problems?
-> 
-> Is this SCSI command time-out something that happened on the target
-> server with the storage, my storage is having a hard time with high
-> latencies, but I am not having any hardware warnings/errors. Or is
-> this related to the iSCSI client servers as well?
+ping ?
 
-Without any hardware errors, a target could takes long time to execute
-SCSI commands (e.g., simply overloaded). It depends on your
-environment.
-
-You could set a longer value for SCSI command time-out on the client
-side.
+>
+>
+> On 06/17/2014 08:30 AM, FUJITA Tomonori wrote:
+>> Added Dan to To:
+>>
+>> On Tue, 17 Jun 2014 08:49:14 -0400
+>> Scott Sullivan <ssullivan@liquidweb.com> wrote:
+>>
+>>> Hello,
+>>>
+>>> Below is a patch that adds two new params to --bsopts for RBD backing
+>>> stores (virsecretuuid & cephx_key). This was very useful for me, since
+>>> it is nice to be able to give the required authentication detail in
+>>> the same place as the id. I have tested and both options work, as well
+>>> as the error condition if both options are given (made them conflict).
+>>>
+>>> I have verified the patch passes scripts/checkpatch.pl style
+>>> guidelines. Is there any interest in applying this patch? Im using
+>>> this internally with success; for us at least this is a desirable
+>>> thing to have.
+>>>
+>>>
+>>>  From 5359b581c5e7bf434979becaefc53a711ef88432 Mon Sep 17 00:00:00 2001
+>>> From: Scott Sullivan <ssullivan@liquidweb.com>
+>>> Date: Tue, 17 Jun 2014 08:16:09 -0400
+>>> Subject: [PATCH] bsopts: Add virsecretuuid && cephx_key
+>>>
+>>> Allow passing either a libvirt secret UUID, or a cephx_key to
+>>> --bsopts. Options are
+>>> conflicting, so error if both options given. This allows one to do
+>>> this:
+>>>
+>>> --bsopts="conf=/etc/ceph/ceph.conf;id=cephx_user;virsecretuuid=$MY_LIBVIRT_SECRET_UUID" 
+>>>
+>>> -OR-
+>>> --bsopts="conf=/etc/ceph/ceph.conf;id=cephx_user;cephx_key=$MY_KEY"
+>>>
+>>> Signed-off-by: Scott Sullivan <ssullivan@liquidweb.com>
+>>> ---
+>>>   usr/bs_rbd.c | 64
+>>>   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>>>   1 file changed, 64 insertions(+)
+>>>
+>>> diff --git a/usr/bs_rbd.c b/usr/bs_rbd.c
+>>> index 3a052ed..86857b9 100644
+>>> --- a/usr/bs_rbd.c
+>>> +++ b/usr/bs_rbd.c
+>>> @@ -517,6 +517,9 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>>> char *bsopts)
+>>>       struct active_rbd *rbd = RBDP(lu);
+>>>       char *confname = NULL;
+>>>       char *clientid = NULL;
+>>> +    char *virsecretuuid = NULL;
+>>> +    char *given_cephx_key = NULL;
+>>> +    char disc_cephx_key[256];
+>>>       char *clustername = NULL;
+>>>       char clientid_full[128];
+>>>       char *ignore = NULL;
+>>> @@ -532,6 +535,10 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>>> char *bsopts)
+>>>               clientid = slurp_value(&bsopts);
+>>>           else if (is_opt("cluster", bsopts))
+>>>               clustername = slurp_value(&bsopts);
+>>> +        else if (is_opt("virsecretuuid", bsopts))
+>>> +            virsecretuuid = slurp_value(&bsopts);
+>>> +        else if (is_opt("cephx_key", bsopts))
+>>> +            given_cephx_key = slurp_value(&bsopts);
+>>>           else {
+>>>               ignore = slurp_to_semi(&bsopts);
+>>>               eprintf("bs_rbd: ignoring unknown option \"%s\"\n",
+>>> @@ -547,6 +554,41 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>>> char *bsopts)
+>>>           eprintf("bs_rbd_init: confname %s\n", confname);
+>>>       if (clustername)
+>>>           eprintf("bs_rbd_init: clustername %s\n", clustername);
+>>> +    if (virsecretuuid)
+>>> +        eprintf("bs_rbd_init: virsecretuuid %s\n", virsecretuuid);
+>>> +    if (given_cephx_key)
+>>> + eprintf("bs_rbd_init: given_cephx_key %s\n", given_cephx_key);
+>>> +
+>>> +    /* virsecretuuid && given_cephx_key are conflicting options. */
+>>> +    if (virsecretuuid && given_cephx_key) {
+>>> + eprintf("Conflicting options virsecretuuid=[%s] cephx_key=[%s]",
+>>> +            virsecretuuid, given_cephx_key);
+>>> +        goto fail;
+>>> +    }
+>>> +
+>>> +    /* Get stored key from secret uuid. */
+>>> +    if (virsecretuuid) {
+>>> + char libvir_uuid_file_path_buf[256] = "/etc/libvirt/secrets/";
+>>> +        strcat(libvir_uuid_file_path_buf, virsecretuuid);
+>>> +        strcat(libvir_uuid_file_path_buf, ".base64");
+>>> +
+>>> +        FILE *fp;
+>>> +        fp = fopen(libvir_uuid_file_path_buf , "r");
+>>> +        if (fp == NULL) {
+>>> +            eprintf("bs_rbd_init: Unable to read %s\n",
+>>> +                libvir_uuid_file_path_buf);
+>>> +            goto fail;
+>>> +        }
+>>> +        if (fgets(disc_cephx_key, 256, fp) == NULL) {
+>>> +            eprintf("bs_rbd_init: Unable to read %s\n",
+>>> +                libvir_uuid_file_path_buf);
+>>> +            goto fail;
+>>> +        }
+>>> +        fclose(fp);
+>>> +        strtok(disc_cephx_key, "\n");
+>>> +
+>>> +        eprintf("bs_rbd_init: disc_cephx_key %s\n", disc_cephx_key);
+>>> +    }
+>>>
+>>>       eprintf("bs_rbd_init bsopts=%s\n", bsopts);
+>>>       /*
+>>> @@ -570,6 +612,7 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>>> char *bsopts)
+>>>           eprintf("bs_rbd_init: rados_create: %d\n", rados_ret);
+>>>           return ret;
+>>>       }
+>>> +
+>>>       /*
+>>>        * Read config from environment, then conf file(s) which may
+>>>        * be set by conf=
+>>> @@ -584,6 +627,23 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu,
+>>> char *bsopts)
+>>>           eprintf("bs_rbd_init: rados_conf_read_file: %d\n", 
+>>> rados_ret);
+>>>           goto fail;
+>>>       }
+>>> +
+>>> +    /* Set given key */
+>>> +    if (virsecretuuid) {
+>>> + if (rados_conf_set(rbd->cluster, "key", disc_cephx_key) < 0) {
+>>> +            eprintf("bs_rbd_init: failed to set cephx_key: %s\n",
+>>> +                disc_cephx_key);
+>>> +            goto fail;
+>>> +        }
+>>> +    }
+>>> +    if (given_cephx_key) {
+>>> + if (rados_conf_set(rbd->cluster, "key", given_cephx_key) < 0) {
+>>> +            eprintf("bs_rbd_init: failed to set cephx_key: %s\n",
+>>> +                given_cephx_key);
+>>> +            goto fail;
+>>> +        }
+>>> +    }
+>>> +
+>>>       rados_ret = rados_connect(rbd->cluster);
+>>>       if (rados_ret < 0) {
+>>>           eprintf("bs_rbd_init: rados_connect: %d\n", rados_ret);
+>>> @@ -595,6 +655,10 @@ fail:
+>>>           free(confname);
+>>>       if (clientid)
+>>>           free(clientid);
+>>> +    if (virsecretuuid)
+>>> +        free(virsecretuuid);
+>>> +    if (given_cephx_key)
+>>> +        free(given_cephx_key);
+>>>
+>>>       return ret;
+>>>   }
+>>> -- 
+>>> 1.7.10.4
+>>>
+>>> -- 
+>>> To unsubscribe from this list: send the line "unsubscribe stgt" in
+>>> the body of a message to majordomo@vger.kernel.org
+>>> More majordomo info at http://vger.kernel.org/majordomo-info.html
+>

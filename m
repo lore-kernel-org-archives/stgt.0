@@ -1,27 +1,28 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] bs_ssc: remove unused variables
-Date: Fri, 25 Jul 2014 16:31:14 +0900 (JST)
-Message-ID: <20140725.163114.1305564732068188239.fujita.tomonori@lab.ntt.co.jp>
-References: <1406083450-29957-1-git-send-email-liangry@ucweb.com>
+Subject: Re: Patch for adding virsecretuuid & cephx_key ids to --bsopts
+Date: Fri, 25 Jul 2014 16:31:50 +0900 (JST)
+Message-ID: <20140725.163150.1898388363586176520.fujita.tomonori@lab.ntt.co.jp>
+References: <20140618.003051.1898388363586164151.fujita.tomonori@lab.ntt.co.jp>
+	<53A12851.1060107@inktank.com>
+	<53CD6B56.3030605@liquidweb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1406083450-29957-1-git-send-email-liangry@ucweb.com>
+In-Reply-To: <53CD6B56.3030605@liquidweb.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: liangry@ucweb.com
-Cc: stgt@vger.kernel.org
+To: ssullivan@liquidweb.com
+Cc: dan.mick@inktank.com, stgt@vger.kernel.org
 
-On Wed, 23 Jul 2014 10:44:10 +0800
-Ruoyu <liangry@ucweb.com> wrote:
+On Mon, 21 Jul 2014 15:34:46 -0400
+Scott Sullivan <ssullivan@liquidweb.com> wrote:
 
-> The variables, transfer_length and residue are never used in the
-> function tape_rdwr_request()
+> On 06/18/2014 01:49 AM, Dan Mick wrote:
+>> I've seen this; I'm traveling/busy this week so will try to give it
+>> some thought, but no promises
 > 
-> Signed-off-by: Ruoyu <liangry@ucweb.com>
-> ---
->  usr/bs_ssc.c | 4 +---
->  1 file changed, 1 insertion(+), 3 deletions(-)
+> ping ?
 
-Applied, thanks.
+I tried to apply however I can't cleanly. Looks like the patch is
+corrupted. Can you resend?

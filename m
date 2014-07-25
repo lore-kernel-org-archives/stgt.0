@@ -1,132 +1,183 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: STGT fork for "broken disk emulation"
-Date: Fri, 25 Jul 2014 16:34:37 +0900 (JST)
-Message-ID: <20140725.163437.1545942096518972665.fujita.tomonori@lab.ntt.co.jp>
-References: <A5F00220-DFD8-41D2-B722-7D274622F44B@gmail.com>
-	<20140723.235018.2201605309636499063.fujita.tomonori@lab.ntt.co.jp>
-	<CAN05THS9Sb=Oz7H-kUv3K0NuQtAa9E5T4tJABifU1+hezZQBcw@mail.gmail.com>
+From: Scott Sullivan <ssullivan@liquidweb.com>
+Subject: Re: Patch for adding virsecretuuid & cephx_key ids to --bsopts
+Date: Fri, 25 Jul 2014 07:25:21 -0400
+Message-ID: <53D23EA1.305@liquidweb.com>
+References: <20140618.003051.1898388363586164151.fujita.tomonori@lab.ntt.co.jp>	<53A12851.1060107@inktank.com>	<53CD6B56.3030605@liquidweb.com> <20140725.163150.1898388363586176520.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <CAN05THS9Sb=Oz7H-kUv3K0NuQtAa9E5T4tJABifU1+hezZQBcw@mail.gmail.com>
+In-Reply-To: <20140725.163150.1898388363586176520.fujita.tomonori@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: ronniesahlberg@gmail.com
-Cc: markh794@gmail.com, stgt@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: dan.mick@inktank.com, stgt@vger.kernel.org
 
-On Wed, 23 Jul 2014 10:55:56 -0700
-ronnie sahlberg <ronniesahlberg@gmail.com> wrote:
+On 07/25/2014 03:31 AM, FUJITA Tomonori wrote:
+> On Mon, 21 Jul 2014 15:34:46 -0400
+> Scott Sullivan <ssullivan@liquidweb.com> wrote:
+>
+>> On 06/18/2014 01:49 AM, Dan Mick wrote:
+>>> I've seen this; I'm traveling/busy this week so will try to give it
+>>> some thought, but no promises
+>> ping ?
+> I tried to apply however I can't cleanly. Looks like the patch is
+> corrupted. Can you resend?
 
-> On Wed, Jul 23, 2014 at 7:50 AM, FUJITA Tomonori
-> <fujita.tomonori@lab.ntt.co.jp> wrote:
->> On Tue, 22 Jul 2014 16:23:54 +1000
->> Mark Harvey <markh794@gmail.com> wrote:
->>
->>> Could this be simply a new backing store type ?
->>
->> Sounds reasonable to me. If we could inject an error dynamically, it
->> would be useful, I think.
-> 
-> Thanks. That is useful to know.
-> 
-> I will refactor the code and move the error injection into a new
-> backing store instead.  bs_errorinject.c or something.
-> 
-> Only drawback wiht a backing store I think would be that you can not
-> test non-medium access CDBs from it, nor can we error inject on the
-> iscsi layer.
 
-Good point. If I remember correctly, there was discussion on using
-scsi_debug for such. But I guess that nobody implemented it.
+URL: http://paste.debian.net/111595/
 
-> That said, I do not know if that would be all that useful anyway.
-> At this stage I am mainly interested in trying to create a disk with
-> failing medium so that we can test scsi initiators and filesystem
-> error recovery paths to make both
-> easier to test and more robust against medium failures.
-> 
-> This all depends on if I can reach a stage where people like file
-> system developers, raid driver developers etc, will find it useful and
-> will want to use it.
-> 
-> 
-> regards
-> ronnie sahlberg
-> 
-> 
->>
->>> Depends on error injection you want/need. If it is scsi command related, should be achievable in backing store. If it's transport related then I could see it being more invasive.
->>>
->>> Another idea would be to hijack send/receive diagnostic op code. Initiator could send "injection commands" via receive diag op code payload & check status etc via send diag
->>>
->>> Sent from my iPhone
->>>
->>>> On 22 Jul 2014, at 7:52, ronnie sahlberg <ronniesahlberg@gmail.com> wrote:
->>>>
->>>> List,
->>>>
->>>> I have created a temporary work version of TGTD at:
->>>> https://github.com/rsahlberg/flaky-stgt
->>>>
->>>> This is not a production TGTD or a version that any normal users should use,
->>>> instead I had an idea to try to add features to make it possible to create an
->>>> iSCSI device that is broken and misbehaves in controllable ways.
->>>>
->>>> For example, imagine a scsi disk that is "good" right now but after a
->>>> certain stage in a scripted test the disk goes bad and start failing
->>>> all WRITE commands.
->>>> Just like a disk that suddenly has run out of reallocation space.
->>>>
->>>>
->>>> The only people I see that could find this type of feature useful
->>>> would be, I guess,
->>>> filesystem developers, SCSI initiator midlayer developers or perhaps
->>>> people writing
->>>> code that talks directly to the disk and want to test that their error
->>>> recovery paths
->>>> work.
->>>> I see no use or benefit from these features to normal users.
->>>>
->>>>
->>>> Right now it is a bit in flux, and I also need to see if I can find
->>>> buy-in and convince
->>>> filesystem and block device driver developer folks that this could
->>>> actually be useful to them.
->>>>
->>>> Later on would come the question, should I refactor the code and
->>>> should we push this into STGT mainline?
->>>> I personally think that this usecase I am aiming for is so special
->>>> case, and is only
->>>> features that are useful or relevant to an almost infinitely small set
->>>> of filesystem and block device driver developers that it would not
->>>> make much sense.
->>>> But if the TGTD community would rather have this built-in to official TGTD I am
->>>> more than happy to rework the patches once things stabilize and submit.
->>>>
->>>> This is not a hostile fork. this is a temporary work/scratch space
->>>> while I experiment
->>>> on "broken disk emulation" and while I try to see if there is interest
->>>> in the devlopment community of this as a test tool.
->>>>
->>>>
->>>> If anyone of you think this could be useful, please feel to try it out
->>>> or let your
->>>> filesystem developer friends know that "could you use a scsi disk that
->>>> is 'busted' in controllable ways for your testing?"
->>>>
->>>>
->>>> best regards
->>>> ronnie sahlberg
->>>> --
->>>> To unsubscribe from this list: send the line "unsubscribe stgt" in
->>>> the body of a message to majordomo@vger.kernel.org
->>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>> --
->>> To unsubscribe from this list: send the line "unsubscribe stgt" in
->>> the body of a message to majordomo@vger.kernel.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> --
-> To unsubscribe from this list: send the line "unsubscribe stgt" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Paste:
+
+ From 5359b581c5e7bf434979becaefc53a711ef88432 Mon Sep 17 00:00:00 2001
+From: Scott Sullivan <ssullivan@liquidweb.com>
+Date: Tue, 17 Jun 2014 08:16:09 -0400
+Subject: [PATCH] bsopts: Add virsecretuuid && cephx_key
+
+Allow passing either a libvirt secret UUID, or a cephx_key to --bsopts. 
+Options are
+conflicting, so error if both options given. This allows one to do this:
+
+--bsopts="conf=/etc/ceph/ceph.conf;id=cephx_user;virsecretuuid=$MY_LIBVIRT_SECRET_UUID"
+-OR-
+--bsopts="conf=/etc/ceph/ceph.conf;id=cephx_user;cephx_key=$MY_KEY"
+
+Signed-off-by: Scott Sullivan <ssullivan@liquidweb.com>
+---
+  usr/bs_rbd.c |   64 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  1 file changed, 64 insertions(+)
+
+diff --git a/usr/bs_rbd.c b/usr/bs_rbd.c
+index 3a052ed..86857b9 100644
+--- a/usr/bs_rbd.c
++++ b/usr/bs_rbd.c
+@@ -517,6 +517,9 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu, 
+char *bsopts)
+      struct active_rbd *rbd = RBDP(lu);
+      char *confname = NULL;
+      char *clientid = NULL;
++    char *virsecretuuid = NULL;
++    char *given_cephx_key = NULL;
++    char disc_cephx_key[256];
+      char *clustername = NULL;
+      char clientid_full[128];
+      char *ignore = NULL;
+@@ -532,6 +535,10 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu, 
+char *bsopts)
+              clientid = slurp_value(&bsopts);
+          else if (is_opt("cluster", bsopts))
+              clustername = slurp_value(&bsopts);
++        else if (is_opt("virsecretuuid", bsopts))
++            virsecretuuid = slurp_value(&bsopts);
++        else if (is_opt("cephx_key", bsopts))
++            given_cephx_key = slurp_value(&bsopts);
+          else {
+              ignore = slurp_to_semi(&bsopts);
+              eprintf("bs_rbd: ignoring unknown option \"%s\"\n",
+@@ -547,6 +554,41 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu, 
+char *bsopts)
+          eprintf("bs_rbd_init: confname %s\n", confname);
+      if (clustername)
+          eprintf("bs_rbd_init: clustername %s\n", clustername);
++    if (virsecretuuid)
++        eprintf("bs_rbd_init: virsecretuuid %s\n", virsecretuuid);
++    if (given_cephx_key)
++        eprintf("bs_rbd_init: given_cephx_key %s\n", given_cephx_key);
++
++    /* virsecretuuid && given_cephx_key are conflicting options. */
++    if (virsecretuuid && given_cephx_key) {
++        eprintf("Conflicting options virsecretuuid=[%s] cephx_key=[%s]",
++            virsecretuuid, given_cephx_key);
++        goto fail;
++    }
++
++    /* Get stored key from secret uuid. */
++    if (virsecretuuid) {
++        char libvir_uuid_file_path_buf[256] = "/etc/libvirt/secrets/";
++        strcat(libvir_uuid_file_path_buf, virsecretuuid);
++        strcat(libvir_uuid_file_path_buf, ".base64");
++
++        FILE *fp;
++        fp = fopen(libvir_uuid_file_path_buf , "r");
++        if (fp == NULL) {
++            eprintf("bs_rbd_init: Unable to read %s\n",
++                libvir_uuid_file_path_buf);
++            goto fail;
++        }
++        if (fgets(disc_cephx_key, 256, fp) == NULL) {
++            eprintf("bs_rbd_init: Unable to read %s\n",
++                libvir_uuid_file_path_buf);
++            goto fail;
++        }
++        fclose(fp);
++        strtok(disc_cephx_key, "\n");
++
++        eprintf("bs_rbd_init: disc_cephx_key %s\n", disc_cephx_key);
++    }
+
+      eprintf("bs_rbd_init bsopts=%s\n", bsopts);
+      /*
+@@ -570,6 +612,7 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu, 
+char *bsopts)
+          eprintf("bs_rbd_init: rados_create: %d\n", rados_ret);
+          return ret;
+      }
++
+      /*
+       * Read config from environment, then conf file(s) which may
+       * be set by conf=
+@@ -584,6 +627,23 @@ static tgtadm_err bs_rbd_init(struct scsi_lu *lu, 
+char *bsopts)
+          eprintf("bs_rbd_init: rados_conf_read_file: %d\n", rados_ret);
+          goto fail;
+      }
++
++    /* Set given key */
++    if (virsecretuuid) {
++        if (rados_conf_set(rbd->cluster, "key", disc_cephx_key) < 0) {
++            eprintf("bs_rbd_init: failed to set cephx_key: %s\n",
++                disc_cephx_key);
++            goto fail;
++        }
++    }
++    if (given_cephx_key) {
++        if (rados_conf_set(rbd->cluster, "key", given_cephx_key) < 0) {
++            eprintf("bs_rbd_init: failed to set cephx_key: %s\n",
++                given_cephx_key);
++            goto fail;
++        }
++    }
++
+      rados_ret = rados_connect(rbd->cluster);
+      if (rados_ret < 0) {
+          eprintf("bs_rbd_init: rados_connect: %d\n", rados_ret);
+@@ -595,6 +655,10 @@ fail:
+          free(confname);
+      if (clientid)
+          free(clientid);
++    if (virsecretuuid)
++        free(virsecretuuid);
++    if (given_cephx_key)
++        free(given_cephx_key);
+
+      return ret;
+  }
+-- 
+1.7.10.4
+
+
+I also checked, and I didn't have any problem applying the patch to the 
+current master branch:
+
+ssullivan@data ~/syseng/packages/tgt $ git apply --stat 
+../rpmbuild/SOURCES/tgt-add_virsecretuuid_cephx_key_to_bsopts.patch
+  usr/bs_rbd.c |   64 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  1 file changed, 64 insertions(+)
+ssullivan@data ~/syseng/packages/tgt $ git apply --check 
+../rpmbuild/SOURCES/tgt-add_virsecretuuid_cephx_key_to_bsopts.patch
+ssullivan@data ~/syseng/packages/tgt $ git am --signoff < 
+../rpmbuild/SOURCES/tgt-add_virsecretuuid_cephx_key_to_bsopts.patch
+Applying: bsopts: Add virsecretuuid && cephx_key
+ssullivan@data ~/syseng/packages/tgt $

@@ -1,285 +1,291 @@
-From: ronnie sahlberg <ronniesahlberg@gmail.com>
-Subject: Re: bs_rbd not listed as backing store with 1.0.49
-Date: Wed, 6 Aug 2014 13:22:28 -0700
-Message-ID: <CAN05THSvF4w2emCQ5LbVQRnmrbqaPNKco+6iv65fGnRoJ-Dk0Q@mail.gmail.com>
-References: <DF44185F-07DB-4138-AFE2-BCE24DD777F4@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8BIT
+From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH] sheepdog: support iSCSI multipath
+Date: Thu,  7 Aug 2014 10:25:49 +0900
+Message-ID: <1407374749-13610-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=WnasUnwkPZGNqalidy3uVcw9uzFHPTHY7yNJiUn50Ac=;
-        b=a7EADMOsNo3mr6DZCMK5i9SwLamdTsMFwGD3iqrsmcn2g6bpO5h5otlBzzk+Bz36VP
-         I4QArOenPyoBB179CCawWYx/AypyYyth8z9SrlmapzWKT1yCTxbh157RkO8iPDz4raN3
-         nT5yiUJR0I5ZT3o37fKeQSHSGj4iW3okc/QQoWxpc3O4B0NPA2DJBjOd+Y+anEhneeGm
-         sZSkG2vEJL35h4cBGT6TlfH6LGv5lvApXaNB68WMsu7KQx9i4g8XP1DB1rqrA0xuREMO
-         mXbAxgS9FCnA7kq6PgMcSynUMkuYNrnvrwE6Lsiwk/lJytpgRgutzpwfaR0WsS6KQEzW
-         RS/g==
-In-Reply-To: <DF44185F-07DB-4138-AFE2-BCE24DD777F4@gmail.com>
+        h=sender:from:to:cc:subject:date:message-id;
+        bh=CFJbh3wxG+SnGWAZ4GQBpoiOHhE2wUzr6NNF+r+fxOE=;
+        b=rMT0E0XLbAtXZE4RJsyqSYo69heHFq83D8r2MgrNoMwfYqjl4/gstZToBMauRP9wDC
+         thkyNSlC7xdNEn4Q3Dbg43MGTJ9JYbJxlwESyMIUMxoS0m0IV77LNH+IMrpSp88Q86Xr
+         fSob5958q6Nh8lLrJp/j2NYiEOMklKdnF3XkoQZPhXBG7SyDcTR/wu5NhsSo0k52CrsY
+         hNrb820271ySE4dNcvxL2ceNCBL18tEF3vvHpGXa7ytYANoGRgmOcMXEjq23EoDyT7be
+         vN9rQeety6OQdjlL+km/s51cSc5wNom1emQy5qWFlTXEpNqW6qE2F5emzyXAFH+cvVA+
+         rzEQ==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Jim Lozanovski <jimlozanovski@gmail.com>
-Cc: stgt <stgt@vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: mitake.hitoshi@gmail.com, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 
-RBD is built as a module and it looks like your build did build it :
-cc -shared -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2
--fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC
--DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\"
-bs_rbd.c -o bs_rbd.so -lrados -lrbd
+This patch implements iSCSI multipath support in sheepdog backing
+store driver. Below is a brief description of the feature:
 
-make install should have copied this into /lib/tgt/backing-store but
-that did not seem to have happened.
-Check if usr/Makefile does the right thing or not.
+The main problem of enabling iSCSI multipath for sheepdog's VDI is
+keeping coherence of tgtd's internal inode data structure. Assume tgt
+A and B have logical units which point same sheepdog VDI. After
+initialization of the logical units, A and B have copies of inode
+object in their address space (let's X denote this object). When an
+initiator sends write request to A and the request causes COW, A
+creates a new object and updates the inode object X (let's X' denote
+the updated one).
 
+After the update by A, A can die with hardware faults. In such a case,
+the initiator detects a connection error and switch its target to B if
+iSCSI multipath is configured correctly. But the problem can arise at
+this point. Because B doesn't know the update caused by A and its
+internal inode object is still X, not X'. B creates requests based on
+X, so it can read obsolete data which is already hidden by X' or
+update X' in wrong manner.
 
-On Tue, Aug 5, 2014 at 7:08 PM, Jim Lozanovski <jimlozanovski@gmail.com> wrote:
-> Hi List,
->
-> Compiling 1.0.49 with CEPH_RBD support does not provide a RBD backing store:
->
-> # tgtadm --version
-> 1.0.49
->
-> # tgtadm --lld iscsi --mode system --op show
-> System:
->    State: ready
->    debug: off
-> LLDs:
->    iser: error
->    iscsi: ready
-> Backing stores:
->    rdwr (bsoflags sync:direct)
->    ssc
->    null
->    bsg
->    sg
->    sheepdog
-> Device types:
->    passthrough
->    tape
->    changer
->    controller
->    osd
->    cd/dvd
->    disk
-> iSNS:
->    iSNS=Off
->    iSNSServerIP=
->    iSNSServerPort=3205
->    iSNSAccessControl=Off
->
-> System is CentOS release 6.5 (Final) kernel 2.6.32-431.20.3.el6.x86_64.
->
-> Compilation output:
->
-> # git clone https://github.com/fujita/tgt
-> # cd tgt
-> # make CEPH_RBD=1
-> make -C usr
-> make[1]: Entering directory `/root/tgt/usr'
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/conn.c -o iscsi/conn.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/param.c -o iscsi/param.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/session.c -o iscsi/session.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/iscsid.c -o iscsi/iscsid.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/target.c -o iscsi/target.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/chap.c -o iscsi/chap.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/sha1.c -o iscsi/sha1.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/md5.c -o iscsi/md5.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/transport.c -o iscsi/transport.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/iscsi_tcp.c -o iscsi/iscsi_tcp.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" iscsi/isns.c -o iscsi/isns.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" tgtd.c -o tgtd.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" mgmt.c -o mgmt.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" target.c -o target.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" scsi.c -o scsi.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" log.c -o log.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" driver.c -o driver.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" util.c -o util.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" work.c -o work.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" concat_buf.c -o concat_buf.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" parser.c -o parser.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" spc.c -o spc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" sbc.c -o sbc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" mmc.c -o mmc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" osd.c -o osd.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" scc.c -o scc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" smc.c -o smc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" ssc.c -o ssc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" libssc.c -o libssc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" bs_rdwr.c -o bs_rdwr.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" bs_ssc.c -o bs_ssc.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" bs_null.c -o bs_null.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" bs_sg.c -o bs_sg.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" bs.c -o bs.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" libcrc32c.c -o libcrc32c.o
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" bs_sheepdog.c -o bs_sheepdog.o
-> echo cc iscsi/conn.o iscsi/param.o iscsi/session.o iscsi/iscsid.o iscsi/target.o iscsi/chap.o iscsi/sha1.o iscsi/md5.o iscsi/transport.o iscsi/iscsi_tcp.o iscsi/isns.o tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o ssc.o libssc.o bs_rdwr.o bs_ssc.o bs_null.o bs_sg.o bs.o libcrc32c.o bs_sheepdog.o -o tgtd -lpthread -ldl
-> cc iscsi/conn.o iscsi/param.o iscsi/session.o iscsi/iscsid.o iscsi/target.o iscsi/chap.o iscsi/sha1.o iscsi/md5.o iscsi/transport.o iscsi/iscsi_tcp.o iscsi/isns.o tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o ssc.o libssc.o bs_rdwr.o bs_ssc.o bs_null.o bs_sg.o bs.o libcrc32c.o bs_sheepdog.o -o tgtd -lpthread -ldl
-> cc iscsi/conn.o iscsi/param.o iscsi/session.o iscsi/iscsid.o iscsi/target.o iscsi/chap.o iscsi/sha1.o iscsi/md5.o iscsi/transport.o iscsi/iscsi_tcp.o iscsi/isns.o tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o ssc.o libssc.o bs_rdwr.o bs_ssc.o bs_null.o bs_sg.o bs.o libcrc32c.o bs_sheepdog.o -o tgtd -Wl,-E,-rpath=/usr/lib/tgt -lpthread -ldl
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" tgtadm.c -o tgtadm.o
-> cc tgtadm.o concat_buf.o -o tgtadm
-> cc -c -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" tgtimg.c -o tgtimg.o
-> cc tgtimg.o libssc.o libcrc32c.o -o tgtimg
-> cc -shared -DUSE_SIGNALFD -DUSE_TIMERFD -D_GNU_SOURCE -I. -g -O2 -fno-strict-aliasing -Wall -Wstrict-prototypes -fPIC -DTGT_VERSION=\"1.0.49\" -DBSDIR=\"/usr/lib/tgt/backing-store\" bs_rbd.c -o bs_rbd.so -lrados -lrbd
-> make[1]: Leaving directory `/root/tgt/usr'
-> make -C doc
-> make[1]: Entering directory `/root/tgt/doc'
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o manpages/tgtd.8 http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl tgtd.8.xml
-> Note: meta source : no *info/productname or alternative            tgtd
-> Note: meta source : see http://docbook.sf.net/el/productname       tgtd
-> Note: meta source : no refentry/refmeta/refmiscinfo@class=source   tgtd
-> Note: meta source : see http://docbook.sf.net/el/refmiscinfo       tgtd
-> Note: meta version: no *info/productnumber or alternative          tgtd
-> Note: meta version: see http://docbook.sf.net/el/productnumber     tgtd
-> Note: meta version: no refentry/refmeta/refmiscinfo@class=version  tgtd
-> Note: meta version: see http://docbook.sf.net/el/refmiscinfo       tgtd
-> Warn: meta source : no fallback for source, so inserted a fixme    tgtd
-> Note: meta manual : no titled ancestor of refentry                 tgtd
-> Note: meta manual : no refentry/refmeta/refmiscinfo@class=manual   tgtd
-> Note: meta manual : see http://docbook.sf.net/el/refmiscinfo       tgtd
-> Warn: meta manual : no fallback for manual, so inserted a fixme    tgtd
-> Warn: meta author : no refentry/info/author                        tgtd
-> Note: meta author : see http://docbook.sf.net/el/author            tgtd
-> Warn: meta author : no author data, so inserted a fixme            tgtd
-> Note: Writing tgtd.8
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o manpages/tgtadm.8 http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl tgtadm.8.xml
-> Note: meta source : no *info/productname or alternative            tgtadm
-> Note: meta source : see http://docbook.sf.net/el/productname       tgtadm
-> Note: meta source : no refentry/refmeta/refmiscinfo@class=source   tgtadm
-> Note: meta source : see http://docbook.sf.net/el/refmiscinfo       tgtadm
-> Note: meta version: no *info/productnumber or alternative          tgtadm
-> Note: meta version: see http://docbook.sf.net/el/productnumber     tgtadm
-> Note: meta version: no refentry/refmeta/refmiscinfo@class=version  tgtadm
-> Note: meta version: see http://docbook.sf.net/el/refmiscinfo       tgtadm
-> Warn: meta source : no fallback for source, so inserted a fixme    tgtadm
-> Note: meta manual : no titled ancestor of refentry                 tgtadm
-> Note: meta manual : no refentry/refmeta/refmiscinfo@class=manual   tgtadm
-> Note: meta manual : see http://docbook.sf.net/el/refmiscinfo       tgtadm
-> Warn: meta manual : no fallback for manual, so inserted a fixme    tgtadm
-> Warn: meta author : no refentry/info/author                        tgtadm
-> Note: meta author : see http://docbook.sf.net/el/author            tgtadm
-> Warn: meta author : no author data, so inserted a fixme            tgtadm
-> Note: Writing tgtadm.8
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o manpages/tgtimg.8 http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl tgtimg.8.xml
-> Note: meta source : no *info/productname or alternative            tgtimg
-> Note: meta source : see http://docbook.sf.net/el/productname       tgtimg
-> Note: meta source : no refentry/refmeta/refmiscinfo@class=source   tgtimg
-> Note: meta source : see http://docbook.sf.net/el/refmiscinfo       tgtimg
-> Note: meta version: no *info/productnumber or alternative          tgtimg
-> Note: meta version: see http://docbook.sf.net/el/productnumber     tgtimg
-> Note: meta version: no refentry/refmeta/refmiscinfo@class=version  tgtimg
-> Note: meta version: see http://docbook.sf.net/el/refmiscinfo       tgtimg
-> Warn: meta source : no fallback for source, so inserted a fixme    tgtimg
-> Note: meta manual : no titled ancestor of refentry                 tgtimg
-> Note: meta manual : no refentry/refmeta/refmiscinfo@class=manual   tgtimg
-> Note: meta manual : see http://docbook.sf.net/el/refmiscinfo       tgtimg
-> Warn: meta manual : no fallback for manual, so inserted a fixme    tgtimg
-> Warn: meta author : no refentry/info/author                        tgtimg
-> Note: meta author : see http://docbook.sf.net/el/author            tgtimg
-> Warn: meta author : no author data, so inserted a fixme            tgtimg
-> Note: Writing tgtimg.8
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o manpages/tgt-admin.8 http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl tgt-admin.8.xml
-> Note: meta source : no *info/productname or alternative            tgt-admin
-> Note: meta source : see http://docbook.sf.net/el/productname       tgt-admin
-> Note: meta source : no refentry/refmeta/refmiscinfo@class=source   tgt-admin
-> Note: meta source : see http://docbook.sf.net/el/refmiscinfo       tgt-admin
-> Note: meta version: no *info/productnumber or alternative          tgt-admin
-> Note: meta version: see http://docbook.sf.net/el/productnumber     tgt-admin
-> Note: meta version: no refentry/refmeta/refmiscinfo@class=version  tgt-admin
-> Note: meta version: see http://docbook.sf.net/el/refmiscinfo       tgt-admin
-> Warn: meta source : no fallback for source, so inserted a fixme    tgt-admin
-> Note: meta manual : no titled ancestor of refentry                 tgt-admin
-> Note: meta manual : no refentry/refmeta/refmiscinfo@class=manual   tgt-admin
-> Note: meta manual : see http://docbook.sf.net/el/refmiscinfo       tgt-admin
-> Warn: meta manual : no fallback for manual, so inserted a fixme    tgt-admin
-> Warn: meta author : no refentry/info/author                        tgt-admin
-> Note: meta author : see http://docbook.sf.net/el/author            tgt-admin
-> Warn: meta author : no author data, so inserted a fixme            tgt-admin
-> Note: Writing tgt-admin.8
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o manpages/targets.conf.5 http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl targets.conf.5.xml
-> Note: meta source : no *info/productname or alternative            targets.conf
-> Note: meta source : see http://docbook.sf.net/el/productname       targets.conf
-> Note: meta source : no refentry/refmeta/refmiscinfo@class=source   targets.conf
-> Note: meta source : see http://docbook.sf.net/el/refmiscinfo       targets.conf
-> Note: meta version: no *info/productnumber or alternative          targets.conf
-> Note: meta version: see http://docbook.sf.net/el/productnumber     targets.conf
-> Note: meta version: no refentry/refmeta/refmiscinfo@class=version  targets.conf
-> Note: meta version: see http://docbook.sf.net/el/refmiscinfo       targets.conf
-> Warn: meta source : no fallback for source, so inserted a fixme    targets.conf
-> Note: meta manual : no titled ancestor of refentry                 targets.conf
-> Note: meta manual : no refentry/refmeta/refmiscinfo@class=manual   targets.conf
-> Note: meta manual : see http://docbook.sf.net/el/refmiscinfo       targets.conf
-> Warn: meta manual : no fallback for manual, so inserted a fixme    targets.conf
-> Warn: meta author : no refentry/info/author                        targets.conf
-> Note: meta author : see http://docbook.sf.net/el/author            targets.conf
-> Warn: meta author : no author data, so inserted a fixme            targets.conf
-> Note: Writing targets.conf.5
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o manpages/tgt-setup-lun.8 http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl tgt-setup-lun.8.xml
-> Note: meta source : no *info/productname or alternative            tgt-setup-lun
-> Note: meta source : see http://docbook.sf.net/el/productname       tgt-setup-lun
-> Note: meta source : no refentry/refmeta/refmiscinfo@class=source   tgt-setup-lun
-> Note: meta source : see http://docbook.sf.net/el/refmiscinfo       tgt-setup-lun
-> Note: meta version: no *info/productnumber or alternative          tgt-setup-lun
-> Note: meta version: see http://docbook.sf.net/el/productnumber     tgt-setup-lun
-> Note: meta version: no refentry/refmeta/refmiscinfo@class=version  tgt-setup-lun
-> Note: meta version: see http://docbook.sf.net/el/refmiscinfo       tgt-setup-lun
-> Warn: meta source : no fallback for source, so inserted a fixme    tgt-setup-lun
-> Note: meta manual : no titled ancestor of refentry                 tgt-setup-lun
-> Note: meta manual : no refentry/refmeta/refmiscinfo@class=manual   tgt-setup-lun
-> Note: meta manual : see http://docbook.sf.net/el/refmiscinfo       tgt-setup-lun
-> Warn: meta manual : no fallback for manual, so inserted a fixme    tgt-setup-lun
-> Note: Writing tgt-setup-lun.8
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o htmlpages/tgtd.8.html http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl tgtd.8.xml
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o htmlpages/tgtadm.8.html http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl tgtadm.8.xml
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o htmlpages/tgtimg.8.html http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl tgtimg.8.xml
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o htmlpages/tgt-admin.8.html http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl tgt-admin.8.xml
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o htmlpages/targets.conf.5.html http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl targets.conf.5.xml
-> test -z "/usr/bin/xsltproc" || /usr/bin/xsltproc -o htmlpages/tgt-setup-lun.8.html http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl tgt-setup-lun.8.xml
-> make[1]: Leaving directory `/root/tgt/doc'
-> make -C conf
-> make[1]: Entering directory `/root/tgt/conf'
-> make[1]: Nothing to be done for `all'.
-> make[1]: Leaving directory `/root/tgt/conf'
-> make -C scripts
-> make[1]: Entering directory `/root/tgt/scripts'
-> make[1]: Nothing to be done for `all'.
-> make[1]: Leaving directory `/root/tgt/scripts'
->
-> # make install
-> make -C usr install
-> make[1]: Entering directory `/root/tgt/usr'
-> install -d -m 755 /usr/sbin
-> install -m 755 tgtd tgtadm tgtimg /usr/sbin
-> make[1]: Leaving directory `/root/tgt/usr'
-> make -C doc install
-> make[1]: Entering directory `/root/tgt/doc'
-> install -d -m 755 /usr/share/man/man8
-> install -m 644 manpages/tgtadm.8 manpages/tgt-admin.8 manpages/tgtimg.8 manpages/tgt-setup-lun.8 manpages/tgtd.8 /usr/share/man/man8
-> install -d -m 755 /usr/share/doc/tgt
-> install -m 644 README.iscsi README.iser README.lu_configuration README.mmc tmf.txt README.rbd /usr/share/doc/tgt
-> install -d -m 755 /usr/share/doc/tgt/html
-> install -m 644 htmlpages/tgtd.8.html htmlpages/tgtadm.8.html htmlpages/tgtimg.8.html htmlpages/tgt-admin.8.html htmlpages/targets.conf.5.html htmlpages/tgt-setup-lun.8.html /usr/share/doc/tgt/html
-> make[1]: Leaving directory `/root/tgt/doc'
-> make -C conf install
-> make[1]: Entering directory `/root/tgt/conf'
-> install -d -m 755 /etc/tgt
-> if [ ! -f /etc/tgt/targets.conf ] ; then \
->                install -m 644 targets.conf /etc/tgt ; \
->        fi
-> install -d -m 755 /etc/tgt/examples
-> for f in targets.conf.example targets.conf.vtl.L700 targets.conf.vtl.MSL2024 ; do \
->                install -m 644 examples/$f /etc/tgt/examples ;\
->        done
-> install -d /etc/tgt/conf.d
-> make[1]: Leaving directory `/root/tgt/conf'
-> make -C scripts install
-> make[1]: Entering directory `/root/tgt/scripts'
-> install -d -m 755 /usr/sbin
-> install -m 755 tgt-setup-lun tgt-admin /usr/sbin
-> make[1]: Leaving directory `/root/tgt/scripts'--
-> To unsubscribe from this list: send the line "unsubscribe stgt" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+For solving the above problem, sheepdog implements inode object
+coherence protocol which mocks MSI protocol of shared memory multicore
+processors. With this mechanism sheepdog can prevent requests which
+are based on obsolete inode objects. This patch let sheepdog driver of
+tgtd adopt the coherence protocol.
+
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+---
+ usr/bs_sheepdog.c | 97 ++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 81 insertions(+), 16 deletions(-)
+
+diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
+index 15f44d8..ffc2519 100644
+--- a/usr/bs_sheepdog.c
++++ b/usr/bs_sheepdog.c
+@@ -94,6 +94,11 @@
+ #define SD_RES_JOIN_FAILED   0x18 /* Target node had failed to join sheepdog */
+ #define SD_RES_HALT          0x19 /* Sheepdog is stopped serving IO request */
+ #define SD_RES_READONLY      0x1A /* Object is read-only */
++#define SD_RES_INCOMPLETE    0x1B /* Object (in kv) is incomplete uploading */
++/* sheep is collecting cluster wide status, not ready for operation */
++#define SD_RES_COLLECTING_CINFO 0x1C
++ /* inode object in client is invalidated, refreshing is required */
++#define SD_RES_INODE_INVALIDATED 0x1D
+ 
+ /*
+  * Object ID rules
+@@ -166,6 +171,9 @@ struct sheepdog_obj_rsp {
+ 	uint32_t pad[6];
+ };
+ 
++#define LOCK_TYPE_NORMAL 1
++#define LOCK_TYPE_SHARED 2      /* for iSCSI multipath */
++
+ struct sheepdog_vdi_req {
+ 	uint8_t proto_ver;
+ 	uint8_t opcode;
+@@ -177,7 +185,8 @@ struct sheepdog_vdi_req {
+ 	uint32_t vdi_id;
+ 	uint32_t copies;
+ 	uint32_t snapid;
+-	uint32_t pad[3];
++	uint32_t type;
++	uint32_t pad[2];
+ };
+ 
+ struct sheepdog_vdi_rsp {
+@@ -626,11 +635,12 @@ static int find_vdi_name(struct sheepdog_access_info *ai, char *filename,
+ 			 uint32_t snapid, char *tag, uint32_t *vid,
+ 			 int for_snapshot);
+ static int read_object(struct sheepdog_access_info *ai, char *buf, uint64_t oid,
+-		       int copies, unsigned int datalen, uint64_t offset);
++		       int copies, unsigned int datalen, uint64_t offset,
++		       int *need_reload);
+ 
+ static int reload_inode(struct sheepdog_access_info *ai)
+ {
+-	int ret;
++	int ret, need_reload = 0;
+ 	char tag[SD_MAX_VDI_TAG_LEN];
+ 	uint32_t vid;
+ 
+@@ -641,7 +651,7 @@ static int reload_inode(struct sheepdog_access_info *ai)
+ 		return -1;
+ 
+ 	ret = read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(vid),
+-			  ai->inode.nr_copies, SD_INODE_SIZE, 0);
++			  ai->inode.nr_copies, SD_INODE_SIZE, 0, &need_reload);
+ 	if (ret)
+ 		return -1;
+ 
+@@ -692,9 +702,10 @@ static int read_write_object(struct sheepdog_access_info *ai, char *buf,
+ 	switch (rsp->result) {
+ 	case SD_RES_SUCCESS:
+ 		return 0;
++	case SD_RES_INODE_INVALIDATED:
++		dprintf("inode object is invalidated\n");
+ 	case SD_RES_READONLY:
+-		if (need_reload)
+-			*need_reload = 1;
++		*need_reload = 1;
+ 		return 0;
+ 	default:
+ 		eprintf("%s (oid: %" PRIx64 ", old_oid: %" PRIx64 ")\n",
+@@ -705,10 +716,10 @@ static int read_write_object(struct sheepdog_access_info *ai, char *buf,
+ 
+ static int read_object(struct sheepdog_access_info *ai, char *buf,
+ 		       uint64_t oid, int copies,
+-		       unsigned int datalen, uint64_t offset)
++		       unsigned int datalen, uint64_t offset, int *need_reload)
+ {
+ 	return read_write_object(ai, buf, oid, copies, datalen, offset,
+-				 0, 0, 0, 0, NULL);
++				 0, 0, 0, 0, need_reload);
+ }
+ 
+ static int write_object(struct sheepdog_access_info *ai, char *buf,
+@@ -782,6 +793,29 @@ end:
+ 	return ret;
+ }
+ 
++static int is_refresh_required(struct sheepdog_access_info *ai)
++/*
++ * 0: refresh isn't required
++ * 1: refresh is required
++ */
++{
++	uint64_t first_oid = vid_to_data_oid(ai->inode.vdi_id, 0);
++	char dummy;
++	int need_reload_inode = 0;
++
++	/*
++	 * Check inode of this tgtd is invaldiated or not.
++	 * Reading which object isn't a problem. If the inode object is
++	 * invalidated, sheep returns SD_RES_INODE_INVALIDATED even if the
++	 * object doesn't exist. So we read the first one.
++	 */
++
++	read_object(ai, &dummy, first_oid, ai->inode.nr_copies, sizeof(dummy),
++		    0, &need_reload_inode);
++
++	return need_reload_inode;
++}
++
+ static int sd_io(struct sheepdog_access_info *ai, int write, char *buf, int len,
+ 		 uint64_t offset)
+ {
+@@ -790,19 +824,34 @@ static int sd_io(struct sheepdog_access_info *ai, int write, char *buf, int len,
+ 	unsigned long max =
+ 		(offset + len + (SD_DATA_OBJ_SIZE - 1)) / SD_DATA_OBJ_SIZE;
+ 	unsigned obj_offset = offset % SD_DATA_OBJ_SIZE;
+-	size_t size, rest = len;
++	size_t orig_size, size, rest = len;
+ 	int ret = 0, create = 0;
+ 	uint64_t oid, old_oid;
+ 	uint16_t flags = 0;
+ 	int need_update_inode = 0, need_reload_inode;
+ 	int nr_copies = ai->inode.nr_copies;
+ 
++	goto do_req;
++
++reload_in_read_path:
++	pthread_rwlock_unlock(&ai->inode_lock); /* unlock current read lock */
++
++	pthread_rwlock_wrlock(&ai->inode_lock);
++	ret = reload_inode(ai);
++	if (ret) {
++		eprintf("failed to reload in read path\n");
++		goto out;
++	}
++	pthread_rwlock_unlock(&ai->inode_lock);
++
++do_req:
+ 	if (write)
+ 		pthread_rwlock_wrlock(&ai->inode_lock);
+ 	else
+ 		pthread_rwlock_rdlock(&ai->inode_lock);
+ 
+ 	for (; idx < max; idx++) {
++		orig_size = size;
+ 		size = SD_DATA_OBJ_SIZE - obj_offset;
+ 		size = min_t(size_t, size, rest);
+ 
+@@ -858,13 +907,27 @@ retry:
+ 			}
+ 		} else {
+ 			if (!ai->inode.data_vdi_id[idx]) {
+-				memset(buf, 0, size);
+-				goto done;
++				int check = is_refresh_required(ai);
++				if (!check) {
++					memset(buf, 0, size);
++					goto done;
++				} else {
++					dprintf("reload in read path for not"\
++						" written area\n");
++					size = orig_size;
++					goto reload_in_read_path;
++				}
+ 			}
+ 
++			need_reload_inode = 0;
+ 			ret = read_object(ai, buf + (len - rest),
+ 					  oid, nr_copies, size,
+-					  obj_offset);
++					  obj_offset, &need_reload_inode);
++			if (need_reload_inode) {
++				dprintf("reload in ordinal read path\n");
++				size = orig_size;
++				goto reload_in_read_path;
++			}
+ 		}
+ 
+ 		if (ret) {
+@@ -905,6 +968,7 @@ static int find_vdi_name(struct sheepdog_access_info *ai, char *filename,
+ 		hdr.opcode = SD_OP_GET_VDI_INFO;
+ 	else
+ 		hdr.opcode = SD_OP_LOCK_VDI;
++	hdr.type = LOCK_TYPE_SHARED;
+ 
+ 	wlen = SD_MAX_VDI_LEN + SD_MAX_VDI_TAG_LEN;
+ 	hdr.proto_ver = SD_PROTO_VER;
+@@ -934,7 +998,7 @@ out:
+ 
+ static int sd_open(struct sheepdog_access_info *ai, char *filename, int flags)
+ {
+-	int ret = 0, i, len, fd;
++	int ret = 0, i, len, fd, need_reload = 0;
+ 	uint32_t vid = 0;
+ 	char *orig_filename;
+ 
+@@ -1094,7 +1158,7 @@ trans_to_expect_nothing:
+ 	ai->max_dirty_data_idx = 0;
+ 
+ 	ret = read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(vid),
+-			  0, SD_INODE_SIZE, 0);
++			  0, SD_INODE_SIZE, 0, &need_reload);
+ 	if (ret)
+ 		goto out;
+ 
+@@ -1116,6 +1180,7 @@ static void sd_close(struct sheepdog_access_info *ai)
+ 	memset(&hdr, 0, sizeof(hdr));
+ 
+ 	hdr.opcode = SD_OP_RELEASE_VDI;
++	hdr.type = LOCK_TYPE_SHARED;
+ 	hdr.vdi_id = ai->inode.vdi_id;
+ 
+ 	ret = do_req(ai, (struct sheepdog_req *)&hdr, NULL, &wlen, &rlen);
+@@ -1137,7 +1202,7 @@ static int create_branch(struct sheepdog_access_info *ai)
+ 	struct sheepdog_vdi_req hdr;
+ 	struct sheepdog_vdi_rsp *rsp = (struct sheepdog_vdi_rsp *)&hdr;
+ 	unsigned int wlen = 0, rlen;
+-	int ret;
++	int ret, need_reload = 0;
+ 
+ 	ret = pthread_rwlock_wrlock(&ai->inode_lock);
+ 	if (ret) {
+@@ -1181,7 +1246,7 @@ static int create_branch(struct sheepdog_access_info *ai)
+ 	}
+ 
+ 	ret = read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(rsp->vdi_id),
+-			  ai->inode.nr_copies, SD_INODE_SIZE, 0);
++			  ai->inode.nr_copies, SD_INODE_SIZE, 0, &need_reload);
+ 	if (ret) {
+ 		eprintf("reloading new inode object failed");
+ 		goto out;
+-- 
+1.8.3.2

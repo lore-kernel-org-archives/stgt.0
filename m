@@ -1,50 +1,48 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] sheepdog: support iSCSI multipath
-Date: Fri, 08 Aug 2014 12:37:20 +0900 (JST)
-Message-ID: <20140808.123720.1281009750676927443.fujita.tomonori@lab.ntt.co.jp>
-References: <1407374749-13610-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH] sheepdog: protocol update for revivng backward compatibility
+Date: Mon, 11 Aug 2014 14:48:39 +0900
+Message-ID: <1407736119-18601-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1407374749-13610-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:from:to:cc:subject:date:message-id;
+        bh=PiMwtuSRrsI+P2HfICil9+q7oaCZXO15PvK9c2cgiC4=;
+        b=DGgvppHweWvZpaw1kSeyFZcEsCwMqIzrzt1KQU9E0ndkNjvS4kuYPjZ4ho92y4Lkk7
+         OdKAtL2ZTidJ6mZoh4jdk0B27gExkJj66NwnUp4IMcuugmzIreKqZr1eS5cHkNbAGmF6
+         hDir1guHRkG0yYk9/MbSAowpAF0ZqwwXIA2ZAXVPF9vHmQVPDZ1t/RseysNOttg9rOB3
+         1eCwjHpC9F6Tfyn+eJwKaWQAFkYwAobcL4JzyNuHVXX04F+w/7Va/kiAnxygcRajTZH5
+         huO6X1r5r1TjYApv014BWFm78Vy6h78mm/SMAjMZLKWVKQYy8Yuk0a7YBa4E9W/ELP6D
+         ShqQ==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: mitake.hitoshi@lab.ntt.co.jp
-Cc: stgt@vger.kernel.org, mitake.hitoshi@gmail.com
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: mitake.hitoshi@gmail.com, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 
-On Thu,  7 Aug 2014 10:25:49 +0900
-Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp> wrote:
+This update is just for updating protocol of sheepdog. Recent
+discussion in the sheepdog community requires it.
 
-> This patch implements iSCSI multipath support in sheepdog backing
-> store driver. Below is a brief description of the feature:
-> 
-> The main problem of enabling iSCSI multipath for sheepdog's VDI is
-> keeping coherence of tgtd's internal inode data structure. Assume tgt
-> A and B have logical units which point same sheepdog VDI. After
-> initialization of the logical units, A and B have copies of inode
-> object in their address space (let's X denote this object). When an
-> initiator sends write request to A and the request causes COW, A
-> creates a new object and updates the inode object X (let's X' denote
-> the updated one).
-> 
-> After the update by A, A can die with hardware faults. In such a case,
-> the initiator detects a connection error and switch its target to B if
-> iSCSI multipath is configured correctly. But the problem can arise at
-> this point. Because B doesn't know the update caused by A and its
-> internal inode object is still X, not X'. B creates requests based on
-> X, so it can read obsolete data which is already hidden by X' or
-> update X' in wrong manner.
-> 
-> For solving the above problem, sheepdog implements inode object
-> coherence protocol which mocks MSI protocol of shared memory multicore
-> processors. With this mechanism sheepdog can prevent requests which
-> are based on obsolete inode objects. This patch let sheepdog driver of
-> tgtd adopt the coherence protocol.
-> 
-> Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-> ---
->  usr/bs_sheepdog.c | 97 ++++++++++++++++++++++++++++++++++++++++++++++---------
->  1 file changed, 81 insertions(+), 16 deletions(-)
+Singed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+---
+ usr/bs_sheepdog.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Applied, thanks.
+diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
+index ffc2519..bbbd392 100644
+--- a/usr/bs_sheepdog.c
++++ b/usr/bs_sheepdog.c
+@@ -171,8 +171,8 @@ struct sheepdog_obj_rsp {
+ 	uint32_t pad[6];
+ };
+ 
+-#define LOCK_TYPE_NORMAL 1
+-#define LOCK_TYPE_SHARED 2      /* for iSCSI multipath */
++#define LOCK_TYPE_NORMAL 0
++#define LOCK_TYPE_SHARED 1      /* for iSCSI multipath */
+ 
+ struct sheepdog_vdi_req {
+ 	uint8_t proto_ver;
+-- 
+1.8.3.2

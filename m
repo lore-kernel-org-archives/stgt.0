@@ -1,148 +1,48 @@
-From: Phillip Brown <phillip.brown.j@gmail.com>
-Subject: "tgtadm --mode system --show" doesn't show  global 'outgoing' users
- if there are no global incoming users
-Date: Fri, 15 Aug 2014 16:39:18 +1000
-Message-ID: <53EDAB16.7010505@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+Subject: [PATCH] Fix broken MMC emulation
+Date: Tue, 19 Aug 2014 20:00:08 -0700
+Message-ID: <1408503609-11688-1-git-send-email-ronniesahlberg@gmail.com>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:subject
-         :content-type:content-transfer-encoding;
-        bh=FOqLpogTEgQ+v97Oi8yxyKKoTtBEMitufmla/oXXFKc=;
-        b=RDs7ByJ9Gz10qVQLMIMdM62I9cO7hHqOAd5vtRZvzoiy4UnASi3OX6C4yn/GAJQ7R/
-         qc2k/Uu8tNgIvkiFitMlwaPoWZpJNiyOvReA/qRqm8Fh6wpKBIoaGM8ZJtwE9M0dE57Y
-         +ceukFKu39nYuHEKoaG8d593vKwRI/xTQhtBmjbJrQkyS11avvsIEfozvSuLN5pNLK9+
-         vRs35j9J7JKw8PxRSF5lsaAk6oBCWH7iyK2/GknqI06+2+5o0q5grYOPGJKuRb4bYde/
-         zCePBpZLA0A5EgU6Fhrotd8d6QBXl9VpiNBqT8Y8mbeI/DYmw0rxCp4TKdiyw30S8HW2
-         XjAA==
+        h=from:to:cc:subject:date:message-id;
+        bh=9wZvgfkz+BB1rnmIMfoUNfPE3adO9gkJ/ukFe5Kq7oQ=;
+        b=yBVrBE+Wyhn2cogNiMYVCwsohOxxkagSuQ8SzM5P/8OguhjZxDhQ0OUL4xbkRpmrV5
+         uGYWPnZHrqkRKH6M+OeIKEL0qoICWjLTT4NUoxi1TOnGDT82Tyq3gAiGeZIVI2LhpODd
+         OmyqmBUb9bJEF9Mj/3EZGUFum8l2ItVbP3Hq5YBeq7bJ/PdFbcNaIiFlyRVI6IFSMeXh
+         oPsJfg2gPxEofHIZE4GNDpVdrlpbFkBhQybNqK1DBJeUHA2o6a/YAR/utcl+7toqaBBQ
+         zxsX8n6CkYQcPRPOt7l+mqzdbTcRSDuZC//I4V3Z0mreykfBIYNHdY6C4L0zfiXOcDZR
+         AWKg==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
+Cc: fujita.tomonori@lab.ntt.co.jp, Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
-Note - I am not subscribed to the mailing list
+List, Tomo,
 
-Noticed that if there are 'outgoing' users but no 'incoming' users bound 
-at system level, then tgtadm --mode system --show does not show the 
-outgoing users. c.f. at target level where targets show outgoing users 
-even if there are no incoming users
+Please find a patch that repairs MMC.
 
-[root@filer3 init.d]# tgtadm --op show --mode sys
-System:
-        State: ready
-LLDs:
-        iser: error
-        iscsi: ready
-Backing stores:
-        rdwr (bsoflags sync:direct)
-        aio
-        ssc
-        null
-        bsg
-        sg
-Device types:
-        passthrough
-        tape
-        changer
-        controller
-        osd
-        cd/dvd
-        disk
-iSNS:
-        iSNS=Off
-        iSNSServerIP=
-        iSNSServerPort=3205
-        iSNSAccessControl=Off
-[root@filer3 init.d]# tgtadm --lld iscsi --mode account --op new --user 
-test --password testpass
-[root@filer3 init.d]# tgtadm --mode account --op bind --user test --outgoing
-[root@filer3 init.d]# tgtadm --mode sys --op show
-System:
-        State: ready
-LLDs:
-        iser: error
-        iscsi: ready
-Backing stores:
-        rdwr (bsoflags sync:direct)
-        aio
-        ssc
-        null
-        bsg
-        sg
-Device types:
-        passthrough
-        tape
-        changer
-        controller
-        osd
-        cd/dvd
-        disk
-iSNS: *   Account info for outg**oing user should be here*
-        iSNS=Off
-        iSNSServerIP=
-        iSNSServerPort=3205
-        iSNSAccessControl=Off
-[root@filer3 init.d]# tgtadm --mode account --op bind --user test
-[root@filer3 init.d]# tgtadm --mode sys --op show
-System:
-        State: ready
-LLDs:
-        iser: error
-        iscsi: ready
-Backing stores:
-        rdwr (bsoflags sync:direct)
-        aio
-        ssc
-        null
-        bsg
-        sg
-Device types:
-        passthrough
-        tape
-        changer
-        controller
-        osd
-        cd/dvd
-        disk
-Account information:
-        test
-        test (outgoing)
-iSNS:
-        iSNS=Off
-        iSNSServerIP=
-        iSNSServerPort=3205
-        iSNSAccessControl=Off
-[root@filer3 init.d]#
+MMC emulation has been broken for a while, and it saddens me that no one
+has complained since it means no one is using it :-(
 
 
-Problem seems to be with this 'if' statement in targets.c:system_show 
-function
+We need to add the MMC specific opcodes to the map of SUPPORTED_OPCODES we
+build for the MMC backend since we share this backend with SBC.
+Otherwise the target will return INVALID_OPCODE for some of the key
+opcodes needed for the medium discovery.
 
---------->> if (global_target.account.nr_inaccount) {
-                                int i, aid;
-                                concat_printf(b, _TAB1 "%s\n", "Account 
-information:\n");
-                                for (i = 0; i < 
-global_target.account.nr_inaccount; i++) {
-                                                aid = 
-global_target.account.in_aids[i];
-                                                concat_printf(b, _TAB1 
-"%s\n",
-            __account_lookup_id(aid)->user);
-                                }
-                                if (global_target.account.out_aid) {
-                                                aid = 
-global_target.account.out_aid;
-                                                concat_printf(b, _TAB1 
-"%s (outgoing)\n",
-            __account_lookup_id(aid)->user);
-                                }
-                }
+With this patch MMC emulation works again.
 
-Does there really need to be that test?
 
-regards
+Ronnie Sahlberg (1):
+  bs_rdwr.c: add missing MMC opcodes to the backing store defs
 
-Phillip Brown
+ usr/bs_rdwr.c |   10 ++++++++++
+ usr/scsi.h    |    9 +++++++++
+ 2 files changed, 19 insertions(+), 0 deletions(-)
+
+-- 
+1.7.3.1

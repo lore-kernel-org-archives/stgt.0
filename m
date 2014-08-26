@@ -1,78 +1,56 @@
 From: Wyllys Ingersoll <wyllys.ingersoll@keepertech.com>
-Subject: Re: poor rbd performance
-Date: Tue, 26 Aug 2014 14:23:15 -0400
-Message-ID: <CAGbvivLcjs2YcJShdvNSm-Je8+q52pgFmzxWUGm2dW4dABd+Og@mail.gmail.com>
-References: <CAGbvivLncZVGVROR1rEP_=_kRGK7pTBdD9siOXdYJkg-H+bPFw@mail.gmail.com>
-	<53F7C167.4010705@inktank.com>
-	<CAGbvivL4gNSZwOKbGvEQ=4oi5bwKm02hxrFQBvVDc-MCv1FTsA@mail.gmail.com>
-	<20140825.082506.1305564732068193901.fujita.tomonori@lab.ntt.co.jp>
-	<CAGbvivLfVUobJTwXSRX4q=4jC9iwkJtUvMRz8kZKGQaCHEY9Bg@mail.gmail.com>
+Subject: Re: poor rbd performance - more data
+Date: Tue, 26 Aug 2014 17:02:27 -0400
+Message-ID: <CAGbvivJ4JM-g14gMZFdLXT5mkPwzFN1x=w7SjrRtEfr-71nnvQ@mail.gmail.com>
 Mime-Version: 1.0
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <CAGbvivLfVUobJTwXSRX4q=4jC9iwkJtUvMRz8kZKGQaCHEY9Bg@mail.gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: Dan Mick <dan.mick@inktank.com>, stgt@vger.kernel.org
+To: stgt@vger.kernel.org
 
-I dont think using RBD AIO makes much difference.  The bs worker
-thread ultimately has to block until the backend request handler
-completes before it can put the cmd structure back in the queue  (see:
- bs_thread_worker_fn in bs.c).  If the request handler function in
-bs_rbd returns before the asynchronous call has actually completed,
-the data gets corrupted and it eventually crashes.
+I did some additional testing today comparing performance of
+open-iscsi + tgt/rbd vs tgt/ramdisk to verify where the performance
+bottleneck seems to occur.
 
-So, changing to using the rados aio functions didnt matter, but
-bumping up the nr_threads from 16 to 64 made a significant difference.
-On a multi-processor/multi-core system it might make sense to raise
-that value way up to maximize the request handling.
+With a simple RAM disk iscsi target, I could push up to about
+1GB/second for both read and write operations.  Running the same tests
+(using fio) against an RBD based iscsi target, I only could get up to
+about 400MB/sec for both read and write (write was slightly slower).
 
-On Sun, Aug 24, 2014 at 11:38 PM, Wyllys Ingersoll
-<wyllys.ingersoll@keepertech.com> wrote:
-> On Sun, Aug 24, 2014 at 7:25 PM, FUJITA Tomonori
-> <fujita.tomonori@lab.ntt.co.jp> wrote:
->> Hello,
->>
->> On Sat, 23 Aug 2014 09:46:37 -0400
->> Wyllys Ingersoll <wyllys.ingersoll@keepertech.com> wrote:
->>
->>> Hey Dan, its always good to hear from another former Sun eng.
->>>
->>> I saw your blog posts about the RBD backend and it seems to work as
->>> advertised.  I don't know if the rados aio calls will make it better
->>> or not.  I do know that it is possible to get better throughput using
->>> the standard IO functions (the ones you used) because all of the
->>> non-iSCSI tests we've done just use the standard rbd_read/rbd_write
->>> calls just like bs_rbd.  It might be an architectural limitation in
->>> tgtd, but I am not familiar enough with the tgtd code yet to know
->>> where to look for the bottlenecks.  I tried changing the timing
->>> interval in 'work.c' to be much shorter, but it didn't make a
->>> difference.  When I enabled some debug logging, I see that the maximum
->>> data size that the tgtd read or write operation handles is only
->>> 128Kb,
->>
->> You mean that the read/write size from iSCSI initiators is 128K? If
->> so, probably it's due to your configuration. tgt doesn't have such
->> limit. iSCSI has lots of negotiation parameters between an initiator
->> and a target, which affects the performance. You need to configure
->> both properly to get good performance.
->
->
->
-> I believe the initiator is from open-iSCSI.  I have tried changing
-> some settings but apparently haven't found the right ones that will
-> make a difference.
->
->
->
->>> Any suggestions for further ceph tuning or other areas in tgtd to look
->>> at for possible problems?
->>
->> I would suggest you to work on a simpler backend like bs_null to know
->> the best performance of tgt on your env. I think that the first step
->> is knowing where is the bottleneck.
->
->
-> Thanks, I'll take a look.
+Running yet another test with fio, using the rbd ioengine, I can
+generate 1GB/sec for reads and about 800MB/sec for writes.
+
+tgtd/ramdisk:   1GB/sec 1GB/sec (read/write)
+tgtd/rbd:       400MB/sec 388 MB/sec
+librados:     1GB/sec 800MB/sec
+
+All of these tests were against a tgtd with 512 threads.
+
+The fio job parameters are as follows, I only varied the ioengine, rw,
+and filename settings depending on what was being tested.
+
+[default]
+rw=randread
+size=10g
+bs=1m
+ioengine=libaio
+direct=1
+numjobs=1
+filename=/dev/sdb
+runtime=600
+write_bw_log=iscsiread
+iodepth=256
+iodepth_batch=256
+
+
+So, open-iscsi is certainly capable of better speed, and librados can
+get better speed, so the bottleneck appears to be either in tgtd or in
+the context switch between the iscsi initiator and tgtd.
+
+I wanted to share this with the devs here, I'll keep looking for other
+areas of improvement.
+
+thanks,
+   Wyllys

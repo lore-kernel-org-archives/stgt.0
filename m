@@ -1,27 +1,36 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: 1.0.50 released
-Date: Mon, 01 Sep 2014 23:34:21 +0900 (JST)
-Message-ID: <20140901.233421.1568838937885782090.fujita.tomonori@lab.ntt.co.jp>
+From: =?UTF-8?B?5bit5pm65YuH?= <xizhiyong18@163.com>
+Subject: attached devices exported by tgt not oprational
+Date: Tue, 2 Sep 2014 14:00:03 +0800 (CST)
+Message-ID: <4c901b0f.155f4.14834f2d962.Coremail.xizhiyong18@163.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=Date:From:Subject:MIME-Version:Message-ID; bh=1OPxf
+	z5/uqRIfpl9ALDTEwGWssZfeDFjHOZrnR08MwI=; b=SDFlX9Stw3yhqhDcyUKeU
+	a/t7HYs0CXXGfoTtGZRq3fZ98jNA/lF3QVWClkz95CM3K4MIyEw/e1EI7p2SgTzV
+	RNQeTUUiNJ8lapLxhN+6WOiKSkpJqLUlQMhMADffzUXxGccENuIM+b+XzAp+rdut
+	dE0sFlBLAxQKIeIxuoyPI0=
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: stgt@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+To: stgt@VGER.KERNEL.ORG
 
-Hello,
-
-Here's a new release.
-
-=
-FUJITA Tomonori (1):
-      tgt 1.0.50
-
-Hitoshi Mitake (2):
-      sheepdog: support iSCSI multipath
-      sheepdog: protocol update for revivng backward compatibility
-
-Ronnie Sahlberg (2):
-      MMC: add a dedicated backend for MMC so that supported-opcode map works
-      DOCS: add an example dvd jukebox script
+CndoZW4gacKgZXhwb3J0IG1hbnkgYmxvY2sgZGV2aWNlIGJ5IHRndCAsIGluIG9uZSBzaW5nbGUg
+dGFyZ2V0ICwgdGhpcyBtZWFucyBtYW55IGV4cG9ydGVkIGx1biBpbiBvbmUgdGFyZ2V0LCB0byBh
+bm90aGVyIAptYWNoaW5lIGJ5IGlzY3Np44CCIAoKaW4gYW5vdGhlciBtYWNoaW5lICwgYXR0YWNo
+IHRoZSBkZXZpY2VzIGJ5IG9wZW4taXNjc2njgIJ3aGVuIGkgd2FpdCB0aGUgCnNpemUgb2YgdGhl
+IGRldmljZSBhdHRhY2hlZCBjaGFuZ2UgZnJvbSAwIHRvIGNvcnJlY3Qgc2l6Ze+8jMKgaSBjcmVh
+dGUgcmFpZDEgd2l0aCB0d28gZGV2aWNlcyBieSBtZGFkbeOAgmF0IHRoaXMgdGltZSwgbWRhZG0g
+cmVwb3J0IGxpa2UgCiIvZGV2L3NkZW0gaXMgbm90IHN1aXRhYmxlIGZvciB0aGlzIGFycmF5LiIs
+IGkgcmVhZCB0aGUgY29kZSBvZiBtZGFkbSAsdGhhdCBiZWNhdXNlIGl0IGNhbm5vdCBvcGVuIHRo
+ZSBkZXZpY2XjgIJzb21ldGltZSBpdCBldmVuIHJlcG9ydCAKImZhaWxlZCB0byBvcGVuIC9kZXYv
+KiogYWZ0ZXIgZWFybGllciBzdWNjZXNzIC0gYWJvcnRpbmcgIuOAggoKaSBkbyBub3Qga25vdyB3
+aGV0aGVyIGl0J3MgYmVjYXVzZSBpIHVzZWQgdGhlIGRldmljZSB3aGVuIGl0J3Mgbm90IHJlYWR5
+IHlldCwgb3IgdGhlIHByb2JsZW0gb2YgdGd044CCCgphbGwgdGhlIGFib3ZlIHNhaWQgaGFwcGVu
+ZWQgd2hlbiBtYW55IHRhcmdldCBsdW4odGd0KSBjcmVhdGVkIGF0IHRoZSBzYW1lIAp0aW1lIGNv
+bmN1cnJlbnRseeOAgml0IGRvIG5vdCBoYXBwZW4gaW4gbm9tYWwgdGltZS4gd2hlbiBpIGNoYW5n
+ZSB0Z3QgdG8gaWV0LCBpdCAKZG8gbm90IGhhcHBlbiBlaXRoZXLjgIIKCsKgCgp0Z3QgdmVyc2lv
+bjogMS4wLjQ4CgpvcGVuLWlzY3NpIHZlcnNpb246aXNjc2lhZG0gdmVyc2lvbiAyLjAtODczIAoK
+bGludXggc3lzdGVtOiBMaW51eMKgIDMuMTAuNDAtYW1kNjTCoCBHTlUvTGludXggCgrCoAoKwqAK
+Ci0tLS0tLS0tLS0tLS0KClpoaXlvbmcgWGk=

@@ -1,36 +1,41 @@
-From: =?UTF-8?B?5bit5pm65YuH?= <xizhiyong18@163.com>
-Subject: attached devices exported by tgt not oprational
-Date: Tue, 2 Sep 2014 14:00:03 +0800 (CST)
-Message-ID: <4c901b0f.155f4.14834f2d962.Coremail.xizhiyong18@163.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+Subject: [PATCH] SMC fixes
+Date: Mon,  8 Sep 2014 19:53:08 -0700
+Message-ID: <1410231190-28735-1-git-send-email-ronniesahlberg@gmail.com>
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
-	s=s110527; h=Date:From:Subject:MIME-Version:Message-ID; bh=1OPxf
-	z5/uqRIfpl9ALDTEwGWssZfeDFjHOZrnR08MwI=; b=SDFlX9Stw3yhqhDcyUKeU
-	a/t7HYs0CXXGfoTtGZRq3fZ98jNA/lF3QVWClkz95CM3K4MIyEw/e1EI7p2SgTzV
-	RNQeTUUiNJ8lapLxhN+6WOiKSkpJqLUlQMhMADffzUXxGccENuIM+b+XzAp+rdut
-	dE0sFlBLAxQKIeIxuoyPI0=
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=from:to:cc:subject:date:message-id;
+        bh=p0OnV14abv9UJZ1M4RMQGjWxFs8GUAWz8mnWiggwcD0=;
+        b=zc4i3zNE9I6M855IrWeWNsx+SSP1CX0Z5O6TN78886g7oPSNKPjtWJWbFcaDckeRZD
+         hr4mDIfVlDcxUxGzeS6BYJqIKh2ShIN/tYkRILTJTDO1QNpWQs+JP1Q8mdYDNgI16WvD
+         vH4bp4SMdcoQZ091w5IF0JJAYyhuKqd+xTMjQqDgYWnwC0TAqtqLzVyUWCiAT0QL+JDF
+         f3xAocSyg2zStaL2MSdmPWS/KXeQ0lEooP+/WEJZx0uCCe9RDIibvR8fEfvVGza5Bl8u
+         j/h0a6M71RIDJeh7qAFEsnjCrXjYh02uq3/6sNhcydhlSSaaLFVGxV5n2dEhwtV+EP5S
+         hxUw==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: stgt@VGER.KERNEL.ORG
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org, fujita.tomonori@lab.ntt.co.jp
+Cc: Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
-CndoZW4gacKgZXhwb3J0IG1hbnkgYmxvY2sgZGV2aWNlIGJ5IHRndCAsIGluIG9uZSBzaW5nbGUg
-dGFyZ2V0ICwgdGhpcyBtZWFucyBtYW55IGV4cG9ydGVkIGx1biBpbiBvbmUgdGFyZ2V0LCB0byBh
-bm90aGVyIAptYWNoaW5lIGJ5IGlzY3Np44CCIAoKaW4gYW5vdGhlciBtYWNoaW5lICwgYXR0YWNo
-IHRoZSBkZXZpY2VzIGJ5IG9wZW4taXNjc2njgIJ3aGVuIGkgd2FpdCB0aGUgCnNpemUgb2YgdGhl
-IGRldmljZSBhdHRhY2hlZCBjaGFuZ2UgZnJvbSAwIHRvIGNvcnJlY3Qgc2l6Ze+8jMKgaSBjcmVh
-dGUgcmFpZDEgd2l0aCB0d28gZGV2aWNlcyBieSBtZGFkbeOAgmF0IHRoaXMgdGltZSwgbWRhZG0g
-cmVwb3J0IGxpa2UgCiIvZGV2L3NkZW0gaXMgbm90IHN1aXRhYmxlIGZvciB0aGlzIGFycmF5LiIs
-IGkgcmVhZCB0aGUgY29kZSBvZiBtZGFkbSAsdGhhdCBiZWNhdXNlIGl0IGNhbm5vdCBvcGVuIHRo
-ZSBkZXZpY2XjgIJzb21ldGltZSBpdCBldmVuIHJlcG9ydCAKImZhaWxlZCB0byBvcGVuIC9kZXYv
-KiogYWZ0ZXIgZWFybGllciBzdWNjZXNzIC0gYWJvcnRpbmcgIuOAggoKaSBkbyBub3Qga25vdyB3
-aGV0aGVyIGl0J3MgYmVjYXVzZSBpIHVzZWQgdGhlIGRldmljZSB3aGVuIGl0J3Mgbm90IHJlYWR5
-IHlldCwgb3IgdGhlIHByb2JsZW0gb2YgdGd044CCCgphbGwgdGhlIGFib3ZlIHNhaWQgaGFwcGVu
-ZWQgd2hlbiBtYW55IHRhcmdldCBsdW4odGd0KSBjcmVhdGVkIGF0IHRoZSBzYW1lIAp0aW1lIGNv
-bmN1cnJlbnRseeOAgml0IGRvIG5vdCBoYXBwZW4gaW4gbm9tYWwgdGltZS4gd2hlbiBpIGNoYW5n
-ZSB0Z3QgdG8gaWV0LCBpdCAKZG8gbm90IGhhcHBlbiBlaXRoZXLjgIIKCsKgCgp0Z3QgdmVyc2lv
-bjogMS4wLjQ4CgpvcGVuLWlzY3NpIHZlcnNpb246aXNjc2lhZG0gdmVyc2lvbiAyLjAtODczIAoK
-bGludXggc3lzdGVtOiBMaW51eMKgIDMuMTAuNDAtYW1kNjTCoCBHTlUvTGludXggCgrCoAoKwqAK
-Ci0tLS0tLS0tLS0tLS0KClpoaXlvbmcgWGk=
+List, Tomo,
+
+We need a proper whitelist for which opcodes are valid for SMC devices.
+The following patch adds a trivial backing store template for smc with
+a corresponding opcode whitelist. With this patch we can access the smc
+device with mtx again.
+
+
+Ronnie Sahlberg (1):
+  SMC: add a smc backend template with an opcode whitelist
+
+ usr/bs_rdwr.c |   33 +++++++++++++++++++++++++++++++++
+ usr/scsi.h    |    1 +
+ usr/smc.c     |    9 +++++++++
+ 3 files changed, 43 insertions(+), 0 deletions(-)
+
+-- 
+1.7.3.1

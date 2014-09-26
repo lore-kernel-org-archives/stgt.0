@@ -1,399 +1,302 @@
-From: ronnie sahlberg <ronniesahlberg@gmail.com>
-Subject: Re: Reply:Fw:Reply:Reply:Re: attached devices exported by tgt not oprational
-Date: Tue, 23 Sep 2014 12:48:00 -0700
-Message-ID: <CAN05THSp7Dum6qOKHbxFJvFDMHTN9yJ6E58GGN+16dUvjoXNWA@mail.gmail.com>
+From: =?GBK?B?z6/Wx9PC?= <xizhiyong18@163.com>
+Subject: Reply:Re: Reply:Fw:Reply:Reply:Re: attached devices exported by tgt
+ not oprational
+Date: Fri, 26 Sep 2014 11:46:34 +0800 (CST)
+Message-ID: <57893a04.1505d.148b0114198.Coremail.xizhiyong18@163.com>
 References: <3616009.10224.1489d510c3b.Coremail.xizhiyong18@163.com>
-	<365c29a9.b193.148a1a32a70.Coremail.xizhiyong18@163.com>
+ <365c29a9.b193.148a1a32a70.Coremail.xizhiyong18@163.com>
+ <CAN05THSp7Dum6qOKHbxFJvFDMHTN9yJ6E58GGN+16dUvjoXNWA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=ksu1zyFasWYUYI2ExhLh59Ac/PTY0Cyn1hH6iWNQ3XE=;
-        b=tvALuEBoQt4JKuJNkRIedUlanKZlKex4t8ljW/XuEZRaPCC5FxJCCOVgQqsF5P/4HV
-         VEjIfBeYL1WeK5p82nboVqLdaYQlMw3W6J7zq0rPl7Ume7O1acXg/X8hvsK2NsCQ7B+3
-         2lfZrHGAYAop70aXnb94wlNpVwxLq7/BUe0T/C75Z2R7IBcfMK+A/bdFPE844MHmCTIT
-         cfy7DBDkygIsTptVnu2xTlgSPPR1R98r8I+W1mhKMwun4CzXC3j1yUoGSEUZnFwjpgXC
-         xrY5xY4wpIwQA2XDXkjEjnkyxAfb8WM0hMOftup5/PifduovpYxmbqaKrxv/alkdmnmp
-         2mTw==
-In-Reply-To: <365c29a9.b193.148a1a32a70.Coremail.xizhiyong18@163.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=Date:From:Subject:MIME-Version:Message-ID; bh=wB6Id
+	j/IHTo1PNFTNGrGHySw5JeDqoV/9gBr8GyhOZg=; b=gkkW4nzzqCqQ1o023aLKO
+	ttpnMmPeGvlCoJC6BwDb/GIF8fSfMgWB4eZKHmXuWk1ya66kRdVYmbpTuh8afYzL
+	Eo6bixmxdXJQK4QWNfZ+sq84y+PkFIAbHXRTnhuS3uapEpaHUEcioKLDlIg2fY97
+	j9+C74IZql+9si5g+OEfmU=
+In-Reply-To: <CAN05THSp7Dum6qOKHbxFJvFDMHTN9yJ6E58GGN+16dUvjoXNWA@mail.gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: =?UTF-8?B?5bit5pm65YuH?= <xizhiyong18@163.com>
+Content-Type: text/plain; charset="euc-tw"
+To: ronnie sahlberg <ronniesahlberg@gmail.com>
 Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, stgt <stgt@vger.kernel.org>
 
-On Tue, Sep 23, 2014 at 1:31 AM, =E5=B8=AD=E6=99=BA=E5=8B=87 <xizhiyong=
-18@163.com> wrote:
->
-> in tgt, i found that, when a lun is created or destroyed, ASC_REPORTE=
-D_LUNS_DATA_HAS_CHANGED was add to I_T by
-> ua_sense_add(), except for command REPORT LUN,
-> in IET, i do not find the same program logic,
-> is this the reason why i met the problem when i using tgt, but not wh=
-en IET=EF=BC=9F
-
-
-That is very likely and probably why you see this.
-It is odd that your initiator appears to temporarily drop the capacity
-to 0 on this
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.752462] sdd: detected=
- capacity change from 1073807360 to 0
-until it has re-issued a new READCAPACITY to re-learn the correct
-capacity again.
-
-I would have imagined that an initiator would have kept the old data
-until the point it could verify whether the device had actually
-changed or not.
-But maybe they have reason for this? But it sounds somewhat odd
-initiator behaviour.
-
-
-=46or device startup, when you start tgtd and there are ways to stop th=
-e
-initiator from being able to access any LUNs at all until you have
-finished setting up everything in TGTD.
-
-If you use tgtadm to set up the target and all the LUNs, then if you
-change your scripts so that you create all the LUNs and all the
-configuration before allowing any initiators to connect,
-then I think your initiators will not see these unit attentions.
-
-I.e. change the scripts to wait doing this line at the very end when
-LUN creation has finished :
-   # Allow ALL initiators to connect to this target
-   tgtadm --lld iscsi --mode target --op bind --tid 1 --initiator-addre=
-ss ALL
-
-
-I do not know the corresponding way to do this with tgt-admin since I
-never use that tool :-(
-
-
-If this only happens when you start the tgt service and you use
-/etc/init.d/ scripts from your system, you can check in which order
-the script does these things.
-I never use the scripts that come from the distros so I don;t know the
-exact details in which order they do things.
-
-
-regards
-ronnie sahlberg
-
-
->
->
-> At 2014-09-22 20:23:27, "=E5=B8=AD=E6=99=BA=E5=8B=87" <xizhiyong18@16=
-3.com> wrote:
->>may you give some advise to me about the problem report by me.
->>
->>-------- Forwarding messages --------
->>From: "=E5=B8=AD=E6=99=BA=E5=8B=87" &lt;xizhiyong18@163.com&gt;
->>Date: 2014-09-22 03:29:51
->>To:  "=E5=B8=AD=E6=99=BA=E5=8B=87" &lt;xizhiyong18@163.com&gt;
->>Cc:  "ronnie sahlberg" &lt;ronniesahlberg@gmail.com&gt;,stgt@vger.ker=
-nel.org
->>Subject: Reply:Reply:Re: attached devices exported by tgt not opratio=
-nal
->>from the syslog of the initiator side, it seams the sd_revalide_disk =
-was trigged more
->>than once, and it succeed first time, when logged  "sd 7:0:0:4: [sdf]=
- Attached SCSI disk",
->>i don't when and where the sd_revalidate was called again, and it fai=
-led when send SCSI
->>command TEST_UNIT_READ and RRAD_CAPACITY.
->>
->>
->>
->>At 2014-09-11 11:35:57, "=E5=B8=AD=E6=99=BA=E5=8B=87" <xizhiyong18@16=
-3.com> wrote:
->>>first of all, thanks for your reply.
->>>in my program, it will use 128 LUNS at the most each target, so LUNS=
- id will
->>>not outnumber 255.
->>>
->>>here is some syslog when the problem occur. you can search [sdf] to =
-find some
->>>info, like "[sdf] READ CAPACITY(16) failed" or "[sdf] Unit Not Ready=
-", and "sdf: detected capacity change from 9664266240 to 0",
->>>"Sense Key : Illegal Request [current]", "Add. Sense: Logical unit n=
-ot supported"
->>>--------------------------------------------------------------------=
-----------------------
->>>
->>>#:~/tgt_debug$ cat syslog |grep -C 1 -e "sdf\|sd 7:0:0:4"
->>>
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.426520] sd 7:0:0:4: [=
-sdf] 18875520 512-byte logical blocks: (9.66 GB/9.00 GiB)
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.426629] sd 7:0:0:3: [=
-sdd] Write cache: enabled, read cache: enabled, doesn't support DPO or =
-=46UA
->>>--
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.427236] sd 7:0:0:5: A=
-ttached scsi generic sg12 type 0
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.427409] sd 7:0:0:4: [=
-sdf] Write Protect is off
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.427414] sd 7:0:0:4: [=
-sdf] Mode Sense: 69 00 00 08
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.427545] sd 7:0:0:5: [=
-sdg] 2097280 512-byte logical blocks: (1.07 GB/1.00 GiB)
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.427875] sd 7:0:0:4: [=
-sdf] Write cache: enabled, read cache: enabled, doesn't support DPO or =
-=46UA
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.427926] scsi 7:0:0:7:=
- Direct-Access     IET      VIRTUAL-DISK     0001 PQ: 0 ANSI: 5
->>>--
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.443681] sd 7:0:0:5: [=
-sdg] Attached SCSI disk
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.458714]  sdf: unknown=
- partition table
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.460786] sd 7:0:0:4: [=
-sdf] Attached SCSI disk
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.476316]  sdh: unknown=
- partition table
->>>--
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.701790] Add. Sense: R=
-eported luns data has changed
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.703810] sd 7:0:0:4: [=
-sdf] Unit Not Ready
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.703814] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.703815] Sense Key : U=
-nit Attention [current]
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.703818] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:25 10-120-120-35 kernel: [1144399.703821] Add. Sense: R=
-eported luns data has changed
->>>--
->>>Aug 26 16:02:26 10-120-120-35 kernel: [1144400.336478] Add. Sense: R=
-eported luns data has changed
->>>Aug 26 16:02:26 10-120-120-35 kernel: [1144400.338547] sd 7:0:0:4: [=
-sdf] Unit Not Ready
->>>Aug 26 16:02:26 10-120-120-35 kernel: [1144400.338552] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:26 10-120-120-35 kernel: [1144400.338554] Sense Key : U=
-nit Attention [current]
->>>Aug 26 16:02:26 10-120-120-35 kernel: [1144400.338558] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:26 10-120-120-35 kernel: [1144400.338561] Add. Sense: R=
-eported luns data has changed
->>>--
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.752462] sdd: detected=
- capacity change from 1073807360 to 0
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.752987] sd 7:0:0:4: [=
-sdf] Unit Not Ready
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.752990] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.752991] Sense Key : U=
-nit Attention [current]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.752994] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.752997] Add. Sense: R=
-eported luns data has changed
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753254] sd 7:0:0:4: W=
-arning! Received an indication that the LUN assignments on this target =
-have changed. The Linux SCSI layer does not automatically remap LUN ass=
-ignments.
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753472] sd 7:0:0:4: W=
-arning! Received an indication that the LUN assignments on this target =
-have changed. The Linux SCSI layer does not automatically remap LUN ass=
-ignments.
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753655] sd 7:0:0:4: W=
-arning! Received an indication that the LUN assignments on this target =
-have changed. The Linux SCSI layer does not automatically remap LUN ass=
-ignments.
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753666] sd 7:0:0:4: [=
-sdf] READ CAPACITY(16) failed
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753672] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753674] Result: hostb=
-yte=3DDID_OK driverbyte=3DDRIVER_SENSE
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753676] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753677] Sense Key : U=
-nit Attention [current]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753680] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753682] Add. Sense: R=
-eported luns data has changed
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.753883] sd 7:0:0:4: W=
-arning! Received an indication that the LUN assignments on this target =
-have changed. The Linux SCSI layer does not automatically remap LUN ass=
-ignments.
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754075] sd 7:0:0:4: W=
-arning! Received an indication that the LUN assignments on this target =
-have changed. The Linux SCSI layer does not automatically remap LUN ass=
-ignments.
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754275] sd 7:0:0:4: W=
-arning! Received an indication that the LUN assignments on this target =
-have changed. The Linux SCSI layer does not automatically remap LUN ass=
-ignments.
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754286] sd 7:0:0:4: [=
-sdf] READ CAPACITY failed
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754291] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754292] Result: hostb=
-yte=3DDID_OK driverbyte=3DDRIVER_SENSE
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754295] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754296] Sense Key : U=
-nit Attention [current]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754299] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.754301] Add. Sense: R=
-eported luns data has changed
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.756150] sdf: detected=
- capacity change from 9664266240 to 0
->>>Aug 26 16:02:28 10-120-120-35 kernel: [1144402.756639] sd 7:0:0:5: [=
-sdg] Unit Not Ready
->>>--
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144402.925588] scsi 3:0:0:21=
-: Direct-Access     IET      VIRTUAL-DISK     0001 PQ: 0 ANSI: 5
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144402.925959] sd 7:0:0:4: [=
-sdf] 18875520 512-byte logical blocks: (9.66 GB/9.00 GiB)
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144402.926000] sd 3:0:0:21: =
-Attached scsi generic sg59 type 0
->>>--
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144402.927749] sd 3:0:0:22: =
-[sdbc] 18875520 512-byte logical blocks: (9.66 GB/9.00 GiB)
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144402.927762] sdf: detected=
- capacity change from 0 to 9664266240
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144402.927843] scsi 3:0:0:23=
-: Direct-Access     IET      VIRTUAL-DISK     0001 PQ: 0 ANSI: 5
->>>--
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.191743] Add. Sense: R=
-eported luns data has changed
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.195776] sd 7:0:0:4: [=
-sdf] Unit Not Ready
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.195779] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.195780] Sense Key : U=
-nit Attention [current]
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.195784] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.195786] Add. Sense: R=
-eported luns data has changed
->>>--
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.592427] sd 7:0:0:39: =
-[sdbx] Mode Sense: 69 00 00 08
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.592809] sd 7:0:0:40: =
-Attached scsi generic sg82 type 0
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.594486] sd 7:0:0:39: =
-[sdbx] Write cache: enabled, read cache: enabled, doesn't support DPO o=
-r FUA
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.594696] sd 7:0:0:40: =
-[sdby] 18875520 512-byte logical blocks: (9.66 GB/9.00 GiB)
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.595825] sd 7:0:0:40: =
-[sdby] Write Protect is off
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.595831] sd 7:0:0:40: =
-[sdby] Mode Sense: 69 00 00 08
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.596261] sd 7:0:0:40: =
-[sdby] Write cache: enabled, read cache: enabled, doesn't support DPO o=
-r FUA
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.605687]  sdbx: unknow=
-n partition table
->>>--
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.610455] sd 7:0:0:39: =
-[sdbx] Attached SCSI disk
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.613057] sd 7:0:0:40: =
-[sdby] Attached SCSI disk
->>>Aug 26 16:02:29 10-120-120-35 kernel: [1144403.617631] sd 3:0:0:13: =
-[sdaf] Warning! Received an indication that the LUN assignments on this=
- target have changed. The Linux SCSI layer does not automatically remap=
- LUN assignments.
->>>--
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.432518]  md113: unkno=
-wn partition table
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.662356] sd 7:0:0:4: [=
-sdf] Synchronizing SCSI cache
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.663163] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.663167] Result: hostb=
-yte=3DDID_OK driverbyte=3DDRIVER_SENSE
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.663170] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.663172] Sense Key : I=
-llegal Request [current]
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.663175] sd 7:0:0:4: [=
-sdf]
->>>Aug 26 16:02:33 10-120-120-35 kernel: [1144407.663178] Add. Sense: L=
-ogical unit not supported
->>>
->>>
->>>At 2014-09-11 02:21:59, "ronnie sahlberg" <ronniesahlberg@gmail.com>=
- wrote:
->>>>When  you say "many devices" exactly how many are you referring to?
->>>>Can you check if this problem you have only occur when you go from =
-255
->>>>LUNs to something higher?
->>>>
->>>>
->>>>The default LUN addressing scheme only allows LUNs numbered 0 to 25=
-5.
->>>>To go to higher LUN numbers, which TGTD supports, doe require that =
-you
->>>>switch to a different addressing format
->>>>and it may be that your initiator can not handle those other modes.
->>>>
->>>>Often it might look like you have LUNs 0-255 and then there is a ju=
-mp
->>>>to the next LUN which has the number 16640 if the initiator can not
->>>>handle addressing modes properly.
->>>>
->>>>
->>>>I do not know how IET does the LUN numbering.
->>>>
->>>>If you can collect a wireshark trace of iscsiadm --login  from both
->>>>STGT and IET then I can take a quick look and see if that is the is=
-sue
->>>>you are facing.
->>>>
->>>>
->>>>
->>>>regards
->>>>ronnie sahlberg
->>>>
->>>>
->>>>On Mon, Sep 1, 2014 at 11:00 PM, =E5=B8=AD=E6=99=BA=E5=8B=87 <xizhi=
-yong18@163.com> wrote:
->>>>>
->>>>> when i export many block device by tgt , in one single target , t=
-his means many exported lun in one target, to another
->>>>> machine by iscsi=E3=80=82
->>>>>
->>>>> in another machine , attach the devices by open-iscsi=E3=80=82whe=
-n i wait the
->>>>> size of the device attached change from 0 to correct size=EF=BC=8C=
- i create raid1 with two devices by mdadm=E3=80=82at this time, mdadm r=
-eport like
->>>>> "/dev/sdem is not suitable for this array.", i read the code of m=
-dadm ,that because it cannot open the device=E3=80=82sometime it even r=
-eport
->>>>> "failed to open /dev/** after earlier success - aborting "=E3=80=82
->>>>>
->>>>> i do not know whether it's because i used the device when it's no=
-t ready yet, or the problem of tgt=E3=80=82
->>>>>
->>>>> all the above said happened when many target lun(tgt) created at =
-the same
->>>>> time concurrently=E3=80=82it do not happen in nomal time. when i =
-change tgt to iet, it
->>>>> do not happen either=E3=80=82
->>>>>
->>>>>
->>>>>
->>>>> tgt version: 1.0.48
->>>>>
->>>>> open-iscsi version:iscsiadm version 2.0-873
->>>>>
->>>>> linux system: Linux  3.10.40-amd64  GNU/Linux
->>>>>
->>>>>
->>>>>
->>>>>
->>>>>
->>>>> -------------
->>>>>
->>>>> Zhiyong Xi
+ClRoYW5rcyBmb3IgeW91ciBhZHZpc2UgZmlyc3QuCmkgdGhpbmsgdGhlIHJlYXNvbiB3aHkgdGhl
+IGF0dGFjaGVkIGRldmljZScgY2FwYWNpdHkgZHJvcCB0byAwIGlzOgp0aGUgUkVTRF9DQVBDSVRZ
+IGNvbW1hbmQgZmFpbGVkIGJlY2F1c2UgdGhlIEFTQ19SRVBPUlRFRF9MVU5TX0RBVEFfSEFTX0NI
+QU5HRUQgc2Vuc2UgY29kZS4gCmp1c3QgbGlrZSB0aGUgcmVhc29uIHdoeSBURVNUX1VOSVRfUkVB
+RFkgZmFpbGVkLiAodGhleSBib3RoIGNhbGxlZCBpbiBzZF9yZWF2YWxpZGF0ZV9kaXNrKS4KCndo
+YXQgaSB3YW50IGtub3cgaXMsIHRoZSBkaWZmZXJlbmNlIGJldHdlZW4gSUVUIGFuZCBUR1QgYWJv
+dXQgdGhlIEFTQ19SRVBPUlRFRF9MVU5TX0RBVEFfSEFTX0NIQU5HRUQsIGFzIHdoYXQgaQptZW50
+aW9uZWQgOgo+Pj4+IGluIHRndCwgaSBmb3VuZCB0aGF0LCB3aGVuIGEgbHVuIGlzIGNyZWF0ZWQg
+b3IgZGVzdHJveWVkLCBBU0NfUkVQT1JURURfTFVOU19EQVRBX0hBU19DSEFOR0VEIHdhcyBhZGQg
+dG8gSV9UIGJ5Cj4+Pj4gdWFfc2Vuc2VfYWRkKCksIGV4Y2VwdCBmb3IgY29tbWFuZCBSRVBPUlQg
+TFVOLAo+Pj4+IGluIElFVCwgaSBkbyBub3QgZmluZCB0aGUgc2FtZSBwcm9ncmFtIGxvZ2ljLAoK
+Y2FuIHUgb3Igc29tZW9uZSBnaXZlIG1lIHNvbWUgaGludC4KCgpBdCAyMDE0LTA5LTI0IDAzOjQ4
+OjAwLCAicm9ubmllIHNhaGxiZXJnIiA8cm9ubmllc2FobGJlcmdAZ21haWwuY29tPiB3cm90ZToK
+Pk9uIFR1ZSwgU2VwIDIzLCAyMDE0IGF0IDE6MzEgQU0sIM+v1sfTwiA8eGl6aGl5b25nMThAMTYz
+LmNvbT4gd3JvdGU6Cj4+Cj4+IGluIHRndCwgaSBmb3VuZCB0aGF0LCB3aGVuIGEgbHVuIGlzIGNy
+ZWF0ZWQgb3IgZGVzdHJveWVkLCBBU0NfUkVQT1JURURfTFVOU19EQVRBX0hBU19DSEFOR0VEIHdh
+cyBhZGQgdG8gSV9UIGJ5Cj4+IHVhX3NlbnNlX2FkZCgpLCBleGNlcHQgZm9yIGNvbW1hbmQgUkVQ
+T1JUIExVTiwKPj4gaW4gSUVULCBpIGRvIG5vdCBmaW5kIHRoZSBzYW1lIHByb2dyYW0gbG9naWMs
+Cj4+IGlzIHRoaXMgdGhlIHJlYXNvbiB3aHkgaSBtZXQgdGhlIHByb2JsZW0gd2hlbiBpIHVzaW5n
+IHRndCwgYnV0IG5vdCB3aGVuIElFVKO/Cj4KPgo+VGhhdCBpcyB2ZXJ5IGxpa2VseSBhbmQgcHJv
+YmFibHkgd2h5IHlvdSBzZWUgdGhpcy4KPkl0IGlzIG9kZCB0aGF0IHlvdXIgaW5pdGlhdG9yIGFw
+cGVhcnMgdG8gdGVtcG9yYXJpbHkgZHJvcCB0aGUgY2FwYWNpdHkKPnRvIDAgb24gdGhpcwo+Pj4+
+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43NTI0NjJdIHNk
+ZDogZGV0ZWN0ZWQgY2FwYWNpdHkgY2hhbmdlIGZyb20gMTA3MzgwNzM2MCB0byAwCj51bnRpbCBp
+dCBoYXMgcmUtaXNzdWVkIGEgbmV3IFJFQURDQVBBQ0lUWSB0byByZS1sZWFybiB0aGUgY29ycmVj
+dAo+Y2FwYWNpdHkgYWdhaW4uCj4KPkkgd291bGQgaGF2ZSBpbWFnaW5lZCB0aGF0IGFuIGluaXRp
+YXRvciB3b3VsZCBoYXZlIGtlcHQgdGhlIG9sZCBkYXRhCj51bnRpbCB0aGUgcG9pbnQgaXQgY291
+bGQgdmVyaWZ5IHdoZXRoZXIgdGhlIGRldmljZSBoYWQgYWN0dWFsbHkKPmNoYW5nZWQgb3Igbm90
+Lgo+QnV0IG1heWJlIHRoZXkgaGF2ZSByZWFzb24gZm9yIHRoaXM/IEJ1dCBpdCBzb3VuZHMgc29t
+ZXdoYXQgb2RkCj5pbml0aWF0b3IgYmVoYXZpb3VyLgo+Cj4KPkZvciBkZXZpY2Ugc3RhcnR1cCwg
+d2hlbiB5b3Ugc3RhcnQgdGd0ZCBhbmQgdGhlcmUgYXJlIHdheXMgdG8gc3RvcCB0aGUKPmluaXRp
+YXRvciBmcm9tIGJlaW5nIGFibGUgdG8gYWNjZXNzIGFueSBMVU5zIGF0IGFsbCB1bnRpbCB5b3Ug
+aGF2ZQo+ZmluaXNoZWQgc2V0dGluZyB1cCBldmVyeXRoaW5nIGluIFRHVEQuCj4KPklmIHlvdSB1
+c2UgdGd0YWRtIHRvIHNldCB1cCB0aGUgdGFyZ2V0IGFuZCBhbGwgdGhlIExVTnMsIHRoZW4gaWYg
+eW91Cj5jaGFuZ2UgeW91ciBzY3JpcHRzIHNvIHRoYXQgeW91IGNyZWF0ZSBhbGwgdGhlIExVTnMg
+YW5kIGFsbCB0aGUKPmNvbmZpZ3VyYXRpb24gYmVmb3JlIGFsbG93aW5nIGFueSBpbml0aWF0b3Jz
+IHRvIGNvbm5lY3QsCj50aGVuIEkgdGhpbmsgeW91ciBpbml0aWF0b3JzIHdpbGwgbm90IHNlZSB0
+aGVzZSB1bml0IGF0dGVudGlvbnMuCj4KPkkuZS4gY2hhbmdlIHRoZSBzY3JpcHRzIHRvIHdhaXQg
+ZG9pbmcgdGhpcyBsaW5lIGF0IHRoZSB2ZXJ5IGVuZCB3aGVuCj5MVU4gY3JlYXRpb24gaGFzIGZp
+bmlzaGVkIDoKPiAgICMgQWxsb3cgQUxMIGluaXRpYXRvcnMgdG8gY29ubmVjdCB0byB0aGlzIHRh
+cmdldAo+ICAgdGd0YWRtIC0tbGxkIGlzY3NpIC0tbW9kZSB0YXJnZXQgLS1vcCBiaW5kIC0tdGlk
+IDEgLS1pbml0aWF0b3ItYWRkcmVzcyBBTEwKPgo+Cj5JIGRvIG5vdCBrbm93IHRoZSBjb3JyZXNw
+b25kaW5nIHdheSB0byBkbyB0aGlzIHdpdGggdGd0LWFkbWluIHNpbmNlIEkKPm5ldmVyIHVzZSB0
+aGF0IHRvb2wgOi0oCj4KPgo+SWYgdGhpcyBvbmx5IGhhcHBlbnMgd2hlbiB5b3Ugc3RhcnQgdGhl
+IHRndCBzZXJ2aWNlIGFuZCB5b3UgdXNlCj4vZXRjL2luaXQuZC8gc2NyaXB0cyBmcm9tIHlvdXIg
+c3lzdGVtLCB5b3UgY2FuIGNoZWNrIGluIHdoaWNoIG9yZGVyCj50aGUgc2NyaXB0IGRvZXMgdGhl
+c2UgdGhpbmdzLgo+SSBuZXZlciB1c2UgdGhlIHNjcmlwdHMgdGhhdCBjb21lIGZyb20gdGhlIGRp
+c3Ryb3Mgc28gSSBkb247dCBrbm93IHRoZQo+ZXhhY3QgZGV0YWlscyBpbiB3aGljaCBvcmRlciB0
+aGV5IGRvIHRoaW5ncy4KPgo+Cj5yZWdhcmRzCj5yb25uaWUgc2FobGJlcmcKPgo+Cj4+Cj4+Cj4+
+IEF0IDIwMTQtMDktMjIgMjA6MjM6MjcsICLPr9bH08IiIDx4aXpoaXlvbmcxOEAxNjMuY29tPiB3
+cm90ZToKPj4+bWF5IHlvdSBnaXZlIHNvbWUgYWR2aXNlIHRvIG1lIGFib3V0IHRoZSBwcm9ibGVt
+IHJlcG9ydCBieSBtZS4KPj4+Cj4+Pi0tLS0tLS0tIEZvcndhcmRpbmcgbWVzc2FnZXMgLS0tLS0t
+LS0KPj4+RnJvbTogIs+v1sfTwiIgJmx0O3hpemhpeW9uZzE4QDE2My5jb20mZ3Q7Cj4+PkRhdGU6
+IDIwMTQtMDktMjIgMDM6Mjk6NTEKPj4+VG86ICAiz6/Wx9PCIiAmbHQ7eGl6aGl5b25nMThAMTYz
+LmNvbSZndDsKPj4+Q2M6ICAicm9ubmllIHNhaGxiZXJnIiAmbHQ7cm9ubmllc2FobGJlcmdAZ21h
+aWwuY29tJmd0OyxzdGd0QHZnZXIua2VybmVsLm9yZwo+Pj5TdWJqZWN0OiBSZXBseTpSZXBseTpS
+ZTogYXR0YWNoZWQgZGV2aWNlcyBleHBvcnRlZCBieSB0Z3Qgbm90IG9wcmF0aW9uYWwKPj4+ZnJv
+bSB0aGUgc3lzbG9nIG9mIHRoZSBpbml0aWF0b3Igc2lkZSwgaXQgc2VhbXMgdGhlIHNkX3JldmFs
+aWRlX2Rpc2sgd2FzIHRyaWdnZWQgbW9yZQo+Pj50aGFuIG9uY2UsIGFuZCBpdCBzdWNjZWVkIGZp
+cnN0IHRpbWUsIHdoZW4gbG9nZ2VkICAic2QgNzowOjA6NDogW3NkZl0gQXR0YWNoZWQgU0NTSSBk
+aXNrIiwKPj4+aSBkb24ndCB3aGVuIGFuZCB3aGVyZSB0aGUgc2RfcmV2YWxpZGF0ZSB3YXMgY2Fs
+bGVkIGFnYWluLCBhbmQgaXQgZmFpbGVkIHdoZW4gc2VuZCBTQ1NJCj4+PmNvbW1hbmQgVEVTVF9V
+TklUX1JFQUQgYW5kIFJSQURfQ0FQQUNJVFkuCj4+Pgo+Pj4KPj4+Cj4+PkF0IDIwMTQtMDktMTEg
+MTE6MzU6NTcsICLPr9bH08IiIDx4aXpoaXlvbmcxOEAxNjMuY29tPiB3cm90ZToKPj4+PmZpcnN0
+IG9mIGFsbCwgdGhhbmtzIGZvciB5b3VyIHJlcGx5Lgo+Pj4+aW4gbXkgcHJvZ3JhbSwgaXQgd2ls
+bCB1c2UgMTI4IExVTlMgYXQgdGhlIG1vc3QgZWFjaCB0YXJnZXQsIHNvIExVTlMgaWQgd2lsbAo+
+Pj4+bm90IG91dG51bWJlciAyNTUuCj4+Pj4KPj4+PmhlcmUgaXMgc29tZSBzeXNsb2cgd2hlbiB0
+aGUgcHJvYmxlbSBvY2N1ci4geW91IGNhbiBzZWFyY2ggW3NkZl0gdG8gZmluZCBzb21lCj4+Pj5p
+bmZvLCBsaWtlICJbc2RmXSBSRUFEIENBUEFDSVRZKDE2KSBmYWlsZWQiIG9yICJbc2RmXSBVbml0
+IE5vdCBSZWFkeSIsIGFuZCAic2RmOiBkZXRlY3RlZCBjYXBhY2l0eSBjaGFuZ2UgZnJvbSA5NjY0
+MjY2MjQwIHRvIDAiLAo+Pj4+IlNlbnNlIEtleSA6IElsbGVnYWwgUmVxdWVzdCBbY3VycmVudF0i
+LCAiQWRkLiBTZW5zZTogTG9naWNhbCB1bml0IG5vdCBzdXBwb3J0ZWQiCj4+Pj4tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KPj4+Pgo+Pj4+Izp+L3RndF9kZWJ1ZyQgY2F0IHN5c2xv
+ZyB8Z3JlcCAtQyAxIC1lICJzZGZcfHNkIDc6MDowOjQiCj4+Pj4KPj4+PkF1ZyAyNiAxNjowMjoy
+NSAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQzOTkuNDI2NTIwXSBzZCA3OjA6MDo0OiBbc2Rm
+XSAxODg3NTUyMCA1MTItYnl0ZSBsb2dpY2FsIGJsb2NrczogKDkuNjYgR0IvOS4wMCBHaUIpCj4+
+Pj5BdWcgMjYgMTY6MDI6MjUgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0Mzk5LjQyNjYyOV0g
+c2QgNzowOjA6MzogW3NkZF0gV3JpdGUgY2FjaGU6IGVuYWJsZWQsIHJlYWQgY2FjaGU6IGVuYWJs
+ZWQsIGRvZXNuJ3Qgc3VwcG9ydCBEUE8gb3IgRlVBCj4+Pj4tLQo+Pj4+QXVnIDI2IDE2OjAyOjI1
+IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDM5OS40MjcyMzZdIHNkIDc6MDowOjU6IEF0dGFj
+aGVkIHNjc2kgZ2VuZXJpYyBzZzEyIHR5cGUgMAo+Pj4+QXVnIDI2IDE2OjAyOjI1IDEwLTEyMC0x
+MjAtMzUga2VybmVsOiBbMTE0NDM5OS40Mjc0MDldIHNkIDc6MDowOjQ6IFtzZGZdIFdyaXRlIFBy
+b3RlY3QgaXMgb2ZmCj4+Pj5BdWcgMjYgMTY6MDI6MjUgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsx
+MTQ0Mzk5LjQyNzQxNF0gc2QgNzowOjA6NDogW3NkZl0gTW9kZSBTZW5zZTogNjkgMDAgMDAgMDgK
+Pj4+PkF1ZyAyNiAxNjowMjoyNSAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQzOTkuNDI3NTQ1
+XSBzZCA3OjA6MDo1OiBbc2RnXSAyMDk3MjgwIDUxMi1ieXRlIGxvZ2ljYWwgYmxvY2tzOiAoMS4w
+NyBHQi8xLjAwIEdpQikKPj4+PkF1ZyAyNiAxNjowMjoyNSAxMC0xMjAtMTIwLTM1IGtlcm5lbDog
+WzExNDQzOTkuNDI3ODc1XSBzZCA3OjA6MDo0OiBbc2RmXSBXcml0ZSBjYWNoZTogZW5hYmxlZCwg
+cmVhZCBjYWNoZTogZW5hYmxlZCwgZG9lc24ndCBzdXBwb3J0IERQTyBvciBGVUEKPj4+PkF1ZyAy
+NiAxNjowMjoyNSAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQzOTkuNDI3OTI2XSBzY3NpIDc6
+MDowOjc6IERpcmVjdC1BY2Nlc3MgICAgIElFVCAgICAgIFZJUlRVQUwtRElTSyAgICAgMDAwMSBQ
+UTogMCBBTlNJOiA1Cj4+Pj4tLQo+Pj4+QXVnIDI2IDE2OjAyOjI1IDEwLTEyMC0xMjAtMzUga2Vy
+bmVsOiBbMTE0NDM5OS40NDM2ODFdIHNkIDc6MDowOjU6IFtzZGddIEF0dGFjaGVkIFNDU0kgZGlz
+awo+Pj4+QXVnIDI2IDE2OjAyOjI1IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDM5OS40NTg3
+MTRdICBzZGY6IHVua25vd24gcGFydGl0aW9uIHRhYmxlCj4+Pj5BdWcgMjYgMTY6MDI6MjUgMTAt
+MTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0Mzk5LjQ2MDc4Nl0gc2QgNzowOjA6NDogW3NkZl0gQXR0
+YWNoZWQgU0NTSSBkaXNrCj4+Pj5BdWcgMjYgMTY6MDI6MjUgMTAtMTIwLTEyMC0zNSBrZXJuZWw6
+IFsxMTQ0Mzk5LjQ3NjMxNl0gIHNkaDogdW5rbm93biBwYXJ0aXRpb24gdGFibGUKPj4+Pi0tCj4+
+Pj5BdWcgMjYgMTY6MDI6MjUgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0Mzk5LjcwMTc5MF0g
+QWRkLiBTZW5zZTogUmVwb3J0ZWQgbHVucyBkYXRhIGhhcyBjaGFuZ2VkCj4+Pj5BdWcgMjYgMTY6
+MDI6MjUgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0Mzk5LjcwMzgxMF0gc2QgNzowOjA6NDog
+W3NkZl0gVW5pdCBOb3QgUmVhZHkKPj4+PkF1ZyAyNiAxNjowMjoyNSAxMC0xMjAtMTIwLTM1IGtl
+cm5lbDogWzExNDQzOTkuNzAzODE0XSBzZCA3OjA6MDo0OiBbc2RmXQo+Pj4+QXVnIDI2IDE2OjAy
+OjI1IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDM5OS43MDM4MTVdIFNlbnNlIEtleSA6IFVu
+aXQgQXR0ZW50aW9uIFtjdXJyZW50XQo+Pj4+QXVnIDI2IDE2OjAyOjI1IDEwLTEyMC0xMjAtMzUg
+a2VybmVsOiBbMTE0NDM5OS43MDM4MThdIHNkIDc6MDowOjQ6IFtzZGZdCj4+Pj5BdWcgMjYgMTY6
+MDI6MjUgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0Mzk5LjcwMzgyMV0gQWRkLiBTZW5zZTog
+UmVwb3J0ZWQgbHVucyBkYXRhIGhhcyBjaGFuZ2VkCj4+Pj4tLQo+Pj4+QXVnIDI2IDE2OjAyOjI2
+IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMC4zMzY0NzhdIEFkZC4gU2Vuc2U6IFJlcG9y
+dGVkIGx1bnMgZGF0YSBoYXMgY2hhbmdlZAo+Pj4+QXVnIDI2IDE2OjAyOjI2IDEwLTEyMC0xMjAt
+MzUga2VybmVsOiBbMTE0NDQwMC4zMzg1NDddIHNkIDc6MDowOjQ6IFtzZGZdIFVuaXQgTm90IFJl
+YWR5Cj4+Pj5BdWcgMjYgMTY6MDI6MjYgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAwLjMz
+ODU1Ml0gc2QgNzowOjA6NDogW3NkZl0KPj4+PkF1ZyAyNiAxNjowMjoyNiAxMC0xMjAtMTIwLTM1
+IGtlcm5lbDogWzExNDQ0MDAuMzM4NTU0XSBTZW5zZSBLZXkgOiBVbml0IEF0dGVudGlvbiBbY3Vy
+cmVudF0KPj4+PkF1ZyAyNiAxNjowMjoyNiAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDAu
+MzM4NTU4XSBzZCA3OjA6MDo0OiBbc2RmXQo+Pj4+QXVnIDI2IDE2OjAyOjI2IDEwLTEyMC0xMjAt
+MzUga2VybmVsOiBbMTE0NDQwMC4zMzg1NjFdIEFkZC4gU2Vuc2U6IFJlcG9ydGVkIGx1bnMgZGF0
+YSBoYXMgY2hhbmdlZAo+Pj4+LS0KPj4+PkF1ZyAyNiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtl
+cm5lbDogWzExNDQ0MDIuNzUyNDYyXSBzZGQ6IGRldGVjdGVkIGNhcGFjaXR5IGNoYW5nZSBmcm9t
+IDEwNzM4MDczNjAgdG8gMAo+Pj4+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVs
+OiBbMTE0NDQwMi43NTI5ODddIHNkIDc6MDowOjQ6IFtzZGZdIFVuaXQgTm90IFJlYWR5Cj4+Pj5B
+dWcgMjYgMTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjc1Mjk5MF0gc2Qg
+NzowOjA6NDogW3NkZl0KPj4+PkF1ZyAyNiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtlcm5lbDog
+WzExNDQ0MDIuNzUyOTkxXSBTZW5zZSBLZXkgOiBVbml0IEF0dGVudGlvbiBbY3VycmVudF0KPj4+
+PkF1ZyAyNiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuNzUyOTk0XSBz
+ZCA3OjA6MDo0OiBbc2RmXQo+Pj4+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVs
+OiBbMTE0NDQwMi43NTI5OTddIEFkZC4gU2Vuc2U6IFJlcG9ydGVkIGx1bnMgZGF0YSBoYXMgY2hh
+bmdlZAo+Pj4+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43
+NTMyNTRdIHNkIDc6MDowOjQ6IFdhcm5pbmchIFJlY2VpdmVkIGFuIGluZGljYXRpb24gdGhhdCB0
+aGUgTFVOIGFzc2lnbm1lbnRzIG9uIHRoaXMgdGFyZ2V0IGhhdmUgY2hhbmdlZC4gVGhlIExpbnV4
+IFNDU0kgbGF5ZXIgZG9lcyBub3QgYXV0b21hdGljYWxseSByZW1hcCBMVU4gYXNzaWdubWVudHMu
+Cj4+Pj5BdWcgMjYgMTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjc1MzQ3
+Ml0gc2QgNzowOjA6NDogV2FybmluZyEgUmVjZWl2ZWQgYW4gaW5kaWNhdGlvbiB0aGF0IHRoZSBM
+VU4gYXNzaWdubWVudHMgb24gdGhpcyB0YXJnZXQgaGF2ZSBjaGFuZ2VkLiBUaGUgTGludXggU0NT
+SSBsYXllciBkb2VzIG5vdCBhdXRvbWF0aWNhbGx5IHJlbWFwIExVTiBhc3NpZ25tZW50cy4KPj4+
+PkF1ZyAyNiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuNzUzNjU1XSBz
+ZCA3OjA6MDo0OiBXYXJuaW5nISBSZWNlaXZlZCBhbiBpbmRpY2F0aW9uIHRoYXQgdGhlIExVTiBh
+c3NpZ25tZW50cyBvbiB0aGlzIHRhcmdldCBoYXZlIGNoYW5nZWQuIFRoZSBMaW51eCBTQ1NJIGxh
+eWVyIGRvZXMgbm90IGF1dG9tYXRpY2FsbHkgcmVtYXAgTFVOIGFzc2lnbm1lbnRzLgo+Pj4+QXVn
+IDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43NTM2NjZdIHNkIDc6
+MDowOjQ6IFtzZGZdIFJFQUQgQ0FQQUNJVFkoMTYpIGZhaWxlZAo+Pj4+QXVnIDI2IDE2OjAyOjI4
+IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43NTM2NzJdIHNkIDc6MDowOjQ6IFtzZGZd
+Cj4+Pj5BdWcgMjYgMTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjc1MzY3
+NF0gUmVzdWx0OiBob3N0Ynl0ZT1ESURfT0sgZHJpdmVyYnl0ZT1EUklWRVJfU0VOU0UKPj4+PkF1
+ZyAyNiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuNzUzNjc2XSBzZCA3
+OjA6MDo0OiBbc2RmXQo+Pj4+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBb
+MTE0NDQwMi43NTM2NzddIFNlbnNlIEtleSA6IFVuaXQgQXR0ZW50aW9uIFtjdXJyZW50XQo+Pj4+
+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43NTM2ODBdIHNk
+IDc6MDowOjQ6IFtzZGZdCj4+Pj5BdWcgMjYgMTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6
+IFsxMTQ0NDAyLjc1MzY4Ml0gQWRkLiBTZW5zZTogUmVwb3J0ZWQgbHVucyBkYXRhIGhhcyBjaGFu
+Z2VkCj4+Pj5BdWcgMjYgMTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjc1
+Mzg4M10gc2QgNzowOjA6NDogV2FybmluZyEgUmVjZWl2ZWQgYW4gaW5kaWNhdGlvbiB0aGF0IHRo
+ZSBMVU4gYXNzaWdubWVudHMgb24gdGhpcyB0YXJnZXQgaGF2ZSBjaGFuZ2VkLiBUaGUgTGludXgg
+U0NTSSBsYXllciBkb2VzIG5vdCBhdXRvbWF0aWNhbGx5IHJlbWFwIExVTiBhc3NpZ25tZW50cy4K
+Pj4+PkF1ZyAyNiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuNzU0MDc1
+XSBzZCA3OjA6MDo0OiBXYXJuaW5nISBSZWNlaXZlZCBhbiBpbmRpY2F0aW9uIHRoYXQgdGhlIExV
+TiBhc3NpZ25tZW50cyBvbiB0aGlzIHRhcmdldCBoYXZlIGNoYW5nZWQuIFRoZSBMaW51eCBTQ1NJ
+IGxheWVyIGRvZXMgbm90IGF1dG9tYXRpY2FsbHkgcmVtYXAgTFVOIGFzc2lnbm1lbnRzLgo+Pj4+
+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43NTQyNzVdIHNk
+IDc6MDowOjQ6IFdhcm5pbmchIFJlY2VpdmVkIGFuIGluZGljYXRpb24gdGhhdCB0aGUgTFVOIGFz
+c2lnbm1lbnRzIG9uIHRoaXMgdGFyZ2V0IGhhdmUgY2hhbmdlZC4gVGhlIExpbnV4IFNDU0kgbGF5
+ZXIgZG9lcyBub3QgYXV0b21hdGljYWxseSByZW1hcCBMVU4gYXNzaWdubWVudHMuCj4+Pj5BdWcg
+MjYgMTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjc1NDI4Nl0gc2QgNzow
+OjA6NDogW3NkZl0gUkVBRCBDQVBBQ0lUWSBmYWlsZWQKPj4+PkF1ZyAyNiAxNjowMjoyOCAxMC0x
+MjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuNzU0MjkxXSBzZCA3OjA6MDo0OiBbc2RmXQo+Pj4+
+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43NTQyOTJdIFJl
+c3VsdDogaG9zdGJ5dGU9RElEX09LIGRyaXZlcmJ5dGU9RFJJVkVSX1NFTlNFCj4+Pj5BdWcgMjYg
+MTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjc1NDI5NV0gc2QgNzowOjA6
+NDogW3NkZl0KPj4+PkF1ZyAyNiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0
+MDIuNzU0Mjk2XSBTZW5zZSBLZXkgOiBVbml0IEF0dGVudGlvbiBbY3VycmVudF0KPj4+PkF1ZyAy
+NiAxNjowMjoyOCAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuNzU0Mjk5XSBzZCA3OjA6
+MDo0OiBbc2RmXQo+Pj4+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0
+NDQwMi43NTQzMDFdIEFkZC4gU2Vuc2U6IFJlcG9ydGVkIGx1bnMgZGF0YSBoYXMgY2hhbmdlZAo+
+Pj4+QXVnIDI2IDE2OjAyOjI4IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi43NTYxNTBd
+IHNkZjogZGV0ZWN0ZWQgY2FwYWNpdHkgY2hhbmdlIGZyb20gOTY2NDI2NjI0MCB0byAwCj4+Pj5B
+dWcgMjYgMTY6MDI6MjggMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjc1NjYzOV0gc2Qg
+NzowOjA6NTogW3NkZ10gVW5pdCBOb3QgUmVhZHkKPj4+Pi0tCj4+Pj5BdWcgMjYgMTY6MDI6Mjkg
+MTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAyLjkyNTU4OF0gc2NzaSAzOjA6MDoyMTogRGly
+ZWN0LUFjY2VzcyAgICAgSUVUICAgICAgVklSVFVBTC1ESVNLICAgICAwMDAxIFBROiAwIEFOU0k6
+IDUKPj4+PkF1ZyAyNiAxNjowMjoyOSAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuOTI1
+OTU5XSBzZCA3OjA6MDo0OiBbc2RmXSAxODg3NTUyMCA1MTItYnl0ZSBsb2dpY2FsIGJsb2Nrczog
+KDkuNjYgR0IvOS4wMCBHaUIpCj4+Pj5BdWcgMjYgMTY6MDI6MjkgMTAtMTIwLTEyMC0zNSBrZXJu
+ZWw6IFsxMTQ0NDAyLjkyNjAwMF0gc2QgMzowOjA6MjE6IEF0dGFjaGVkIHNjc2kgZ2VuZXJpYyBz
+ZzU5IHR5cGUgMAo+Pj4+LS0KPj4+PkF1ZyAyNiAxNjowMjoyOSAxMC0xMjAtMTIwLTM1IGtlcm5l
+bDogWzExNDQ0MDIuOTI3NzQ5XSBzZCAzOjA6MDoyMjogW3NkYmNdIDE4ODc1NTIwIDUxMi1ieXRl
+IGxvZ2ljYWwgYmxvY2tzOiAoOS42NiBHQi85LjAwIEdpQikKPj4+PkF1ZyAyNiAxNjowMjoyOSAx
+MC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDIuOTI3NzYyXSBzZGY6IGRldGVjdGVkIGNhcGFj
+aXR5IGNoYW5nZSBmcm9tIDAgdG8gOTY2NDI2NjI0MAo+Pj4+QXVnIDI2IDE2OjAyOjI5IDEwLTEy
+MC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMi45Mjc4NDNdIHNjc2kgMzowOjA6MjM6IERpcmVjdC1B
+Y2Nlc3MgICAgIElFVCAgICAgIFZJUlRVQUwtRElTSyAgICAgMDAwMSBQUTogMCBBTlNJOiA1Cj4+
+Pj4tLQo+Pj4+QXVnIDI2IDE2OjAyOjI5IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMy4x
+OTE3NDNdIEFkZC4gU2Vuc2U6IFJlcG9ydGVkIGx1bnMgZGF0YSBoYXMgY2hhbmdlZAo+Pj4+QXVn
+IDI2IDE2OjAyOjI5IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMy4xOTU3NzZdIHNkIDc6
+MDowOjQ6IFtzZGZdIFVuaXQgTm90IFJlYWR5Cj4+Pj5BdWcgMjYgMTY6MDI6MjkgMTAtMTIwLTEy
+MC0zNSBrZXJuZWw6IFsxMTQ0NDAzLjE5NTc3OV0gc2QgNzowOjA6NDogW3NkZl0KPj4+PkF1ZyAy
+NiAxNjowMjoyOSAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDMuMTk1NzgwXSBTZW5zZSBL
+ZXkgOiBVbml0IEF0dGVudGlvbiBbY3VycmVudF0KPj4+PkF1ZyAyNiAxNjowMjoyOSAxMC0xMjAt
+MTIwLTM1IGtlcm5lbDogWzExNDQ0MDMuMTk1Nzg0XSBzZCA3OjA6MDo0OiBbc2RmXQo+Pj4+QXVn
+IDI2IDE2OjAyOjI5IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMy4xOTU3ODZdIEFkZC4g
+U2Vuc2U6IFJlcG9ydGVkIGx1bnMgZGF0YSBoYXMgY2hhbmdlZAo+Pj4+LS0KPj4+PkF1ZyAyNiAx
+NjowMjoyOSAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDMuNTkyNDI3XSBzZCA3OjA6MDoz
+OTogW3NkYnhdIE1vZGUgU2Vuc2U6IDY5IDAwIDAwIDA4Cj4+Pj5BdWcgMjYgMTY6MDI6MjkgMTAt
+MTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAzLjU5MjgwOV0gc2QgNzowOjA6NDA6IEF0dGFjaGVk
+IHNjc2kgZ2VuZXJpYyBzZzgyIHR5cGUgMAo+Pj4+QXVnIDI2IDE2OjAyOjI5IDEwLTEyMC0xMjAt
+MzUga2VybmVsOiBbMTE0NDQwMy41OTQ0ODZdIHNkIDc6MDowOjM5OiBbc2RieF0gV3JpdGUgY2Fj
+aGU6IGVuYWJsZWQsIHJlYWQgY2FjaGU6IGVuYWJsZWQsIGRvZXNuJ3Qgc3VwcG9ydCBEUE8gb3Ig
+RlVBCj4+Pj5BdWcgMjYgMTY6MDI6MjkgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAzLjU5
+NDY5Nl0gc2QgNzowOjA6NDA6IFtzZGJ5XSAxODg3NTUyMCA1MTItYnl0ZSBsb2dpY2FsIGJsb2Nr
+czogKDkuNjYgR0IvOS4wMCBHaUIpCj4+Pj5BdWcgMjYgMTY6MDI6MjkgMTAtMTIwLTEyMC0zNSBr
+ZXJuZWw6IFsxMTQ0NDAzLjU5NTgyNV0gc2QgNzowOjA6NDA6IFtzZGJ5XSBXcml0ZSBQcm90ZWN0
+IGlzIG9mZgo+Pj4+QXVnIDI2IDE2OjAyOjI5IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQw
+My41OTU4MzFdIHNkIDc6MDowOjQwOiBbc2RieV0gTW9kZSBTZW5zZTogNjkgMDAgMDAgMDgKPj4+
+PkF1ZyAyNiAxNjowMjoyOSAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDMuNTk2MjYxXSBz
+ZCA3OjA6MDo0MDogW3NkYnldIFdyaXRlIGNhY2hlOiBlbmFibGVkLCByZWFkIGNhY2hlOiBlbmFi
+bGVkLCBkb2Vzbid0IHN1cHBvcnQgRFBPIG9yIEZVQQo+Pj4+QXVnIDI2IDE2OjAyOjI5IDEwLTEy
+MC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMy42MDU2ODddICBzZGJ4OiB1bmtub3duIHBhcnRpdGlv
+biB0YWJsZQo+Pj4+LS0KPj4+PkF1ZyAyNiAxNjowMjoyOSAxMC0xMjAtMTIwLTM1IGtlcm5lbDog
+WzExNDQ0MDMuNjEwNDU1XSBzZCA3OjA6MDozOTogW3NkYnhdIEF0dGFjaGVkIFNDU0kgZGlzawo+
+Pj4+QXVnIDI2IDE2OjAyOjI5IDEwLTEyMC0xMjAtMzUga2VybmVsOiBbMTE0NDQwMy42MTMwNTdd
+IHNkIDc6MDowOjQwOiBbc2RieV0gQXR0YWNoZWQgU0NTSSBkaXNrCj4+Pj5BdWcgMjYgMTY6MDI6
+MjkgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDAzLjYxNzYzMV0gc2QgMzowOjA6MTM6IFtz
+ZGFmXSBXYXJuaW5nISBSZWNlaXZlZCBhbiBpbmRpY2F0aW9uIHRoYXQgdGhlIExVTiBhc3NpZ25t
+ZW50cyBvbiB0aGlzIHRhcmdldCBoYXZlIGNoYW5nZWQuIFRoZSBMaW51eCBTQ1NJIGxheWVyIGRv
+ZXMgbm90IGF1dG9tYXRpY2FsbHkgcmVtYXAgTFVOIGFzc2lnbm1lbnRzLgo+Pj4+LS0KPj4+PkF1
+ZyAyNiAxNjowMjozMyAxMC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDcuNDMyNTE4XSAgbWQx
+MTM6IHVua25vd24gcGFydGl0aW9uIHRhYmxlCj4+Pj5BdWcgMjYgMTY6MDI6MzMgMTAtMTIwLTEy
+MC0zNSBrZXJuZWw6IFsxMTQ0NDA3LjY2MjM1Nl0gc2QgNzowOjA6NDogW3NkZl0gU3luY2hyb25p
+emluZyBTQ1NJIGNhY2hlCj4+Pj5BdWcgMjYgMTY6MDI6MzMgMTAtMTIwLTEyMC0zNSBrZXJuZWw6
+IFsxMTQ0NDA3LjY2MzE2M10gc2QgNzowOjA6NDogW3NkZl0KPj4+PkF1ZyAyNiAxNjowMjozMyAx
+MC0xMjAtMTIwLTM1IGtlcm5lbDogWzExNDQ0MDcuNjYzMTY3XSBSZXN1bHQ6IGhvc3RieXRlPURJ
+RF9PSyBkcml2ZXJieXRlPURSSVZFUl9TRU5TRQo+Pj4+QXVnIDI2IDE2OjAyOjMzIDEwLTEyMC0x
+MjAtMzUga2VybmVsOiBbMTE0NDQwNy42NjMxNzBdIHNkIDc6MDowOjQ6IFtzZGZdCj4+Pj5BdWcg
+MjYgMTY6MDI6MzMgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDA3LjY2MzE3Ml0gU2Vuc2Ug
+S2V5IDogSWxsZWdhbCBSZXF1ZXN0IFtjdXJyZW50XQo+Pj4+QXVnIDI2IDE2OjAyOjMzIDEwLTEy
+MC0xMjAtMzUga2VybmVsOiBbMTE0NDQwNy42NjMxNzVdIHNkIDc6MDowOjQ6IFtzZGZdCj4+Pj5B
+dWcgMjYgMTY6MDI6MzMgMTAtMTIwLTEyMC0zNSBrZXJuZWw6IFsxMTQ0NDA3LjY2MzE3OF0gQWRk
+LiBTZW5zZTogTG9naWNhbCB1bml0IG5vdCBzdXBwb3J0ZWQKPj4+Pgo+Pj4+Cj4+Pj5BdCAyMDE0
+LTA5LTExIDAyOjIxOjU5LCAicm9ubmllIHNhaGxiZXJnIiA8cm9ubmllc2FobGJlcmdAZ21haWwu
+Y29tPiB3cm90ZToKPj4+Pj5XaGVuICB5b3Ugc2F5ICJtYW55IGRldmljZXMiIGV4YWN0bHkgaG93
+IG1hbnkgYXJlIHlvdSByZWZlcnJpbmcgdG8/Cj4+Pj4+Q2FuIHlvdSBjaGVjayBpZiB0aGlzIHBy
+b2JsZW0geW91IGhhdmUgb25seSBvY2N1ciB3aGVuIHlvdSBnbyBmcm9tIDI1NQo+Pj4+PkxVTnMg
+dG8gc29tZXRoaW5nIGhpZ2hlcj8KPj4+Pj4KPj4+Pj4KPj4+Pj5UaGUgZGVmYXVsdCBMVU4gYWRk
+cmVzc2luZyBzY2hlbWUgb25seSBhbGxvd3MgTFVOcyBudW1iZXJlZCAwIHRvIDI1NS4KPj4+Pj5U
+byBnbyB0byBoaWdoZXIgTFVOIG51bWJlcnMsIHdoaWNoIFRHVEQgc3VwcG9ydHMsIGRvZSByZXF1
+aXJlIHRoYXQgeW91Cj4+Pj4+c3dpdGNoIHRvIGEgZGlmZmVyZW50IGFkZHJlc3NpbmcgZm9ybWF0
+Cj4+Pj4+YW5kIGl0IG1heSBiZSB0aGF0IHlvdXIgaW5pdGlhdG9yIGNhbiBub3QgaGFuZGxlIHRo
+b3NlIG90aGVyIG1vZGVzLgo+Pj4+Pgo+Pj4+Pk9mdGVuIGl0IG1pZ2h0IGxvb2sgbGlrZSB5b3Ug
+aGF2ZSBMVU5zIDAtMjU1IGFuZCB0aGVuIHRoZXJlIGlzIGEganVtcAo+Pj4+PnRvIHRoZSBuZXh0
+IExVTiB3aGljaCBoYXMgdGhlIG51bWJlciAxNjY0MCBpZiB0aGUgaW5pdGlhdG9yIGNhbiBub3QK
+Pj4+Pj5oYW5kbGUgYWRkcmVzc2luZyBtb2RlcyBwcm9wZXJseS4KPj4+Pj4KPj4+Pj4KPj4+Pj5J
+IGRvIG5vdCBrbm93IGhvdyBJRVQgZG9lcyB0aGUgTFVOIG51bWJlcmluZy4KPj4+Pj4KPj4+Pj5J
+ZiB5b3UgY2FuIGNvbGxlY3QgYSB3aXJlc2hhcmsgdHJhY2Ugb2YgaXNjc2lhZG0gLS1sb2dpbiAg
+ZnJvbSBib3RoCj4+Pj4+U1RHVCBhbmQgSUVUIHRoZW4gSSBjYW4gdGFrZSBhIHF1aWNrIGxvb2sg
+YW5kIHNlZSBpZiB0aGF0IGlzIHRoZSBpc3N1ZQo+Pj4+PnlvdSBhcmUgZmFjaW5nLgo+Pj4+Pgo+
+Pj4+Pgo+Pj4+Pgo+Pj4+PnJlZ2FyZHMKPj4+Pj5yb25uaWUgc2FobGJlcmcKPj4+Pj4KPj4+Pj4K
+Pj4+Pj5PbiBNb24sIFNlcCAxLCAyMDE0IGF0IDExOjAwIFBNLCDPr9bH08IgPHhpemhpeW9uZzE4
+QDE2My5jb20+IHdyb3RlOgo+Pj4+Pj4KPj4+Pj4+IHdoZW4gaSBleHBvcnQgbWFueSBibG9jayBk
+ZXZpY2UgYnkgdGd0ICwgaW4gb25lIHNpbmdsZSB0YXJnZXQgLCB0aGlzIG1lYW5zIG1hbnkgZXhw
+b3J0ZWQgbHVuIGluIG9uZSB0YXJnZXQsIHRvIGFub3RoZXIKPj4+Pj4+IG1hY2hpbmUgYnkgaXNj
+c2mhowo+Pj4+Pj4KPj4+Pj4+IGluIGFub3RoZXIgbWFjaGluZSAsIGF0dGFjaCB0aGUgZGV2aWNl
+cyBieSBvcGVuLWlzY3NpoaN3aGVuIGkgd2FpdCB0aGUKPj4+Pj4+IHNpemUgb2YgdGhlIGRldmlj
+ZSBhdHRhY2hlZCBjaGFuZ2UgZnJvbSAwIHRvIGNvcnJlY3Qgc2l6ZaOsIGkgY3JlYXRlIHJhaWQx
+IHdpdGggdHdvIGRldmljZXMgYnkgbWRhZG2ho2F0IHRoaXMgdGltZSwgbWRhZG0gcmVwb3J0IGxp
+a2UKPj4+Pj4+ICIvZGV2L3NkZW0gaXMgbm90IHN1aXRhYmxlIGZvciB0aGlzIGFycmF5LiIsIGkg
+cmVhZCB0aGUgY29kZSBvZiBtZGFkbSAsdGhhdCBiZWNhdXNlIGl0IGNhbm5vdCBvcGVuIHRoZSBk
+ZXZpY2Who3NvbWV0aW1lIGl0IGV2ZW4gcmVwb3J0Cj4+Pj4+PiAiZmFpbGVkIHRvIG9wZW4gL2Rl
+di8qKiBhZnRlciBlYXJsaWVyIHN1Y2Nlc3MgLSBhYm9ydGluZyAioaMKPj4+Pj4+Cj4+Pj4+PiBp
+IGRvIG5vdCBrbm93IHdoZXRoZXIgaXQncyBiZWNhdXNlIGkgdXNlZCB0aGUgZGV2aWNlIHdoZW4g
+aXQncyBub3QgcmVhZHkgeWV0LCBvciB0aGUgcHJvYmxlbSBvZiB0Z3Showo+Pj4+Pj4KPj4+Pj4+
+IGFsbCB0aGUgYWJvdmUgc2FpZCBoYXBwZW5lZCB3aGVuIG1hbnkgdGFyZ2V0IGx1bih0Z3QpIGNy
+ZWF0ZWQgYXQgdGhlIHNhbWUKPj4+Pj4+IHRpbWUgY29uY3VycmVudGx5oaNpdCBkbyBub3QgaGFw
+cGVuIGluIG5vbWFsIHRpbWUuIHdoZW4gaSBjaGFuZ2UgdGd0IHRvIGlldCwgaXQKPj4+Pj4+IGRv
+IG5vdCBoYXBwZW4gZWl0aGVyoaMKPj4+Pj4+Cj4+Pj4+Pgo+Pj4+Pj4KPj4+Pj4+IHRndCB2ZXJz
+aW9uOiAxLjAuNDgKPj4+Pj4+Cj4+Pj4+PiBvcGVuLWlzY3NpIHZlcnNpb246aXNjc2lhZG0gdmVy
+c2lvbiAyLjAtODczCj4+Pj4+Pgo+Pj4+Pj4gbGludXggc3lzdGVtOiBMaW51eCAgMy4xMC40MC1h
+bWQ2NCAgR05VL0xpbnV4Cj4+Pj4+Pgo+Pj4+Pj4KPj4+Pj4+Cj4+Pj4+Pgo+Pj4+Pj4KPj4+Pj4+
+IC0tLS0tLS0tLS0tLS0KPj4+Pj4+Cj4+Pj4+PiBaaGl5b25nIFhpCg==

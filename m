@@ -1,19 +1,19 @@
 From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH 1/3] sheepdog: refresh invalidated inode in update_inode() path
-Date: Fri, 26 Sep 2014 15:44:24 +0900
-Message-ID: <1411713866-12355-2-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH 2/3] sheepdog: set flag for indicating requests are from tgt
+Date: Fri, 26 Sep 2014 15:44:25 +0900
+Message-ID: <1411713866-12355-3-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 References: <1411713866-12355-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=zhVWT6aqUmGYxB1KbHVlIDAmeN9FIWjROdrkpBROMxM=;
-        b=AnjbpiarNIeHx/Nx+U+RFuF26LlnEA2MPYG1uZrd5NJBcp4SmPiqyOJt8JQb7gmHVA
-         XKEUZG8biO3af9DzfsNstBrL9XAPDKkDyGu4JgGpMYCZWtLBmIxK0pSFdPhJFTZUZpeD
-         vjCrlPhsltMXXA2sL+cqyvoHhP9hzYGfD2uw/KzfYpGieobTXOqYSdrjM2LG/be/oadI
-         Ix+KCUbohAL+xu7EhnTT3rDZ68VOA9knvmjl6aLfPZEJLNOCD7zQDRwat2lE7HRJT9py
-         InoU+9lSDDCfmAfHmGBpOojZ7NJdUd5JnYi5U0VMsjRNmxg9Zz+axkUdt4tAK1SlqMmj
-         QMtg==
+        bh=aCIOSkIqfMBoww4Xa9N4z1W2tu+C2vu2lmEjigwvF7M=;
+        b=PR+/9rw6K0XLA9DT3it3yzJwnhQXHh6ivgDGjNueJvS5vWGWd1nFIcoVLty/XF17KC
+         nto9i5EWVDj1PFpgCqA9NrT0KZCMewlNOODwTUrCIsVca0WbUWMmbaG7DngiS5Cx/Xad
+         0TSXhCGlPjuAcPqC31FGHpNnZg06JaHMNNk3lQHBvLJZz8T7VEa9ru0LH/HVBYUt7LkQ
+         IeCrMguotGzwF11iBgO/Vqkl6XwX4V642s4KTa0HKjpphKuiJbJDbO8g5xGTTcynftMI
+         dmVMF4H3wizRr3DqphSuBXn1nQp5BKkWhO9k1GoD3wzvXo9TnfWIvDUwboVr2G4yJwhl
+         5UqA==
 In-Reply-To: <1411713866-12355-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
@@ -23,65 +23,42 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: mitake.hitoshi@gmail.com, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 
-This patch also adds a string representation of new error code
-SD_RES_INODE_INVALIDATED.
+It is required for iSCSI multipath with sheepdog.
 
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 ---
- usr/bs_sheepdog.c | 18 ++++++++++++++++--
- 1 file changed, 16 insertions(+), 2 deletions(-)
+ usr/bs_sheepdog.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
 diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
-index bbbd392..09ba470 100644
+index 09ba470..06f2995 100644
 --- a/usr/bs_sheepdog.c
 +++ b/usr/bs_sheepdog.c
-@@ -346,6 +346,7 @@ static const char *sd_strerror(int err)
- 		{SD_RES_JOIN_FAILED, "Target node had failed to join sheepdog"},
- 		{SD_RES_HALT, "Sheepdog is stopped serving IO request"},
- 		{SD_RES_READONLY, "Object is read-only"},
-+		{SD_RES_INODE_INVALIDATED, "Inode object is invalidated"},
- 	};
+@@ -66,6 +66,9 @@
+ #define SD_FLAG_CMD_COW      0x02
+ #define SD_FLAG_CMD_CACHE    0x04 /* Writeback mode for cache */
+ #define SD_FLAG_CMD_DIRECT   0x08 /* Don't use cache */
++/* return something back while sending something to sheep */
++#define SD_FLAG_CMD_PIGGYBACK   0x10
++#define SD_FLAG_CMD_TGT   0x20
  
- 	for (i = 0; i < ARRAY_SIZE(errors); ++i) {
-@@ -766,7 +767,7 @@ static int sd_sync(struct sheepdog_access_info *ai)
+ #define SD_RES_SUCCESS       0x00 /* Success */
+ #define SD_RES_UNKNOWN       0x01 /* Unknown error */
+@@ -693,6 +696,7 @@ static int read_write_object(struct sheepdog_access_info *ai, char *buf,
+ 	hdr.data_length = datalen;
+ 	hdr.offset = offset;
+ 	hdr.copies = copies;
++	hdr.flags |= SD_FLAG_CMD_TGT;
  
- static int update_inode(struct sheepdog_access_info *ai)
- {
--	int ret = 0;
-+	int ret = 0, need_reload_inode = 0;
- 	uint64_t oid = vid_to_vdi_oid(ai->inode.vdi_id);
- 	uint32_t min, max, offset, data_len;
- 
-@@ -776,16 +777,29 @@ static int update_inode(struct sheepdog_access_info *ai)
- 	if (max < min)
- 		goto end;
- 
-+	goto update;
-+
-+reload:
-+	reload_inode(ai);
-+	need_reload_inode = 0;
-+
-+update:
- 	offset = sizeof(ai->inode) - sizeof(ai->inode.data_vdi_id) +
- 		min * sizeof(ai->inode.data_vdi_id[0]);
- 	data_len = (max - min + 1) * sizeof(ai->inode.data_vdi_id[0]);
- 
- 	ret = write_object(ai, (char *)&ai->inode + offset, oid,
- 			   ai->inode.nr_copies, data_len, offset,
--			   0, 0, 0, NULL);
-+			   0, 0, 0, &need_reload_inode);
- 	if (ret < 0)
- 		eprintf("sync inode failed\n");
- 
-+	if (need_reload_inode) {
-+		dprintf("reloading inode is required in the path"
-+			" of update_inode()\n");
-+		goto reload;
-+	}
-+
- end:
+ 	ret = do_req(ai, (struct sheepdog_req *)&hdr, buf, &wlen, &rlen);
+ 	if (ret) {
+@@ -1171,6 +1175,7 @@ trans_to_expect_nothing:
  	ai->min_dirty_data_idx = UINT32_MAX;
  	ai->max_dirty_data_idx = 0;
+ 
++retry:
+ 	ret = read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(vid),
+ 			  0, SD_INODE_SIZE, 0, &need_reload);
+ 	if (ret)
 -- 
 1.8.3.2

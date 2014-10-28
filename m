@@ -1,50 +1,38 @@
-From: Theophanis Kontogiannis <tkonto@gmail.com>
-Subject: Help with attributes
-Date: Sun, 19 Oct 2014 11:19:20 +0300
-Message-ID: <54437408.9090309@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Roi Dayan <roid@mellanox.com>
+Subject: [PATCH] iser: fix local conn params being reset to default
+Date: Tue, 28 Oct 2014 17:41:06 +0200
+Message-ID: <1414510866-14770-1-git-send-email-roid@mellanox.com>
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:subject
-         :content-type:content-transfer-encoding;
-        bh=LXZ5PcjxFJft8KsrcnYhdPVcjMY1nQDgDw4/0lyIOoM=;
-        b=DJism+KnoJ0jd17+GamMpOViIQsXoCxpeOQaOzvYFiMzW/jovsL58rUCM3zmmPLCTu
-         vf51i9+GiZXbqXa10vmVodOc2IU3hSeiQJZYN+IxEP6FC1ScuVkQqLJlxF4jqhdf9De9
-         ATYaewIr2im/3nbID3zQ32ruf10qByM6J2v96/ttY7KpdhnTWHtYfCg08bpnoUWS9xrB
-         QaDoZn4KPp6ALRqAWvo0CCJGEp/85K4y6T7nCIh1YjnLvxiA2g1kRKVXF4xdJ/q+ibVy
-         sHi1N1fX/SuFHS7EXjLo7KSY9YjqkM9IuiS4LSUtSJBuHFUOKd90c5PSrFN4hWtfROQW
-         yHOg==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: fujita.tomonori@lab.ntt.co.jp
+Cc: stgt@vger.kernel.org, Roi Dayan <roid@mellanox.com>
 
-Hello All,
+Instead of reseting the params to default if they pass it
+we should reset to max if they pass it.
 
-Thank you in advance for your time.
+Signed-off-by: Roi Dayan <roid@mellanox.com>
+---
+ usr/iscsi/iser_text.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-I am trying to figure out, how to add attributes like vendor_id or scsi=
-_sn.
-
-
-Reading through
-/usr/share/doc/scsi-target-utils-1.0.14/README.lu_configuration, and
-going through some examples, it looks that '--params' will do the job.
-
-Going for it, I would expect that tgt-admin --dump would give the xlm
-including those parameters, but apparently it does not.
-
-How can I confirm that the parameters are in place?
-
-
-
-
---=20
-
-Kind Regards,
-Theophanis Kontogiannis
-
-=CC=D6=D7
-=C8=CA
+diff --git a/usr/iscsi/iser_text.c b/usr/iscsi/iser_text.c
+index 8180dbc..b8c5136 100644
+--- a/usr/iscsi/iser_text.c
++++ b/usr/iscsi/iser_text.c
+@@ -342,8 +342,8 @@ static int iser_login_check_params(struct iscsi_connection *iscsi_conn,
+ 		if (p[i].state == KEY_STATE_START && p[i].val != session_keys[i].def) {
+ 			if (iscsi_conn->state == STATE_LOGIN) {
+ 				if (i >= ISCSI_PARAM_FIRST_LOCAL) {
+-					if (p[i].val > session_keys[i].def)
+-						p[i].val = session_keys[i].def;
++					if (p[i].val > session_keys[i].max)
++						p[i].val = session_keys[i].max;
+ 					p[i].state = KEY_STATE_DONE;
+ 					continue;
+ 				}
+-- 
+1.8.4.3

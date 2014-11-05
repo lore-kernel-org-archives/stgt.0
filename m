@@ -1,41 +1,44 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH] README: update dead url
-Date: Mon, 3 Nov 2014 19:55:13 +0900
-Message-ID: <20141103202530R.fujita.tomonori@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: YAMADA Hideki <yamada.hideki@lab.ntt.co.jp>
+Subject: [PATCH] sheepdog: fix to clear create flag when reloading inode
+Date: Wed,  5 Nov 2014 14:31:20 +0900
+Message-ID: <1415165480-15541-1-git-send-email-yamada.hideki@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
+Cc: YAMADA Hideki <yamada.hideki@lab.ntt.co.jp>
 
-Applied the following patch:
-=
-From 5b825925bd669c7e7cd8cbc3b75ee13a2ffa5d00 Mon Sep 17 00:00:00 2001
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Date: Mon, 3 Nov 2014 20:23:55 +0900
-Subject: [PATCH] README: update dead url
+This bug causes duplicated CREATE_AND_WRITE requests
+in case of iSCSI multipath failover.
 
-Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Signed-off-by: YAMADA Hideki <yamada.hideki@lab.ntt.co.jp>
 ---
- README |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ usr/bs_sheepdog.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/README b/README
-index c3f505c..1ce2f55 100644
---- a/README
-+++ b/README
-@@ -60,8 +60,8 @@ The central resource for tgt development is the mailing list
- First, please read the following documents (in short, follow Linux
- kernel development rules):
+diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
+index ba5b099..2941803 100644
+--- a/usr/bs_sheepdog.c
++++ b/usr/bs_sheepdog.c
+@@ -858,7 +858,7 @@ static int sd_io(struct sheepdog_access_info *ai, int write, char *buf, int len,
+ 		(offset + len + (SD_DATA_OBJ_SIZE - 1)) / SD_DATA_OBJ_SIZE;
+ 	unsigned obj_offset = offset % SD_DATA_OBJ_SIZE;
+ 	size_t orig_size, size, rest = len;
+-	int ret = 0, create = 0;
++	int ret = 0, create;
+ 	uint64_t oid, old_oid;
+ 	uint16_t flags = 0;
+ 	int need_update_inode = 0, need_reload_inode;
+@@ -899,6 +899,7 @@ retry:
+ 			 * always turn on cache of sheep layer
+ 			 */
+ 			flags = SD_FLAG_CMD_CACHE;
++			create = 0;
  
--http://lxr.linux.no/source/Documentation/CodingStyle
--http://lxr.linux.no/source/Documentation/SubmittingPatches
-+https://www.kernel.org/doc/Documentation/CodingStyle
-+https://www.kernel.org/doc/Documentation/SubmittingPatches
- 
- Then, check your patches with the patch style checker prior to
- submission (scripts/checkpatch.pl) like the following example.
+ 			if (ai->inode.data_vdi_id[idx] != vid) {
+ 				create = 1;
 -- 
-1.7.2.5
+1.7.1

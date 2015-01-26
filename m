@@ -1,33 +1,24 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] iser: fix tasks leak with all its resources
-Date: Mon, 26 Jan 2015 13:23:40 +0900 (JST)
-Message-ID: <20150126.132340.1305564732068174437.fujita.tomonori@lab.ntt.co.jp>
-References: <1420648934-10219-1-git-send-email-roid@mellanox.com>
+From: =?iso-2022-jp?B?TUlOT1VSQSBNYWtvdG8gLyAbJEJMJzE6GyhCIBskQj8/GyhC?= 
+	<minoura@valinux.co.jp>
+Subject: Re: ExpCmdSn and MaxCmdSn in ISCSI_OP_R2T
+Date: Mon, 26 Jan 2015 15:53:11 +0900
+Message-ID: <kk5k30aav8o.fsf@brer.local.valinux.co.jp>
+References: <kk5iofyfjem.fsf@brer.local.valinux.co.jp>
+	<kk5twzeb3q2.fsf@brer.local.valinux.co.jp>
+	<20150126.125857.1568838937885762852.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1420648934-10219-1-git-send-email-roid@mellanox.com>
+In-Reply-To: <20150126.125857.1568838937885762852.fujita.tomonori@lab.ntt.co.jp>
+	(FUJITA Tomonori's message of "Mon, 26 Jan 2015 12:58:57 +0900 (JST)")
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: roid@mellanox.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 Cc: stgt@vger.kernel.org
 
-Very sorry about the delay,
 
-On Wed,  7 Jan 2015 18:42:14 +0200
-Roi Dayan <roid@mellanox.com> wrote:
+Good news. Thanks!
 
-> On timewait_exit cm event we expect to put the last refcount on conn and
-> release it. Since we already after the connection was closed we
-> could have tasks in tx_list that won't be processed.
-> We need to clean them or refcount won't reach 0.
-> Not cleaning the tasks will also leak any rdma_bufs associated with those
-> tasks.
-> 
-> Signed-off-by: Roi Dayan <roid@mellanox.com>
-> ---
->  usr/iscsi/iser.c | 22 +++++++++++++++++++++-
->  1 file changed, 21 insertions(+), 1 deletion(-)
-
-Applied, thanks a lot!
+-- 
+Minoura Makoto <minoura@valinux.co.jp>

@@ -1,25 +1,35 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: 1.0.55 released
-Date: Sat, 07 Feb 2015 12:40:37 +0900 (JST)
-Message-ID: <20150207.124037.1568838937885765988.fujita.tomonori@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Andy Grover <agrover@redhat.com>
+Subject: [PATCH] Fix libs for current systemd linker name
+Date: Tue, 10 Feb 2015 13:55:28 -0800
+Message-ID: <1423605328-25931-1-git-send-email-agrover@redhat.com>
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-2022-jp"
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 
-Hi,
+Systemd versions since 210 (Feb 2014) have merged libsystemd-daemon into
+libsystemd.
 
-Here's a new release.
+Signed-off-by: Andy Grover <agrover@redhat.com>
+---
+ usr/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-=
-FUJITA Tomonori (1):
-      tgt 1.0.55
-
-MINOURA Makoto / 箕浦 真 (1):
-      Set ExpCmdSn and MaxCmdSn in ISCSI_OP_R2T
-
-Roi Dayan (1):
-      iser: fix tasks leak with all its resources
+diff --git a/usr/Makefile b/usr/Makefile
+index 817a3fb..1fae7e7 100644
+--- a/usr/Makefile
++++ b/usr/Makefile
+@@ -52,7 +52,7 @@ CFLAGS += -DBSDIR=\"$(DESTDIR)$(libdir)/backing-store\"
+ LIBS += -lpthread -ldl
+ 
+ ifneq ($(SD_NOTIFY),)
+-LIBS += -lsystemd-daemon
++LIBS += -lsystemd
+ endif
+ 
+ PROGRAMS += tgtd tgtadm tgtimg
+-- 
+2.1.0

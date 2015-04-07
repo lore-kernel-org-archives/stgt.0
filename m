@@ -1,19 +1,19 @@
 From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-Subject: [PATCH 2/3] mgmt: change ipc socket address and make it group writeable
-Date: Tue,  7 Apr 2015 11:29:08 -0700
-Message-ID: <1428431349-24087-3-git-send-email-ronniesahlberg@gmail.com>
+Subject: [PATCH 3/3] mgmt.c: check that the socket is owned by the current user, not root
+Date: Tue,  7 Apr 2015 11:29:09 -0700
+Message-ID: <1428431349-24087-4-git-send-email-ronniesahlberg@gmail.com>
 References: <1428431349-24087-1-git-send-email-ronniesahlberg@gmail.com>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=dXL2/47ktcAbNu6LGTTzFwaY10RPp+/IXIL8e2QEh+s=;
-        b=tas4Tf3WpclTIXogUBnqXuc1oy3Tk0ACkuDPMsbucLJQRqDzflBy3FpD8L+u4kCLBn
-         lQN1PlqCzd94Hs56xh++W5MrIxkkmbvN3FV3O477P4iN8WaMACxNxvbOVZsDIYcF/ndW
-         GEvtSNz2zI16PXxzvXveRvtvsyVqfwdLuzqRhd3thuN4PpC9UUkbdTqlQ3L9Ux/cM9Nd
-         jc8sr//dIdyl3FMiFXzPrDlIGROs7wizJX2T3Z4qRScwOZHLv8o8HUvpySWRm8J0ShhS
-         GUNDBMzAyqDfV/38MLza9yUiFjRuC4KJbdsLirsYJFnuwbZSLMJwWAV2rkpwDhL7T0DH
-         757A==
+        bh=H1iBt7yB5TC6APGEOi5y4pafcAAMuhPQ2ymcHZFzFSo=;
+        b=g+JJuyKjcUEVkEBUXrD+jSnBLd1tGAplPK7+ttcoB5zSISbzOgSAU9juu8TT52ob4J
+         QZVbSYHfcTn2CtzuSkDWg4qqhqtWbUWLMjH16oLw2KfYm7JxpKNUHIXs1X1XVDcDlI0u
+         BbSggZ0dFYkLLVjo2iGJ2y7ZiiYQgSMu19m8J8jvqsrfzo8gAIhDG5mLmzC0pK3312VD
+         pcwGsymgNIDkdGkBZBbVUauytuSb0sEH/1Ns4ZwATfKr3X6UQK3++ADLF+tM1Jj0yktS
+         rMjx9D7mI3EhECUWXc0jxt6Q5zkcXktes2yugPJ/7aKe9dzNmC44CoojtdxrPu3ssohZ
+         ov+g==
 In-Reply-To: <1428431349-24087-1-git-send-email-ronniesahlberg@gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
@@ -23,54 +23,28 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: fujita.tomonori@lab.ntt.co.jp, Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
-Change the ipc socket basename from /var/run/tgtd.ipc_abstract_namespace
-to /var/run/tgtd/socket.
-
-/var/run is usually only writeable by root, so putting the ipc socket
-and its lockfile directly under /var/run prevents running tgtd as a
-non-root user. Thus we place the socket file under /var/run/tgtd instead
-and this directory can then be set up as owned and writeable by
-a user tgtd and group tgtd.
-
-Second is that ipc_abstract_namespace is unintuitive for what it does.
-Lets just call it socket so it is clear that this is just a socket
-we use to talk to the daemon with.
-
-We also change the socket to be group writeable. This then will allow
-running tgtd as a dedicated group tgtd and then group membership to
-tgtd can control who can connect to the daemon.
+Change the ipc_perm() check from being a check that the socket user and group
+is set to root into instead check that the socket user/group matches
+the running tgtd process.
+This is needed in order to run tgtd as a normal non-root user.
 
 Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
 ---
- usr/mgmt.c   | 2 +-
- usr/tgtadm.h | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ usr/mgmt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/usr/mgmt.c b/usr/mgmt.c
-index 3587f4b..364b3c8 100644
+index 364b3c8..ebe0fd6 100644
 --- a/usr/mgmt.c
 +++ b/usr/mgmt.c
-@@ -768,7 +768,7 @@ int ipc_init(void)
- 
- 	sprintf(mgmt_lock_path, "%s.%d.lock", TGT_IPC_NAMESPACE, control_port);
- 	ipc_lock_fd = open(mgmt_lock_path, O_WRONLY | O_CREAT,
--			   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-+			   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
- 	if (ipc_lock_fd < 0) {
- 		eprintf("failed to open lock file for management IPC\n");
+@@ -569,7 +569,7 @@ static int ipc_perm(int fd)
  		return -1;
-diff --git a/usr/tgtadm.h b/usr/tgtadm.h
-index 4e239c4..866aac9 100644
---- a/usr/tgtadm.h
-+++ b/usr/tgtadm.h
-@@ -1,7 +1,7 @@
- #ifndef TGTADM_H
- #define TGTADM_H
+ 	}
  
--#define TGT_IPC_NAMESPACE	"/var/run/tgtd.ipc_abstract_namespace"
-+#define TGT_IPC_NAMESPACE	"/var/run/tgtd/socket"
- #define TGT_LLD_NAME_LEN	64
+-	if (cred.uid || cred.gid)
++	if (cred.uid != getuid() || cred.gid != getgid())
+ 		return -EPERM;
  
- #define GLOBAL_TID (~0U)
+ 	return 0;
 -- 
 2.1.0

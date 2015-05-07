@@ -1,34 +1,33 @@
-From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-Subject: [PATCH] Allow setting the IPC socket via environment variable
-Date: Thu, 30 Apr 2015 18:29:11 -0700
-Message-ID: <1430443752-30929-1-git-send-email-ronniesahlberg@gmail.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: 1.0.58 released
+Date: Thu, 07 May 2015 20:25:01 +0900 (JST)
+Message-ID: <20150507.202501.1568838937885759993.fujita.tomonori@lab.ntt.co.jp>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=from:to:cc:subject:date:message-id;
-        bh=UKxmfWXnr2BqMzKjPwc/ZukTKnKpJB+ibrlnWomwLhc=;
-        b=TXH5YB0+jMkJHfiPeL1QULQyX0Sb2eqlrBNzDayN5XgOtqAtYILsuu3eWJoqq7PoSp
-         2S8KNQRdSNLzq/AWhE4fCUDdsM+8Hf6Hw+d5B1zFd8VcgT/4ynQHwn340wJyQHuUP/tI
-         53/pnBHOTT4YQiBQZI31XPzdsWnb1tywoBaESXAXWExc/nzQrA1LVuTWUYLOSJlbpJkQ
-         wuZaEoc0FB7JifGLN6i+5IOn1Arox4Nkzkjoq/VUXRF2Wopk9EFPqLfPwdPBCFKoJhpT
-         u/4FOe6NjSyP/412Xv9ur02onlT+e4kCdgFnH+ekiRj+vlTKb1acaWb4c6/OnstSQLYv
-         FecA==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: Text/Plain; charset="us-ascii"
 To: stgt@vger.kernel.org
-Cc: fujita.tomonori@lab.ntt.co.jp
 
-List, Tomo
+Sorry about the delay on the announcement.
 
-Another small patch. This time to set the IPC socket for TGTD and TGTADM
-via the TGT_IPC_SOCKET environment variable.
-This is useful for example for my libiscsi tests since it allows
-spinning up a local TGT daemon just for 'make test'
+=
+Dong Wu (1):
+      bs_aio: fix failure handling
 
-regards
-ronnie sahlberg
+FUJITA Tomonori (1):
+      tgt 1.0.58
 
+Hitoshi Mitake (1):
+      sheepdog: fine grained locking in write path
 
+Roi Dayan (2):
+      mgmt: Create ipc socket parent dir if does not exists
+      iser: Fix memory leak of addrinfo struct
+
+Ronnie Sahlberg (4):
+      tgtd.c: allow oom adjust failures for non-root users
+      mgmt: change ipc socket address
+      mgmt.c: check that the connecting user is the same as the user tgtd runs as
+      Allow overriding the IPC socket path via TGT_IPC_SOCKET

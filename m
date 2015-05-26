@@ -1,30 +1,33 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH internal-review 0/2] Discovery mode session iser fixes
-Date: Wed, 20 May 2015 20:27:48 +0900 (JST)
-Message-ID: <20150520.202748.1568838937885774437.fujita.tomonori@lab.ntt.co.jp>
-References: <1432111556-20535-1-git-send-email-sagig@mellanox.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Maksym Lobur <mlobur@mirantis.com>
+Subject: [tgtadm] Looking for a Persistent Reservations support
+Date: Wed, 27 May 2015 00:25:31 +0300
+Message-ID: <A557C827-44FD-4585-ABA7-D22B4BB54EC4@mirantis.com>
+References: <CFA7795E-D088-44A8-9B55-A168FA1796A2@mirantis.com>
+Mime-Version: 1.0 (Mac OS X Mail 7.3 \(1878.6\))
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1432111556-20535-1-git-send-email-sagig@mellanox.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=mirantis.com; s=google;
+        h=from:content-type:content-transfer-encoding:subject:date:references
+         :to:message-id:mime-version;
+        bh=yHLiJvpA/sxePnvNN7VgPdIelffOxrr5J5DQrR6IPK8=;
+        b=WPyn3mFHSi6HGoThIbBrtb6HkK+HMA6V7a77HzpM02YgDNfZPBhi0hC7WV7/EmxSBn
+         dHAkJ3CcjTZsRZ4Z0t5EgqUBXTxt4j7Jc1DMiRcd2+Kwdk9q53An8+Zn1G85HqaPIQAo
+         wc+GTdBGgjpxPxB8Fgt5+riw25gR5UAMLgmz8=
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: sagig@mellanox.com
-Cc: stgt@vger.kernel.org, roid@mellanox.com
+Content-Type: text/plain; charset="windows-1252"
+To: stgt@vger.kernel.org
 
-On Wed, 20 May 2015 11:45:54 +0300
-Sagi Grimberg <sagig@mellanox.com> wrote:
+Hi All,
 
-> This small set is fixing discovery mode NULL dereference
-> and tasks leak in iser. These were found when testing against
-> FreeBSD iser initiator (https://github.com/sagigrimberg/iser-freebsd).
-> 
-> Sagi Grimberg (2):
->   iser: Clear tasks free list when closing the connection
->   iser: Fix wrong access to the session discovery mode
-> 
->  usr/iscsi/iser.c | 8 +++-----
->  1 file changed, 3 insertions(+), 5 deletions(-)
+I am interested if Persistent Reservations (SCSI-3) are fully supported=
+ in tgtadm. I=92m using ubuntu 14.04.2, tgt 1:1.0.43-0ubuntu4. We were =
+going to use tgtadm to configure targets for Windows 2008 clustering.=20
+I found an old comparison [1] which says SCSI-3 =93not all functionalit=
+y implemented=94. Could anyone please give an update?
 
-Applied, thanks!
+[1] http://scst.sourceforge.net/comparison.html
+
+Thanks!
+Max Lobur

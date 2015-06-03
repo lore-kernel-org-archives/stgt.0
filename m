@@ -1,36 +1,35 @@
-From: Ahmed Al-Mehdi <ahmedalmehdi@gmail.com>
-Subject: Re: FW: Error when creating a logicalunit from a regular file
-Date: Tue, 2 Jun 2015 17:11:09 -0700
-Message-ID: <CAKNWCPZ_Ub=wZPhZn_Dsd93ujMnv1pjotz9Rn+XFHBp+8w6qwg@mail.gmail.com>
-References: <CAKNWCPb+GZcSaJ1QB8OE392HCm6Xi6s3OvgFzVxNRiiRgM3S_w@mail.gmail.com>
-	<001201d09d89$f2b987f0$d82c97d0$@secturion.com>
+From: "Michael Grover" <mgrover@secturion.com>
+Subject: RE: FW: Error when creating a logicalunit from a regular file
+Date: Tue, 2 Jun 2015 18:39:14 -0600
+Message-ID: <002a01d09d95$b7b7d330$27277990$@secturion.com>
+References: <CAKNWCPb+GZcSaJ1QB8OE392HCm6Xi6s3OvgFzVxNRiiRgM3S_w@mail.gmail.com>	<001201d09d89$f2b987f0$d82c97d0$@secturion.com> <CAKNWCPZ_Ub=wZPhZn_Dsd93ujMnv1pjotz9Rn+XFHBp+8w6qwg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :content-type:content-transfer-encoding;
-        bh=QfQnh/+A5NOZzJGASWfxEz5kHvP6hnK8PUO115Eoyd4=;
-        b=okQq6i1kO8u7JTCtQioNUHifHAE6UUjigPCIAlCCB7pen1mD4A6XCr0+GywJqiIbYk
-         uubzC4KZ3XHtthFCdeDLkbo8WVYMdGKn9zXQcA58bkFy0Yw9K/rTjSKp7bz63vFRqBhJ
-         pJIZKwgKZ2gdayjr1nz5cQ27EfUouEgekyT6znC4mPIFF7UjsW9k2nunPhRutc2fLHQ8
-         yWmeinAYrnR8nfLCAOHS+qJ3sP7Q6khLAw0+s4kMtZSII/58Bl2jw/rB5EFgx3QFI5y8
-         WCnNYK+s+lbNslEHCix40DilypllHkh9iD4ufeShNcu/3So6T5uMK3Ifiqv5I98P2wwh
-         8Lmg==
-In-Reply-To: <001201d09d89$f2b987f0$d82c97d0$@secturion.com>
+In-Reply-To: <CAKNWCPZ_Ub=wZPhZn_Dsd93ujMnv1pjotz9Rn+XFHBp+8w6qwg@mail.gmail.com>
+Content-Language: en-us
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="utf-8"
-To: Michael Grover <mgrover@secturion.com>, stgt@vger.kernel.org
+To: 'Ahmed Al-Mehdi' <ahmedalmehdi@gmail.com>, stgt@vger.kernel.org
+
+Yes. Of course. Sorry about that! Run this to install semanage:
+
+yum =E2=80=93y install policycoreutils-python
+
+-----Original Message-----
+=46rom: Ahmed Al-Mehdi [mailto:ahmedalmehdi@gmail.com]=20
+Sent: Tuesday, June 02, 2015 6:11 PM
+To: Michael Grover; stgt@vger.kernel.org
+Subject: Re: FW: Error when creating a logicalunit from a regular file
 
 Hi Michael,
 
-Thank you for the suggestion.  I will look into trying it out.  Just a
-bit of a background. I am running CentOS 7.  I don't even have
-"semanage" installed by default, but I am sure I can install it.  I
-looked into the man page of "semange" (option "fcontext") not sure
-what exactly the command is doing.  Any idea?
+Thank you for the suggestion.  I will look into trying it out.  Just a =
+bit of a background. I am running CentOS 7.  I don't even have "semanag=
+e" installed by default, but I am sure I can install it.  I looked into=
+ the man page of "semange" (option "fcontext") not sure what exactly th=
+e command is doing.  Any idea?
 
 Thank you,
 Ahmed.
@@ -47,8 +46,9 @@ is address, so I'm going around it.
 ate some "file" drives. SELinux was denying iSCSI access to the files I=
  was creating as drives in iSCSI. I ran the following commands:
 >
-> semanage fcontext =E2=80=93a =E2=80=93t tgtd_var_lib_t <drive_path>
-> restorecon =E2=80=93Rv <drive_path>
+> semanage fcontext =E2=80=93a =E2=80=93t tgtd_var_lib_t <drive_path> r=
+estorecon =E2=80=93Rv=20
+> <drive_path>
 >
 > Then restarted tgt and all was well.
 >
@@ -56,8 +56,8 @@ ate some "file" drives. SELinux was denying iSCSI access to the files I=
 >
 >
 > -----Original Message-----
-> From: stgt-owner@vger.kernel.org [mailto:stgt-owner@vger.kernel.org] =
-On Behalf Of Ahmed Al-Mehdi
+> From: stgt-owner@vger.kernel.org [mailto:stgt-owner@vger.kernel.org]=20
+> On Behalf Of Ahmed Al-Mehdi
 > Sent: Tuesday, June 02, 2015 3:48 PM
 > To: stgt@vger.kernel.org
 > Subject: Error when creating a logicalunit from a regular file
@@ -104,7 +104,8 @@ w Target 1: target1
 > -rwxrwxrwx. 1 root root 1048576 Jun  2 14:18 /tmp/tgt_disk2_dd
 >
 > # tgtadm --lld iscsi  --mode logicalunit --op new --tid 1 --lun 2  -b=
- /tmp/tgt_disk2_dd
+=20
+> /tmp/tgt_disk2_dd
 > tgtadm: invalid request
 >
 >
@@ -117,14 +118,15 @@ w Target 1: target1
 412) 16 Jun 02 14:39:46 unknown0800275C3F01 tgtd[5505]: tgtd:
 > backed_file_open(92) Could not open /tmp/tgt_disk2_dd, Permission den=
 ied Jun 02 14:39:46 unknown0800275C3F01 tgtd[5505]: tgtd:
-> backed_file_open(92) Could not open /tmp/tgt_disk2_dd, Permission den=
-ied
+> backed_file_open(92) Could not open /tmp/tgt_disk2_dd, Permission=20
+> denied
 >
 >
 > Thank you very much in advance,
 > Ahmed.
 > --
 > To unsubscribe from this list: send the line "unsubscribe stgt" in th=
-e body of a message to majordomo@vger.kernel.org More majordomo info at=
+e=20
+> body of a message to majordomo@vger.kernel.org More majordomo info at=
   http://vger.kernel.org/majordomo-info.html
 >

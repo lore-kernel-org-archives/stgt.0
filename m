@@ -1,34 +1,30 @@
-From: Yifeng Xu <skypexu@gmail.com>
-Subject: race condition between target life cycle and login
-Date: Sun, 5 Jul 2015 10:57:29 +0800
-Message-ID: <CAD-e953UY+3o-jYgJegO-Mhva4nYtGUjPsph0Rv515jfKWHABQ@mail.gmail.com>
+From: Dipen Modi <Dipen_Modi@symantec.com>
+Subject: segfault in tgtd version 1.0.24 CentOS 6.6
+Date: Mon, 6 Jul 2015 14:59:21 -0700
+Message-ID: <EFF6E8AF0F7A1C40A5B60B3E46AF7103A6013EF138@TUS1XCHEVSPIN31.SYMC.SYMANTEC.COM>
 Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:date:message-id:subject:from:to:content-type;
-        bh=IGRm900lh/eKgI76GpUbrTbS8PLKfwdRqZuTaZkOvLc=;
-        b=envR9kLVe8JitTAuD2Y1WIB6z/XBcDjhzWvciMkXIyvMVS6ounAcHmCImZUYgk3Mwx
-         cr+tVHxF6rnwW7ZJlwqu5VD6y0SuGVF979gRdUdQwvw+cZqp/Xfmp9ir6MxmDEyqKdsp
-         vqWIDa/kTqofOexlnm9C/3vAZKStEg0W7KKoGUCPZmEyUDbyGw/ZuBd3++hKx2A5YKqL
-         xI5jL02KZV3bt6P5aWKEBwJyLk1oQW6HYYleiyNReucyKAlvZ32DLGrDPybZK+KPSUzF
-         00Hi1HgHRYjS1Kl7QEVL5MufJABgc2jfMvZ2F7pRUCAiUJsXyBR9cGtlDfX0oJTM0+BD
-         DVWQ==
+Content-Language: en-US
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: stgt@vger.kernel.org
+To: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
 Hi,
+I have a CentOS 6.6 box (2.6.32-504.16.2.el6.x86_64) with scsi-target-utils-1.0.24-16.el6.x86_64. Under heavy load, I'm seeing tgtd segfault with this stack trace:
 
-I think there is a race condition between target recreating and
-iscsi_tcp_conn_login_complete(), later only checks tid, but during
-login procedure, a target may be destroyed and recreated,  and
-it is another different target at all.
+#0  0x00000000004086b0 in iscsi_data_out_rx_start (conn=0x22e8358) at iscsi/iscsid.c:1538
+#1  iscsi_task_rx_start (conn=0x22e8358) at iscsi/iscsid.c:1743
+#2  iscsi_rx_handler (conn=0x22e8358) at iscsi/iscsid.c:2000
+#3  0x000000000040e538 in iscsi_tcp_event_handler (fd=<value optimized out>, events=5, data=0x22e8358) at iscsi/iscsi_tcp.c:158
+#4  0x000000000041a319 in event_loop () at tgtd.c:411
+#5  0x000000000041a9ca in main (argc=<value optimized out>, argv=<value optimized out>) at tgtd.c:583
 
-I think there should be a generation number saved both in connection and
-target, the iscsi_tcp_conn_login_complete() should check it.
+I searched mailing list archives and found a similar issue on mailing list mirror back from 2011:
+http://www.spinics.net/lists/linux-stgt/msg02653.html
 
-Regards,
-Skype Xu
+But there was no conclusion. So Is this still a known issue? If not, which version is it fixed in?
+
+Thanks,
+Dipen

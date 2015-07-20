@@ -1,18 +1,20 @@
 From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH 1/4] sheepdog: prevent double locking during inode reload
-Date: Mon, 20 Jul 2015 15:59:12 +0900
-Message-ID: <1437375555-11698-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH 2/4] sheepdog: serialize overwrapping request
+Date: Mon, 20 Jul 2015 15:59:13 +0900
+Message-ID: <1437375555-11698-2-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+References: <1437375555-11698-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id;
-        bh=OX9II+IoudHX1C627uR2aZlYEuOjlOZzfHZz5tMYR44=;
-        b=RtsJgx0j4HV6eG14vgV3ZuppzKpA8wFn6SnPS8dJi1SHRu9bpcBwfe0s/M2C55cfys
-         GhLarp/1AEcQqecTfwqj1n5DOXgVMAhjgzcFByk9nsksqlWLtGaR4Q9rBGULQJKOWakT
-         HL269KvD5deVLJzrcUncEAZJ9vwNrSWyVKjCFxPg4dIUiCxqa6/KqH6cDVF93+AcgJWT
-         8FOmQR4dmeG3TJPb5JgU03n8yH2Sh9v3KIAKj6cwYF79CWH8f9GG0JcHzPa5KeRqr91f
-         Lh7QYnprvbX93VCXSlRxiV/ifEmqLZFFT1OiL9UNaWfJAe2qS4YsRORYVuIIJ/Do3v1K
-         X+5g==
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=nIHErk2qnpNLXINvGRXS4rF12CtT6lcHsd0RyViiR+8=;
+        b=SUmPSkIadUwhGWfUCEkqLKWOH4iD0Eeo1MM6lTxOKKzvq9wS+CiSqlg5rfB/7b9jvz
+         tRNOJstDPDdyKi1Fu2WEx38MHDpzTIVsnIfqUtsLEVxcqeB419vYfkjMQwo1vVmfVSf9
+         CVmDGbVL3MIckGJn7wbowfQQ8IKCoZ6ehbfEqbjkP+d/LoR7rJgh564twXWccO4Ty8n6
+         P+6BqZsLcymfkhNX7Ohq7THyge3vqxd3hkzXX1AfXmJUtuzdDkW7HW9VbVGBtCVZ5pt4
+         fvmb2pEDPKT5r0IkUekjhi7Zcf51wnVEcR6bSmAVyQtNpCGx9QcuO5CKEabGBsY9uLkt
+         YGRA==
+In-Reply-To: <1437375555-11698-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 MIME-Version: 1.0
@@ -21,119 +23,138 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: sheepdog@lists.wpkg.org, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>, Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
 
-The commit 0c531dfe18f9b2af made the lock protecting on memory inode
-object finer grain and improved performacne, but it also introduced a
-possibility of double locking single VDI.
-
-The problem can arise in this sequence:
-1. both of thread A and B issues write request to a VDI
-2. user make a snapshot of the VDI
-3. the VDI is now readonly snapshot, sheep returns SD_RES_READONLY
-4. both of A and B calls find_vdi_name() for obtaining a new ID of
-   working VDI, it results double locking
-
-This patch resolves the problem. Each thread has a version number of
-inode object in its TLS. Acess info struct also has the number. When
-the thread needs to reload the inode object, it check the number with
-the one of the access info first. If they differ, it means no other
-threads reloaded the object. If not, it means other thread already
-reloaded, so the thread doesn't call find_vdi_name() and double
-locking can be avoided.
+iSCSI initiators can issue read and write requests that target
+overlapping areas. In such a case, current sheepdog driver cannot
+serialize these requests so the semantics of virtual drive will be
+corrupt. This patch implements a mechanism for serializing such
+requests.
 
 Cc: Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 ---
- usr/bs_sheepdog.c | 41 +++++++++++++++++++++++++++++++++--------
- 1 file changed, 33 insertions(+), 8 deletions(-)
+ usr/bs_sheepdog.c | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 68 insertions(+)
 
 diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
-index cfaf48b..21d7dac 100644
+index 21d7dac..be6d321 100644
 --- a/usr/bs_sheepdog.c
 +++ b/usr/bs_sheepdog.c
-@@ -291,6 +291,9 @@ struct sheepdog_access_info {
+@@ -294,6 +294,10 @@ struct sheepdog_access_info {
  
- 	struct sheepdog_inode inode;
- 	pthread_rwlock_t inode_lock;
+ 	pthread_mutex_t inode_version_mutex;
+ 	uint64_t inode_version;
 +
-+	pthread_mutex_t inode_version_mutex;
-+	uint64_t inode_version;
++	struct list_head inflight_list_head;
++	pthread_mutex_t inflight_list_mutex;
++	pthread_cond_t inflight_list_cond;
  };
  
  static inline int is_data_obj_writeable(struct sheepdog_inode *inode,
-@@ -656,37 +659,58 @@ static int read_object(struct sheepdog_access_info *ai, char *buf, uint64_t oid,
+@@ -1252,6 +1256,11 @@ trans_to_expect_nothing:
+ 		goto out;
  
- static int reload_inode(struct sheepdog_access_info *ai, int is_snapshot)
- {
--	int ret, need_reload = 0;
-+	int ret = 0, need_reload = 0;
- 	char tag[SD_MAX_VDI_TAG_LEN];
- 	uint32_t vid;
+ 	ret = 0;
++
++	INIT_LIST_HEAD(&ai->inflight_list_head);
++	pthread_mutex_init(&ai->inflight_list_mutex, NULL);
++	pthread_cond_init(&ai->inflight_list_cond, NULL);
++
+ out:
+ 	strcpy(filename, orig_filename);
+ 	free(orig_filename);
+@@ -1349,6 +1358,41 @@ out:
+ 	return ret;
+ }
  
-+	static __thread uint64_t inode_version;
++struct inflight_thread {
++	unsigned long min_idx, max_idx;
++	struct list_head list;
++};
 +
-+	pthread_mutex_lock(&ai->inode_version_mutex);
++static void inflight_block(struct sheepdog_access_info *ai,
++			   struct inflight_thread *myself)
++{
++	struct inflight_thread *inflight;
 +
-+	if (inode_version != ai->inode_version) {
-+		/* some other threads reloaded inode */
-+		inode_version = ai->inode_version;
-+		goto ret;
++	pthread_mutex_lock(&ai->inflight_list_mutex);
++
++retry:
++	list_for_each_entry(inflight, &ai->inflight_list_head, list) {
++		if (!(myself->max_idx < inflight->min_idx ||
++		      inflight->max_idx < myself->min_idx)) {
++			pthread_cond_wait(&ai->inflight_list_cond,
++					  &ai->inflight_list_mutex);
++			goto retry;
++		}
 +	}
 +
- 	if (is_snapshot) {
- 		memset(tag, 0, sizeof(tag));
- 
- 		ret = find_vdi_name(ai, ai->inode.name, CURRENT_VDI_ID, tag,
- 				    &vid, 0);
--		if (ret)
--			return -1;
-+		if (ret) {
-+			ret = -1;
-+			goto ret;
-+		}
- 
- 		ret = read_object(ai, (char *)&ai->inode, vid_to_vdi_oid(vid),
- 				  ai->inode.nr_copies,
- 				  offsetof(struct sheepdog_inode, data_vdi_id),
- 				  0, &need_reload);
--		if (ret)
--			return -1;
-+		if (ret) {
-+			ret = -1;
-+			goto ret;
-+		}
- 	} else {
- 		ret = read_object(ai, (char *)&ai->inode,
- 				  vid_to_vdi_oid(ai->inode.vdi_id),
- 				  ai->inode.nr_copies, SD_INODE_SIZE, 0,
- 				  &need_reload);
--		if (ret)
--			return -1;
-+		if (ret) {
-+			ret = -1;
-+			goto ret;
-+		}
- 	}
- 
- 	ai->min_dirty_data_idx = UINT32_MAX;
- 	ai->max_dirty_data_idx = 0;
- 
--	return 0;
-+	inode_version++;
-+	ai->inode_version = inode_version;
++	list_add_tail(&myself->list, &ai->inflight_list_head);
++	pthread_mutex_unlock(&ai->inflight_list_mutex);
++}
++ void inflight_release(struct sheepdog_access_info *ai,
++			     struct inflight_thread *myself)
++{
++	pthread_mutex_lock(&ai->inflight_list_mutex);
++	list_del(&myself->list);
++	pthread_mutex_unlock(&ai->inflight_list_mutex);
 +
-+ret:
-+	pthread_mutex_unlock(&ai->inode_version_mutex);
-+	return ret;
++	pthread_cond_signal(&ai->inflight_list_cond);
++}
++
+ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ {
+ 	int ret = 0;
+@@ -1360,6 +1404,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 	struct sheepdog_access_info *ai =
+ 		(struct sheepdog_access_info *)(info + 1);
+ 
++	uint32_t object_size = (UINT32_C(1) << ai->inode.block_size_shift);
++	struct inflight_thread myself;
++	int inflight = 0;
++
++	memset(&myself, 0, sizeof(myself));
++	INIT_LIST_HEAD(&myself.list);
++
+ 	switch (cmd->scb[0]) {
+ 	case SYNCHRONIZE_CACHE:
+ 	case SYNCHRONIZE_CACHE_16:
+@@ -1383,6 +1434,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 		}
+ 
+ 		length = scsi_get_out_length(cmd);
++
++		myself.min_idx = cmd->offset / object_size;
++		myself.max_idx = (cmd->offset + length + (object_size - 1))
++			/ object_size;
++		inflight_block(ai, &myself);
++		inflight = 1;
++
+ 		ret = sd_io(ai, 1, scsi_get_out_buffer(cmd),
+ 			    length, cmd->offset);
+ 
+@@ -1394,6 +1452,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 	case READ_12:
+ 	case READ_16:
+ 		length = scsi_get_in_length(cmd);
++
++		myself.min_idx = cmd->offset / object_size;
++		myself.max_idx = (cmd->offset + length + (object_size - 1))
++			/ object_size;
++		inflight_block(ai, &myself);
++		inflight = 1;
++
+ 		ret = sd_io(ai, 0, scsi_get_in_buffer(cmd),
+ 			    length, cmd->offset);
+ 		if (ret)
+@@ -1413,6 +1478,9 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 			cmd, cmd->scb[0], ret, length, cmd->offset);
+ 		sense_data_build(cmd, key, asc);
+ 	}
++
++	if (inflight)
++		inflight_release(ai, &myself);
  }
  
- static int read_write_object(struct sheepdog_access_info *ai, char *buf,
-@@ -1426,6 +1450,7 @@ static tgtadm_err bs_sheepdog_init(struct scsi_lu *lu, char *bsopts)
- 	INIT_LIST_HEAD(&ai->fd_list_head);
- 	pthread_rwlock_init(&ai->fd_list_lock, NULL);
- 	pthread_rwlock_init(&ai->inode_lock, NULL);
-+	pthread_mutex_init(&ai->inode_version_mutex, NULL);
- 
- 	return bs_thread_open(info, bs_sheepdog_request, nr_iothreads);
- }
+ static int bs_sheepdog_open(struct scsi_lu *lu, char *path,
 -- 
 1.9.1

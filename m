@@ -1,19 +1,19 @@
 From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH 2/4] sheepdog: serialize overwrapping request
-Date: Mon, 20 Jul 2015 15:59:13 +0900
-Message-ID: <1437375555-11698-2-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH 3/4] sheepdog: pass a correct flag to find_vdi_name()
+Date: Mon, 20 Jul 2015 15:59:14 +0900
+Message-ID: <1437375555-11698-3-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 References: <1437375555-11698-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=nIHErk2qnpNLXINvGRXS4rF12CtT6lcHsd0RyViiR+8=;
-        b=SUmPSkIadUwhGWfUCEkqLKWOH4iD0Eeo1MM6lTxOKKzvq9wS+CiSqlg5rfB/7b9jvz
-         tRNOJstDPDdyKi1Fu2WEx38MHDpzTIVsnIfqUtsLEVxcqeB419vYfkjMQwo1vVmfVSf9
-         CVmDGbVL3MIckGJn7wbowfQQ8IKCoZ6ehbfEqbjkP+d/LoR7rJgh564twXWccO4Ty8n6
-         P+6BqZsLcymfkhNX7Ohq7THyge3vqxd3hkzXX1AfXmJUtuzdDkW7HW9VbVGBtCVZ5pt4
-         fvmb2pEDPKT5r0IkUekjhi7Zcf51wnVEcR6bSmAVyQtNpCGx9QcuO5CKEabGBsY9uLkt
-         YGRA==
+        bh=6999+QLnh5QPisQvhA/p8dA9igjrvLJ5BjN/ZBifcyA=;
+        b=c+m//O+67B+6NxVjJuQOgpB0TqaOiiExb7q/Mzf7FAZN5gozs4J61/uqHjePE48M+b
+         lJYiVIEHXGZvmNRTZbDEHhG6XCBVRqMVk6dzlueT2uz1jEiIELt6pYR9UmdmjAFxdn6B
+         CEaYbyZWOnQ0RRkdo3dDjBNvjfwLOJinb5niEHPUjVUYklzLzNeK8chy1odFqGtwNovA
+         qspsvVwJQlcjsjzAf9IsXCliBYgsipVaFTTn9VUZ6C+xavrhHrBeD84LF2ERIQ+cOT8X
+         eR5+sQeDCjGL6KEmfkBURcVIrfpBGtmDPBu4OvBMDpVQfllOWVG2YXMClWAFLq4S4Qp4
+         jzPg==
 In-Reply-To: <1437375555-11698-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
@@ -23,138 +23,62 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: sheepdog@lists.wpkg.org, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>, Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
 
-iSCSI initiators can issue read and write requests that target
-overlapping areas. In such a case, current sheepdog driver cannot
-serialize these requests so the semantics of virtual drive will be
-corrupt. This patch implements a mechanism for serializing such
-requests.
+Current usage of find_vdi_name() is invalid because it is called with
+for_snapshot == 0 even for a case of readonly. This patch fixes the
+problem.
 
 Cc: Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 ---
- usr/bs_sheepdog.c | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 68 insertions(+)
+ usr/bs_sheepdog.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
-index 21d7dac..be6d321 100644
+index be6d321..56630ac 100644
 --- a/usr/bs_sheepdog.c
 +++ b/usr/bs_sheepdog.c
-@@ -294,6 +294,10 @@ struct sheepdog_access_info {
+@@ -681,7 +681,7 @@ static int reload_inode(struct sheepdog_access_info *ai, int is_snapshot)
+ 		memset(tag, 0, sizeof(tag));
  
- 	pthread_mutex_t inode_version_mutex;
- 	uint64_t inode_version;
-+
-+	struct list_head inflight_list_head;
-+	pthread_mutex_t inflight_list_mutex;
-+	pthread_cond_t inflight_list_cond;
- };
+ 		ret = find_vdi_name(ai, ai->inode.name, CURRENT_VDI_ID, tag,
+-				    &vid, 0);
++				    &vid, 1);
+ 		if (ret) {
+ 			ret = -1;
+ 			goto ret;
+@@ -905,6 +905,7 @@ static int sd_io(struct sheepdog_access_info *ai, int write, char *buf, int len,
+ 	int need_update_inode = 0, need_reload_inode;
+ 	int nr_copies = ai->inode.nr_copies;
+ 	int need_write_lock, check_idx;
++	int read_reload_snap = 0;
  
- static inline int is_data_obj_writeable(struct sheepdog_inode *inode,
-@@ -1252,6 +1256,11 @@ trans_to_expect_nothing:
+ 	goto do_req;
+ 
+@@ -912,7 +913,7 @@ reload_in_read_path:
+ 	pthread_rwlock_unlock(&ai->inode_lock); /* unlock current read lock */
+ 
+ 	pthread_rwlock_wrlock(&ai->inode_lock);
+-	ret = reload_inode(ai, 0);
++	ret = reload_inode(ai, read_reload_snap);
+ 	if (ret) {
+ 		eprintf("failed to reload in read path\n");
  		goto out;
- 
- 	ret = 0;
-+
-+	INIT_LIST_HEAD(&ai->inflight_list_head);
-+	pthread_mutex_init(&ai->inflight_list_mutex, NULL);
-+	pthread_cond_init(&ai->inflight_list_cond, NULL);
-+
- out:
- 	strcpy(filename, orig_filename);
- 	free(orig_filename);
-@@ -1349,6 +1358,41 @@ out:
- 	return ret;
- }
- 
-+struct inflight_thread {
-+	unsigned long min_idx, max_idx;
-+	struct list_head list;
-+};
-+
-+static void inflight_block(struct sheepdog_access_info *ai,
-+			   struct inflight_thread *myself)
-+{
-+	struct inflight_thread *inflight;
-+
-+	pthread_mutex_lock(&ai->inflight_list_mutex);
-+
-+retry:
-+	list_for_each_entry(inflight, &ai->inflight_list_head, list) {
-+		if (!(myself->max_idx < inflight->min_idx ||
-+		      inflight->max_idx < myself->min_idx)) {
-+			pthread_cond_wait(&ai->inflight_list_cond,
-+					  &ai->inflight_list_mutex);
-+			goto retry;
-+		}
-+	}
-+
-+	list_add_tail(&myself->list, &ai->inflight_list_head);
-+	pthread_mutex_unlock(&ai->inflight_list_mutex);
-+}
-+ void inflight_release(struct sheepdog_access_info *ai,
-+			     struct inflight_thread *myself)
-+{
-+	pthread_mutex_lock(&ai->inflight_list_mutex);
-+	list_del(&myself->list);
-+	pthread_mutex_unlock(&ai->inflight_list_mutex);
-+
-+	pthread_cond_signal(&ai->inflight_list_cond);
-+}
-+
- static void bs_sheepdog_request(struct scsi_cmd *cmd)
- {
- 	int ret = 0;
-@@ -1360,6 +1404,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
- 	struct sheepdog_access_info *ai =
- 		(struct sheepdog_access_info *)(info + 1);
- 
-+	uint32_t object_size = (UINT32_C(1) << ai->inode.block_size_shift);
-+	struct inflight_thread myself;
-+	int inflight = 0;
-+
-+	memset(&myself, 0, sizeof(myself));
-+	INIT_LIST_HEAD(&myself.list);
-+
- 	switch (cmd->scb[0]) {
- 	case SYNCHRONIZE_CACHE:
- 	case SYNCHRONIZE_CACHE_16:
-@@ -1383,6 +1434,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+@@ -1008,6 +1009,8 @@ retry:
+ 					dprintf("reload in read path for not"\
+ 						" written area\n");
+ 					size = orig_size;
++					read_reload_snap =
++						need_reload_inode == 1;
+ 					goto reload_in_read_path;
+ 				}
+ 			}
+@@ -1019,6 +1022,7 @@ retry:
+ 			if (need_reload_inode) {
+ 				dprintf("reload in ordinal read path\n");
+ 				size = orig_size;
++				read_reload_snap = need_reload_inode == 1;
+ 				goto reload_in_read_path;
+ 			}
  		}
- 
- 		length = scsi_get_out_length(cmd);
-+
-+		myself.min_idx = cmd->offset / object_size;
-+		myself.max_idx = (cmd->offset + length + (object_size - 1))
-+			/ object_size;
-+		inflight_block(ai, &myself);
-+		inflight = 1;
-+
- 		ret = sd_io(ai, 1, scsi_get_out_buffer(cmd),
- 			    length, cmd->offset);
- 
-@@ -1394,6 +1452,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
- 	case READ_12:
- 	case READ_16:
- 		length = scsi_get_in_length(cmd);
-+
-+		myself.min_idx = cmd->offset / object_size;
-+		myself.max_idx = (cmd->offset + length + (object_size - 1))
-+			/ object_size;
-+		inflight_block(ai, &myself);
-+		inflight = 1;
-+
- 		ret = sd_io(ai, 0, scsi_get_in_buffer(cmd),
- 			    length, cmd->offset);
- 		if (ret)
-@@ -1413,6 +1478,9 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
- 			cmd, cmd->scb[0], ret, length, cmd->offset);
- 		sense_data_build(cmd, key, asc);
- 	}
-+
-+	if (inflight)
-+		inflight_release(ai, &myself);
- }
- 
- static int bs_sheepdog_open(struct scsi_lu *lu, char *path,
 -- 
 1.9.1

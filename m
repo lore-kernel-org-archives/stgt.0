@@ -1,76 +1,42 @@
-From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH 4/4] sheepdog: handle a case of snapshot -> failover
-Date: Mon, 20 Jul 2015 15:59:15 +0900
-Message-ID: <1437375555-11698-4-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
-References: <1437375555-11698-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+Subject: [PATCH] Add WRITE_ATOMIC_16 support
+Date: Wed,  9 Sep 2015 11:43:54 -0700
+Message-ID: <1441824235-7724-1-git-send-email-ronniesahlberg@gmail.com>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=8LHfgM3iuw5KNKBI2pngF88ZTHOG9aAg3FHdtaB9pho=;
-        b=fkniMJ3p4IERaC9HQ0Z4+6v3rO6d72pkDRwnQxGzsc7kar+RKPA/QxbJi7jN25Jt5+
-         DMYFIIV2bsASkgcfLXi4G7/Ix/WP29DPr8w5TY6z0eByrAuro/W5HJwQbjgnH6hmJLfo
-         naGUrvnxNqmqURMW3bngITKcTti/AynuINNW6CWL+UAX/4ANAxwniyDe+RqngX2uM+T1
-         mpkDtlCYWXlPy1rsAAgEPeQDwLuWWEcfLfnCSCZVkVY0tteEWVSZKVsFjdJPW3ww65yx
-         jNAScyPaYmgvtl9uDBRj+hAptM4Dw1lkxXUeqb3LRoE198yNKQi78OBdmODpx/SGQK4I
-         oeJg==
-In-Reply-To: <1437375555-11698-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+        h=from:to:cc:subject:date:message-id;
+        bh=h1f5Scl+jhuGNlCznlPKZzKWGSxSuBClDeWnfLPceiI=;
+        b=mKfaQbBsr/n53Xn2whRQwHIiVBnNu4jEDruKBEkk0OmE5i8eJF2OwuAvn2eEEegcuQ
+         giThBkxv9PYXzorV82BDKFJhajlVgaeZArmLFQsNLPJ4cMCfhy4Tnjf5TZaKXBJod0qQ
+         F6cweD5F3nLSVoEV+R6+OxaKQxEYOCVDGXG19aVt73KlC+BmFeQcYucTwupePOAFRyF4
+         oVxvB4ICEPC4+Fh95cJchDP0qTT1m+CsBcPuPHfKjqs4gYbwS714tnWMOzJHPqXcsoya
+         AHCAlpZB6/a8OKzNQiqypkGjYCFDSbigI3gTtoFmuWMYO/MjWYzs33B7KVW81st/p+uw
+         IGVw==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
-Cc: sheepdog@lists.wpkg.org, Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>, Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
+Cc: fujita.tomonori@lab.ntt.co.jp
 
-If refreshed inode is snapshot, we can reload entire inode and switch
-to working VDI immediately. It is required by the new refreshing
-condition introduced in the commit 8f781f02ab of sheepdog.
 
-Cc: Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
-Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
----
- usr/bs_sheepdog.c | 28 ++++++++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
+Tomo, All,
 
-diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
-index 56630ac..99519ef 100644
---- a/usr/bs_sheepdog.c
-+++ b/usr/bs_sheepdog.c
-@@ -704,6 +704,34 @@ static int reload_inode(struct sheepdog_access_info *ai, int is_snapshot)
- 			ret = -1;
- 			goto ret;
- 		}
-+
-+		if (!!ai->inode.snap_ctime) {
-+			/*
-+			 * This is a case like below:
-+			 * take snapshot -> write something -> failover
-+			 *
-+			 * Because invalidated inode is readonly and latest
-+			 * working VDI can have COWed objects, we need to
-+			 * resolve VID and reload its entire inode object.
-+			 */
-+			memset(tag, 0, sizeof(tag));
-+
-+			ret = find_vdi_name(ai, ai->inode.name, CURRENT_VDI_ID,
-+					    tag, &vid, 1);
-+			if (ret) {
-+				ret = -1;
-+				goto ret;
-+			}
-+
-+			ret = read_object(ai, (char *)&ai->inode,
-+					  vid_to_vdi_oid(vid),
-+					  ai->inode.nr_copies, SD_INODE_SIZE, 0,
-+					  &need_reload);
-+			if (ret) {
-+				ret = -1;
-+				goto ret;
-+			}
-+		}
- 	}
- 
- 	ai->min_dirty_data_idx = UINT32_MAX;
--- 
-1.9.1
+Please find attached a patch that adds support for the new opcode
+WRITE_ATOMIC_16 to the bs_rdwr backend.
+
+I try to make it as atomic as possible by using mmap and mlock to ensure that
+both the write buffer and the file region we are writing to will be all
+present and locked down in memory before I just memcpy() the data.
+At that stage it is then assumed that the memcpy() will never fail short.
+
+The patch also adds the three new write atomic fields to the block limits
+vpd page and sets some sane defaults.
+Maximum amount of write atomic is set to the arbitrary limit of 16MByte
+and alignment and granularity is computed based on the blocksize of the
+underlying filesystem.
+
+regards
+ronnie sahlberg

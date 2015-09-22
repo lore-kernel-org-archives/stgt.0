@@ -1,45 +1,71 @@
 From: Jon Heese <jheese@inetu.net>
-Subject: Authorizing iSCSI access by IQN
-Date: Tue, 22 Sep 2015 15:57:20 +0000
-Message-ID: <8079a8c67d1d4e4c98d67c4794b4e9a9@int-exch6.int.inetu.net>
+Subject: RE: Authorizing iSCSI access by IQN
+Date: Tue, 22 Sep 2015 19:15:39 +0000
+Message-ID: <a039c37e75ea41bdb5439f2e9981eecd@int-exch6.int.inetu.net>
+References: <8079a8c67d1d4e4c98d67c4794b4e9a9@int-exch6.int.inetu.net>
+ <CAL2tJLJ677c3pQZjRBdqCH=Xe12pjnRh53eD30i0xngCHDp3FA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
+In-Reply-To: <CAL2tJLJ677c3pQZjRBdqCH=Xe12pjnRh53eD30i0xngCHDp3FA@mail.gmail.com>
 Content-Language: en-US
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-To: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
+To: OviOS Linux <ovi@ovios.org>
+Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
-Hello,
-
-I am attempting to use tgtd to provide iSCSI storage for a (large) group of initiators who are given IPs with DHCP, and thus cannot be relied upon to be static.  As such, I'd like to authorize access to the storage LUs based on the IQNs on each initiator.  For example:
-
-<target iqn.storage.server:target02>
-        backing-store /var/iscsi.file02
-        initiator-address iqn.1996-12.net.inetu:server-name.domain.net-r4zsbpwh2nfy
-</target>
-
-However, when I connect an initiator with that IQN, they don't see any LUs.  If I remove the "initiator-address" restriction, or change it to "ALL" or the IP or subnet of the initiator, the LUs show up and work properly, albeit without sufficient access control.
-
-On a RHEL6 initiator, using iscsi-initiator-utils-6.2.0.873-14, I get the following:
-[root@jheese-rhel6 ~]# iscsiadm -m discovery -t sendtargets -p 10.174.1.101       
-iscsiadm: No portals found
-
-And on Windows 2012 R2, I get the following:
-"No Targets available for Login using Quick Connect."
-
-Can anyone help me to troubleshoot what's going wrong here?  Any suggestions of ways to gain more insight into what's happening?
-
-FYI, I'm running tgtd 1.0.60, cloned from the git repo and built from scratch (because I needed the capability of using RBD backing-stores, and I couldn't find any CentOS 7 packages/repos that would provide that).
-
-Thanks in advance!
-
-Jon Heese
-Systems Engineer
-INetU Managed Hosting
-P: 610.266.7441 x 261
-F: 610.266.7434
-www.inetu.net
-
-** This message contains confidential information, which also may be privileged, and is intended only for the person(s) addressed above. Any unauthorized use, distribution, copying or disclosure of confidential and/or privileged information is strictly prohibited. If you have received this communication in error, please erase all copies of the message and its attachments and notify the sender immediately via reply e-mail. **
+RmFpciBlbm91Z2guDQoNClNvIGhvdyBkbyBJIGNvbnRyb2wgYWNjZXNzIGJ5IElRTj8gIFN1cmVs
+eSB0aGVyZSBpcyBhIHdheSwgbm8/DQoNCkpvbiBIZWVzZQ0KU3lzdGVtcyBFbmdpbmVlcg0KSU5l
+dFUgTWFuYWdlZCBIb3N0aW5nDQpQOiA2MTAuMjY2Ljc0NDEgeCAyNjENCkY6IDYxMC4yNjYuNzQz
+NA0Kd3d3LmluZXR1Lm5ldA0KKiogVGhpcyBtZXNzYWdlIGNvbnRhaW5zIGNvbmZpZGVudGlhbCBp
+bmZvcm1hdGlvbiwgd2hpY2ggYWxzbyBtYXkgYmUgcHJpdmlsZWdlZCwgYW5kIGlzIGludGVuZGVk
+IG9ubHkgZm9yIHRoZSBwZXJzb24ocykgYWRkcmVzc2VkIGFib3ZlLiBBbnkgdW5hdXRob3JpemVk
+IHVzZSwgZGlzdHJpYnV0aW9uLCBjb3B5aW5nIG9yIGRpc2Nsb3N1cmUgb2YgY29uZmlkZW50aWFs
+IGFuZC9vciBwcml2aWxlZ2VkIGluZm9ybWF0aW9uIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElm
+IHlvdSBoYXZlIHJlY2VpdmVkIHRoaXMgY29tbXVuaWNhdGlvbiBpbiBlcnJvciwgcGxlYXNlIGVy
+YXNlIGFsbCBjb3BpZXMgb2YgdGhlIG1lc3NhZ2UgYW5kIGl0cyBhdHRhY2htZW50cyBhbmQgbm90
+aWZ5IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgdmlhIHJlcGx5IGUtbWFpbC4gKioNCg0KRnJvbTog
+T3ZpT1MgTGludXggW21haWx0bzpvdmlAb3Zpb3Mub3JnXSANClNlbnQ6IFR1ZXNkYXksIFNlcHRl
+bWJlciAyMiwgMjAxNSAzOjA4IFBNDQpUbzogSm9uIEhlZXNlIDxqaGVlc2VAaW5ldHUubmV0Pg0K
+Q2M6IHN0Z3RAdmdlci5rZXJuZWwub3JnDQpTdWJqZWN0OiBSZTogQXV0aG9yaXppbmcgaVNDU0kg
+YWNjZXNzIGJ5IElRTg0KDQpIZXksIGlmIEknbSBub3Qgd3JvbmcsIHRoYXQgb25seSB3b3JrcyB3
+aXRoIElQcyBub3QgaXFucw0KT24gMjIgU2VwIDIwMTUgMTI6MDIgcG0sICJKb24gSGVlc2UiIDxq
+aGVlc2VAaW5ldHUubmV0PiB3cm90ZToNCkhlbGxvLA0KDQpJIGFtIGF0dGVtcHRpbmcgdG8gdXNl
+IHRndGQgdG8gcHJvdmlkZSBpU0NTSSBzdG9yYWdlIGZvciBhIChsYXJnZSkgZ3JvdXAgb2YgaW5p
+dGlhdG9ycyB3aG8gYXJlIGdpdmVuIElQcyB3aXRoIERIQ1AsIGFuZCB0aHVzIGNhbm5vdCBiZSBy
+ZWxpZWQgdXBvbiB0byBiZSBzdGF0aWMuwqAgQXMgc3VjaCwgSSdkIGxpa2UgdG8gYXV0aG9yaXpl
+IGFjY2VzcyB0byB0aGUgc3RvcmFnZSBMVXMgYmFzZWQgb24gdGhlIElRTnMgb24gZWFjaCBpbml0
+aWF0b3IuwqAgRm9yIGV4YW1wbGU6DQoNCjx0YXJnZXQgaXFuLnN0b3JhZ2Uuc2VydmVyOnRhcmdl
+dDAyPg0KwqAgwqAgwqAgwqAgYmFja2luZy1zdG9yZSAvdmFyL2lzY3NpLmZpbGUwMg0KwqAgwqAg
+wqAgwqAgaW5pdGlhdG9yLWFkZHJlc3MgaXFuLjE5OTYtMTIubmV0LmluZXR1OnNlcnZlci1uYW1l
+LmRvbWFpbi5uZXQtcjR6c2Jwd2gybmZ5DQo8L3RhcmdldD4NCg0KSG93ZXZlciwgd2hlbiBJIGNv
+bm5lY3QgYW4gaW5pdGlhdG9yIHdpdGggdGhhdCBJUU4sIHRoZXkgZG9uJ3Qgc2VlIGFueSBMVXMu
+wqAgSWYgSSByZW1vdmUgdGhlICJpbml0aWF0b3ItYWRkcmVzcyIgcmVzdHJpY3Rpb24sIG9yIGNo
+YW5nZSBpdCB0byAiQUxMIiBvciB0aGUgSVAgb3Igc3VibmV0IG9mIHRoZSBpbml0aWF0b3IsIHRo
+ZSBMVXMgc2hvdyB1cCBhbmQgd29yayBwcm9wZXJseSwgYWxiZWl0IHdpdGhvdXQgc3VmZmljaWVu
+dCBhY2Nlc3MgY29udHJvbC4NCg0KT24gYSBSSEVMNiBpbml0aWF0b3IsIHVzaW5nIGlzY3NpLWlu
+aXRpYXRvci11dGlscy02LjIuMC44NzMtMTQsIEkgZ2V0IHRoZSBmb2xsb3dpbmc6DQpbcm9vdEBq
+aGVlc2UtcmhlbDYgfl0jIGlzY3NpYWRtIC1tIGRpc2NvdmVyeSAtdCBzZW5kdGFyZ2V0cyAtcCAx
+MC4xNzQuMS4xMDENCmlzY3NpYWRtOiBObyBwb3J0YWxzIGZvdW5kDQoNCkFuZCBvbiBXaW5kb3dz
+IDIwMTIgUjIsIEkgZ2V0IHRoZSBmb2xsb3dpbmc6DQoiTm8gVGFyZ2V0cyBhdmFpbGFibGUgZm9y
+IExvZ2luIHVzaW5nIFF1aWNrIENvbm5lY3QuIg0KDQpDYW4gYW55b25lIGhlbHAgbWUgdG8gdHJv
+dWJsZXNob290IHdoYXQncyBnb2luZyB3cm9uZyBoZXJlP8KgIEFueSBzdWdnZXN0aW9ucyBvZiB3
+YXlzIHRvIGdhaW4gbW9yZSBpbnNpZ2h0IGludG8gd2hhdCdzIGhhcHBlbmluZz8NCg0KRllJLCBJ
+J20gcnVubmluZyB0Z3RkIDEuMC42MCwgY2xvbmVkIGZyb20gdGhlIGdpdCByZXBvIGFuZCBidWls
+dCBmcm9tIHNjcmF0Y2ggKGJlY2F1c2UgSSBuZWVkZWQgdGhlIGNhcGFiaWxpdHkgb2YgdXNpbmcg
+UkJEIGJhY2tpbmctc3RvcmVzLCBhbmQgSSBjb3VsZG4ndCBmaW5kIGFueSBDZW50T1MgNyBwYWNr
+YWdlcy9yZXBvcyB0aGF0IHdvdWxkIHByb3ZpZGUgdGhhdCkuDQoNClRoYW5rcyBpbiBhZHZhbmNl
+IQ0KDQpKb24gSGVlc2UNClN5c3RlbXMgRW5naW5lZXINCklOZXRVIE1hbmFnZWQgSG9zdGluZw0K
+UDogNjEwLjI2Ni43NDQxIHggMjYxDQpGOiA2MTAuMjY2Ljc0MzQNCnd3dy5pbmV0dS5uZXQNCg0K
+KiogVGhpcyBtZXNzYWdlIGNvbnRhaW5zIGNvbmZpZGVudGlhbCBpbmZvcm1hdGlvbiwgd2hpY2gg
+YWxzbyBtYXkgYmUgcHJpdmlsZWdlZCwgYW5kIGlzIGludGVuZGVkIG9ubHkgZm9yIHRoZSBwZXJz
+b24ocykgYWRkcmVzc2VkIGFib3ZlLiBBbnkgdW5hdXRob3JpemVkIHVzZSwgZGlzdHJpYnV0aW9u
+LCBjb3B5aW5nIG9yIGRpc2Nsb3N1cmUgb2YgY29uZmlkZW50aWFsIGFuZC9vciBwcml2aWxlZ2Vk
+IGluZm9ybWF0aW9uIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIHlvdSBoYXZlIHJlY2VpdmVk
+IHRoaXMgY29tbXVuaWNhdGlvbiBpbiBlcnJvciwgcGxlYXNlIGVyYXNlIGFsbCBjb3BpZXMgb2Yg
+dGhlIG1lc3NhZ2UgYW5kIGl0cyBhdHRhY2htZW50cyBhbmQgbm90aWZ5IHRoZSBzZW5kZXIgaW1t
+ZWRpYXRlbHkgdmlhIHJlcGx5IGUtbWFpbC4gKioNCi0tDQpUbyB1bnN1YnNjcmliZSBmcm9tIHRo
+aXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgc3RndCIgaW4NCnRoZSBib2R5IG9m
+IGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3JnDQpNb3JlIG1ham9yZG9tbyBp
+bmZvIGF0wqAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1sDQo=

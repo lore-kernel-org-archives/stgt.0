@@ -1,74 +1,76 @@
-From: ronnie sahlberg <ronniesahlberg@gmail.com>
-Subject: Re: Authorizing iSCSI access by IQN
-Date: Tue, 22 Sep 2015 12:29:56 -0700
-Message-ID: <CAN05THRjt=fhdMJ8NuNy3ReSi9zoovxupfmHZ6raruOJ=r4AWA@mail.gmail.com>
+From: Jon Heese <jheese@inetu.net>
+Subject: RE: Authorizing iSCSI access by IQN
+Date: Tue, 22 Sep 2015 19:34:24 +0000
+Message-ID: <2dea931a447945da88ebb0f5e565ace9@int-exch6.int.inetu.net>
 References: <8079a8c67d1d4e4c98d67c4794b4e9a9@int-exch6.int.inetu.net>
+ <CAN05THRjt=fhdMJ8NuNy3ReSi9zoovxupfmHZ6raruOJ=r4AWA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=5UEoB8QwpwT+9ScWcSuB6WeafQwfUUK86VQnLz0FhR8=;
-        b=f1SbNxgpgRn9V3YDHh7/dfbrtOf9Dcn1lfhZs9Sxxy92NeWXLI52PBaa/MmuvhtB/d
-         DqV3Z/SlV4U2XZmWbFE2cauxKrlxcX2L3noHeQyH8k3a3nHmzFbAxPVa3W02DzkS+gsa
-         TvKaXKWgVK/GMEtkeSJcc6RgUV+HKWLOdKD0x+we8/CI1vp/LU+uqtCb9+eSQrKwWphI
-         lJrk5DlJMc//8kNgglyvpEVlEP4V1u7N/1ugrIrfLdrkd9jbhwpiTiq6FXhbEYFUy3Fr
-         VHfpwwH6fdJHYOQVyLY6eaiT/mBbvxh2fr82DpT7XI7kzA4K+VwsfxkAphUhwLXHHvFA
-         1Cuw==
-In-Reply-To: <8079a8c67d1d4e4c98d67c4794b4e9a9@int-exch6.int.inetu.net>
+In-Reply-To: <CAN05THRjt=fhdMJ8NuNy3ReSi9zoovxupfmHZ6raruOJ=r4AWA@mail.gmail.com>
+Content-Language: en-US
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Jon Heese <jheese@inetu.net>
+To: ronnie sahlberg <ronniesahlberg@gmail.com>
 Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
-Change initiator-address to initiator-name
-
-initiator-address is for specifying an ip address to allow access from.
-initiator-name is to specify the iqn name to allow access from.
-
-
-See
-http://linux.die.net/man/5/targets.conf
-
-
-
-On Tue, Sep 22, 2015 at 8:57 AM, Jon Heese <jheese@inetu.net> wrote:
-> Hello,
->
-> I am attempting to use tgtd to provide iSCSI storage for a (large) group of initiators who are given IPs with DHCP, and thus cannot be relied upon to be static.  As such, I'd like to authorize access to the storage LUs based on the IQNs on each initiator.  For example:
->
-> <target iqn.storage.server:target02>
->         backing-store /var/iscsi.file02
->         initiator-address iqn.1996-12.net.inetu:server-name.domain.net-r4zsbpwh2nfy
-> </target>
->
-> However, when I connect an initiator with that IQN, they don't see any LUs.  If I remove the "initiator-address" restriction, or change it to "ALL" or the IP or subnet of the initiator, the LUs show up and work properly, albeit without sufficient access control.
->
-> On a RHEL6 initiator, using iscsi-initiator-utils-6.2.0.873-14, I get the following:
-> [root@jheese-rhel6 ~]# iscsiadm -m discovery -t sendtargets -p 10.174.1.101
-> iscsiadm: No portals found
->
-> And on Windows 2012 R2, I get the following:
-> "No Targets available for Login using Quick Connect."
->
-> Can anyone help me to troubleshoot what's going wrong here?  Any suggestions of ways to gain more insight into what's happening?
->
-> FYI, I'm running tgtd 1.0.60, cloned from the git repo and built from scratch (because I needed the capability of using RBD backing-stores, and I couldn't find any CentOS 7 packages/repos that would provide that).
->
-> Thanks in advance!
->
-> Jon Heese
-> Systems Engineer
-> INetU Managed Hosting
-> P: 610.266.7441 x 261
-> F: 610.266.7434
-> www.inetu.net
->
-> ** This message contains confidential information, which also may be privileged, and is intended only for the person(s) addressed above. Any unauthorized use, distribution, copying or disclosure of confidential and/or privileged information is strictly prohibited. If you have received this communication in error, please erase all copies of the message and its attachments and notify the sender immediately via reply e-mail. **
-> --
-> To unsubscribe from this list: send the line "unsubscribe stgt" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+QXdlc29tZSwgdGhhbmtzLg0KDQpKb24gSGVlc2UNClN5c3RlbXMgRW5naW5lZXINCklOZXRVIE1h
+bmFnZWQgSG9zdGluZw0KUDogNjEwLjI2Ni43NDQxIHggMjYxDQpGOiA2MTAuMjY2Ljc0MzQNCnd3
+dy5pbmV0dS5uZXQNCg0KKiogVGhpcyBtZXNzYWdlIGNvbnRhaW5zIGNvbmZpZGVudGlhbCBpbmZv
+cm1hdGlvbiwgd2hpY2ggYWxzbyBtYXkgYmUgcHJpdmlsZWdlZCwgYW5kIGlzIGludGVuZGVkIG9u
+bHkgZm9yIHRoZSBwZXJzb24ocykgYWRkcmVzc2VkIGFib3ZlLiBBbnkgdW5hdXRob3JpemVkIHVz
+ZSwgZGlzdHJpYnV0aW9uLCBjb3B5aW5nIG9yIGRpc2Nsb3N1cmUgb2YgY29uZmlkZW50aWFsIGFu
+ZC9vciBwcml2aWxlZ2VkIGluZm9ybWF0aW9uIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIHlv
+dSBoYXZlIHJlY2VpdmVkIHRoaXMgY29tbXVuaWNhdGlvbiBpbiBlcnJvciwgcGxlYXNlIGVyYXNl
+IGFsbCBjb3BpZXMgb2YgdGhlIG1lc3NhZ2UgYW5kIGl0cyBhdHRhY2htZW50cyBhbmQgbm90aWZ5
+IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgdmlhIHJlcGx5IGUtbWFpbC4gKioNCi0tLS0tT3JpZ2lu
+YWwgTWVzc2FnZS0tLS0tDQpGcm9tOiByb25uaWUgc2FobGJlcmcgW21haWx0bzpyb25uaWVzYWhs
+YmVyZ0BnbWFpbC5jb21dIA0KU2VudDogVHVlc2RheSwgU2VwdGVtYmVyIDIyLCAyMDE1IDM6MzAg
+UE0NClRvOiBKb24gSGVlc2UgPGpoZWVzZUBpbmV0dS5uZXQ+DQpDYzogc3RndEB2Z2VyLmtlcm5l
+bC5vcmcNClN1YmplY3Q6IFJlOiBBdXRob3JpemluZyBpU0NTSSBhY2Nlc3MgYnkgSVFODQoNCkNo
+YW5nZSBpbml0aWF0b3ItYWRkcmVzcyB0byBpbml0aWF0b3ItbmFtZQ0KDQppbml0aWF0b3ItYWRk
+cmVzcyBpcyBmb3Igc3BlY2lmeWluZyBhbiBpcCBhZGRyZXNzIHRvIGFsbG93IGFjY2VzcyBmcm9t
+Lg0KaW5pdGlhdG9yLW5hbWUgaXMgdG8gc3BlY2lmeSB0aGUgaXFuIG5hbWUgdG8gYWxsb3cgYWNj
+ZXNzIGZyb20uDQoNCg0KU2VlDQpodHRwOi8vbGludXguZGllLm5ldC9tYW4vNS90YXJnZXRzLmNv
+bmYNCg0KDQoNCk9uIFR1ZSwgU2VwIDIyLCAyMDE1IGF0IDg6NTcgQU0sIEpvbiBIZWVzZSA8amhl
+ZXNlQGluZXR1Lm5ldD4gd3JvdGU6DQo+IEhlbGxvLA0KPg0KPiBJIGFtIGF0dGVtcHRpbmcgdG8g
+dXNlIHRndGQgdG8gcHJvdmlkZSBpU0NTSSBzdG9yYWdlIGZvciBhIChsYXJnZSkgZ3JvdXAgb2Yg
+aW5pdGlhdG9ycyB3aG8gYXJlIGdpdmVuIElQcyB3aXRoIERIQ1AsIGFuZCB0aHVzIGNhbm5vdCBi
+ZSByZWxpZWQgdXBvbiB0byBiZSBzdGF0aWMuICBBcyBzdWNoLCBJJ2QgbGlrZSB0byBhdXRob3Jp
+emUgYWNjZXNzIHRvIHRoZSBzdG9yYWdlIExVcyBiYXNlZCBvbiB0aGUgSVFOcyBvbiBlYWNoIGlu
+aXRpYXRvci4gIEZvciBleGFtcGxlOg0KPg0KPiA8dGFyZ2V0IGlxbi5zdG9yYWdlLnNlcnZlcjp0
+YXJnZXQwMj4NCj4gICAgICAgICBiYWNraW5nLXN0b3JlIC92YXIvaXNjc2kuZmlsZTAyDQo+ICAg
+ICAgICAgaW5pdGlhdG9yLWFkZHJlc3MgDQo+IGlxbi4xOTk2LTEyLm5ldC5pbmV0dTpzZXJ2ZXIt
+bmFtZS5kb21haW4ubmV0LXI0enNicHdoMm5meQ0KPiA8L3RhcmdldD4NCj4NCj4gSG93ZXZlciwg
+d2hlbiBJIGNvbm5lY3QgYW4gaW5pdGlhdG9yIHdpdGggdGhhdCBJUU4sIHRoZXkgZG9uJ3Qgc2Vl
+IGFueSBMVXMuICBJZiBJIHJlbW92ZSB0aGUgImluaXRpYXRvci1hZGRyZXNzIiByZXN0cmljdGlv
+biwgb3IgY2hhbmdlIGl0IHRvICJBTEwiIG9yIHRoZSBJUCBvciBzdWJuZXQgb2YgdGhlIGluaXRp
+YXRvciwgdGhlIExVcyBzaG93IHVwIGFuZCB3b3JrIHByb3Blcmx5LCBhbGJlaXQgd2l0aG91dCBz
+dWZmaWNpZW50IGFjY2VzcyBjb250cm9sLg0KPg0KPiBPbiBhIFJIRUw2IGluaXRpYXRvciwgdXNp
+bmcgaXNjc2ktaW5pdGlhdG9yLXV0aWxzLTYuMi4wLjg3My0xNCwgSSBnZXQgdGhlIGZvbGxvd2lu
+ZzoNCj4gW3Jvb3RAamhlZXNlLXJoZWw2IH5dIyBpc2NzaWFkbSAtbSBkaXNjb3ZlcnkgLXQgc2Vu
+ZHRhcmdldHMgLXAgDQo+IDEwLjE3NC4xLjEwMQ0KPiBpc2NzaWFkbTogTm8gcG9ydGFscyBmb3Vu
+ZA0KPg0KPiBBbmQgb24gV2luZG93cyAyMDEyIFIyLCBJIGdldCB0aGUgZm9sbG93aW5nOg0KPiAi
+Tm8gVGFyZ2V0cyBhdmFpbGFibGUgZm9yIExvZ2luIHVzaW5nIFF1aWNrIENvbm5lY3QuIg0KPg0K
+PiBDYW4gYW55b25lIGhlbHAgbWUgdG8gdHJvdWJsZXNob290IHdoYXQncyBnb2luZyB3cm9uZyBo
+ZXJlPyAgQW55IHN1Z2dlc3Rpb25zIG9mIHdheXMgdG8gZ2FpbiBtb3JlIGluc2lnaHQgaW50byB3
+aGF0J3MgaGFwcGVuaW5nPw0KPg0KPiBGWUksIEknbSBydW5uaW5nIHRndGQgMS4wLjYwLCBjbG9u
+ZWQgZnJvbSB0aGUgZ2l0IHJlcG8gYW5kIGJ1aWx0IGZyb20gc2NyYXRjaCAoYmVjYXVzZSBJIG5l
+ZWRlZCB0aGUgY2FwYWJpbGl0eSBvZiB1c2luZyBSQkQgYmFja2luZy1zdG9yZXMsIGFuZCBJIGNv
+dWxkbid0IGZpbmQgYW55IENlbnRPUyA3IHBhY2thZ2VzL3JlcG9zIHRoYXQgd291bGQgcHJvdmlk
+ZSB0aGF0KS4NCj4NCj4gVGhhbmtzIGluIGFkdmFuY2UhDQo+DQo+IEpvbiBIZWVzZQ0KPiBTeXN0
+ZW1zIEVuZ2luZWVyDQo+IElOZXRVIE1hbmFnZWQgSG9zdGluZw0KPiBQOiA2MTAuMjY2Ljc0NDEg
+eCAyNjENCj4gRjogNjEwLjI2Ni43NDM0DQo+IHd3dy5pbmV0dS5uZXQNCj4NCj4gKiogVGhpcyBt
+ZXNzYWdlIGNvbnRhaW5zIGNvbmZpZGVudGlhbCBpbmZvcm1hdGlvbiwgd2hpY2ggYWxzbyBtYXkg
+YmUgDQo+IHByaXZpbGVnZWQsIGFuZCBpcyBpbnRlbmRlZCBvbmx5IGZvciB0aGUgcGVyc29uKHMp
+IGFkZHJlc3NlZCBhYm92ZS4gDQo+IEFueSB1bmF1dGhvcml6ZWQgdXNlLCBkaXN0cmlidXRpb24s
+IGNvcHlpbmcgb3IgZGlzY2xvc3VyZSBvZiANCj4gY29uZmlkZW50aWFsIGFuZC9vciBwcml2aWxl
+Z2VkIGluZm9ybWF0aW9uIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIA0KPiB5b3UgaGF2ZSBy
+ZWNlaXZlZCB0aGlzIGNvbW11bmljYXRpb24gaW4gZXJyb3IsIHBsZWFzZSBlcmFzZSBhbGwgY29w
+aWVzIA0KPiBvZiB0aGUgbWVzc2FnZSBhbmQgaXRzIGF0dGFjaG1lbnRzIGFuZCBub3RpZnkgdGhl
+IHNlbmRlciBpbW1lZGlhdGVseSANCj4gdmlhIHJlcGx5IGUtbWFpbC4gKioNCj4gLS0NCj4gVG8g
+dW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIHN0
+Z3QiIGluIHRoZSANCj4gYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVs
+Lm9yZyBNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICANCj4gaHR0cDovL3ZnZXIua2VybmVsLm9yZy9t
+YWpvcmRvbW8taW5mby5odG1sDQo=

@@ -1,76 +1,50 @@
-From: Jon Heese <jheese@inetu.net>
-Subject: RE: Authorizing iSCSI access by IQN
-Date: Tue, 22 Sep 2015 19:34:24 +0000
-Message-ID: <2dea931a447945da88ebb0f5e565ace9@int-exch6.int.inetu.net>
-References: <8079a8c67d1d4e4c98d67c4794b4e9a9@int-exch6.int.inetu.net>
- <CAN05THRjt=fhdMJ8NuNy3ReSi9zoovxupfmHZ6raruOJ=r4AWA@mail.gmail.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH] Add WRITE_ATOMIC_16 support
+Date: Wed, 23 Sep 2015 12:16:16 +0900 (JST)
+Message-ID: <20150923.121616.1568838937885768056.fujita.tomonori@lab.ntt.co.jp>
+References: <1441824235-7724-1-git-send-email-ronniesahlberg@gmail.com>
+	<20150915.185432.653026525707333816.fujita.tomonori@lab.ntt.co.jp>
+	<CAN05THQU-N5Twu4Oi5BsxTa+3XaaAkwcotJNZmzu7mJkSDQxAA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <CAN05THRjt=fhdMJ8NuNy3ReSi9zoovxupfmHZ6raruOJ=r4AWA@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <CAN05THQU-N5Twu4Oi5BsxTa+3XaaAkwcotJNZmzu7mJkSDQxAA@mail.gmail.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: ronnie sahlberg <ronniesahlberg@gmail.com>
-Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: ronniesahlberg@gmail.com
+Cc: stgt@vger.kernel.org
 
-QXdlc29tZSwgdGhhbmtzLg0KDQpKb24gSGVlc2UNClN5c3RlbXMgRW5naW5lZXINCklOZXRVIE1h
-bmFnZWQgSG9zdGluZw0KUDogNjEwLjI2Ni43NDQxIHggMjYxDQpGOiA2MTAuMjY2Ljc0MzQNCnd3
-dy5pbmV0dS5uZXQNCg0KKiogVGhpcyBtZXNzYWdlIGNvbnRhaW5zIGNvbmZpZGVudGlhbCBpbmZv
-cm1hdGlvbiwgd2hpY2ggYWxzbyBtYXkgYmUgcHJpdmlsZWdlZCwgYW5kIGlzIGludGVuZGVkIG9u
-bHkgZm9yIHRoZSBwZXJzb24ocykgYWRkcmVzc2VkIGFib3ZlLiBBbnkgdW5hdXRob3JpemVkIHVz
-ZSwgZGlzdHJpYnV0aW9uLCBjb3B5aW5nIG9yIGRpc2Nsb3N1cmUgb2YgY29uZmlkZW50aWFsIGFu
-ZC9vciBwcml2aWxlZ2VkIGluZm9ybWF0aW9uIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIHlv
-dSBoYXZlIHJlY2VpdmVkIHRoaXMgY29tbXVuaWNhdGlvbiBpbiBlcnJvciwgcGxlYXNlIGVyYXNl
-IGFsbCBjb3BpZXMgb2YgdGhlIG1lc3NhZ2UgYW5kIGl0cyBhdHRhY2htZW50cyBhbmQgbm90aWZ5
-IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgdmlhIHJlcGx5IGUtbWFpbC4gKioNCi0tLS0tT3JpZ2lu
-YWwgTWVzc2FnZS0tLS0tDQpGcm9tOiByb25uaWUgc2FobGJlcmcgW21haWx0bzpyb25uaWVzYWhs
-YmVyZ0BnbWFpbC5jb21dIA0KU2VudDogVHVlc2RheSwgU2VwdGVtYmVyIDIyLCAyMDE1IDM6MzAg
-UE0NClRvOiBKb24gSGVlc2UgPGpoZWVzZUBpbmV0dS5uZXQ+DQpDYzogc3RndEB2Z2VyLmtlcm5l
-bC5vcmcNClN1YmplY3Q6IFJlOiBBdXRob3JpemluZyBpU0NTSSBhY2Nlc3MgYnkgSVFODQoNCkNo
-YW5nZSBpbml0aWF0b3ItYWRkcmVzcyB0byBpbml0aWF0b3ItbmFtZQ0KDQppbml0aWF0b3ItYWRk
-cmVzcyBpcyBmb3Igc3BlY2lmeWluZyBhbiBpcCBhZGRyZXNzIHRvIGFsbG93IGFjY2VzcyBmcm9t
-Lg0KaW5pdGlhdG9yLW5hbWUgaXMgdG8gc3BlY2lmeSB0aGUgaXFuIG5hbWUgdG8gYWxsb3cgYWNj
-ZXNzIGZyb20uDQoNCg0KU2VlDQpodHRwOi8vbGludXguZGllLm5ldC9tYW4vNS90YXJnZXRzLmNv
-bmYNCg0KDQoNCk9uIFR1ZSwgU2VwIDIyLCAyMDE1IGF0IDg6NTcgQU0sIEpvbiBIZWVzZSA8amhl
-ZXNlQGluZXR1Lm5ldD4gd3JvdGU6DQo+IEhlbGxvLA0KPg0KPiBJIGFtIGF0dGVtcHRpbmcgdG8g
-dXNlIHRndGQgdG8gcHJvdmlkZSBpU0NTSSBzdG9yYWdlIGZvciBhIChsYXJnZSkgZ3JvdXAgb2Yg
-aW5pdGlhdG9ycyB3aG8gYXJlIGdpdmVuIElQcyB3aXRoIERIQ1AsIGFuZCB0aHVzIGNhbm5vdCBi
-ZSByZWxpZWQgdXBvbiB0byBiZSBzdGF0aWMuICBBcyBzdWNoLCBJJ2QgbGlrZSB0byBhdXRob3Jp
-emUgYWNjZXNzIHRvIHRoZSBzdG9yYWdlIExVcyBiYXNlZCBvbiB0aGUgSVFOcyBvbiBlYWNoIGlu
-aXRpYXRvci4gIEZvciBleGFtcGxlOg0KPg0KPiA8dGFyZ2V0IGlxbi5zdG9yYWdlLnNlcnZlcjp0
-YXJnZXQwMj4NCj4gICAgICAgICBiYWNraW5nLXN0b3JlIC92YXIvaXNjc2kuZmlsZTAyDQo+ICAg
-ICAgICAgaW5pdGlhdG9yLWFkZHJlc3MgDQo+IGlxbi4xOTk2LTEyLm5ldC5pbmV0dTpzZXJ2ZXIt
-bmFtZS5kb21haW4ubmV0LXI0enNicHdoMm5meQ0KPiA8L3RhcmdldD4NCj4NCj4gSG93ZXZlciwg
-d2hlbiBJIGNvbm5lY3QgYW4gaW5pdGlhdG9yIHdpdGggdGhhdCBJUU4sIHRoZXkgZG9uJ3Qgc2Vl
-IGFueSBMVXMuICBJZiBJIHJlbW92ZSB0aGUgImluaXRpYXRvci1hZGRyZXNzIiByZXN0cmljdGlv
-biwgb3IgY2hhbmdlIGl0IHRvICJBTEwiIG9yIHRoZSBJUCBvciBzdWJuZXQgb2YgdGhlIGluaXRp
-YXRvciwgdGhlIExVcyBzaG93IHVwIGFuZCB3b3JrIHByb3Blcmx5LCBhbGJlaXQgd2l0aG91dCBz
-dWZmaWNpZW50IGFjY2VzcyBjb250cm9sLg0KPg0KPiBPbiBhIFJIRUw2IGluaXRpYXRvciwgdXNp
-bmcgaXNjc2ktaW5pdGlhdG9yLXV0aWxzLTYuMi4wLjg3My0xNCwgSSBnZXQgdGhlIGZvbGxvd2lu
-ZzoNCj4gW3Jvb3RAamhlZXNlLXJoZWw2IH5dIyBpc2NzaWFkbSAtbSBkaXNjb3ZlcnkgLXQgc2Vu
-ZHRhcmdldHMgLXAgDQo+IDEwLjE3NC4xLjEwMQ0KPiBpc2NzaWFkbTogTm8gcG9ydGFscyBmb3Vu
-ZA0KPg0KPiBBbmQgb24gV2luZG93cyAyMDEyIFIyLCBJIGdldCB0aGUgZm9sbG93aW5nOg0KPiAi
-Tm8gVGFyZ2V0cyBhdmFpbGFibGUgZm9yIExvZ2luIHVzaW5nIFF1aWNrIENvbm5lY3QuIg0KPg0K
-PiBDYW4gYW55b25lIGhlbHAgbWUgdG8gdHJvdWJsZXNob290IHdoYXQncyBnb2luZyB3cm9uZyBo
-ZXJlPyAgQW55IHN1Z2dlc3Rpb25zIG9mIHdheXMgdG8gZ2FpbiBtb3JlIGluc2lnaHQgaW50byB3
-aGF0J3MgaGFwcGVuaW5nPw0KPg0KPiBGWUksIEknbSBydW5uaW5nIHRndGQgMS4wLjYwLCBjbG9u
-ZWQgZnJvbSB0aGUgZ2l0IHJlcG8gYW5kIGJ1aWx0IGZyb20gc2NyYXRjaCAoYmVjYXVzZSBJIG5l
-ZWRlZCB0aGUgY2FwYWJpbGl0eSBvZiB1c2luZyBSQkQgYmFja2luZy1zdG9yZXMsIGFuZCBJIGNv
-dWxkbid0IGZpbmQgYW55IENlbnRPUyA3IHBhY2thZ2VzL3JlcG9zIHRoYXQgd291bGQgcHJvdmlk
-ZSB0aGF0KS4NCj4NCj4gVGhhbmtzIGluIGFkdmFuY2UhDQo+DQo+IEpvbiBIZWVzZQ0KPiBTeXN0
-ZW1zIEVuZ2luZWVyDQo+IElOZXRVIE1hbmFnZWQgSG9zdGluZw0KPiBQOiA2MTAuMjY2Ljc0NDEg
-eCAyNjENCj4gRjogNjEwLjI2Ni43NDM0DQo+IHd3dy5pbmV0dS5uZXQNCj4NCj4gKiogVGhpcyBt
-ZXNzYWdlIGNvbnRhaW5zIGNvbmZpZGVudGlhbCBpbmZvcm1hdGlvbiwgd2hpY2ggYWxzbyBtYXkg
-YmUgDQo+IHByaXZpbGVnZWQsIGFuZCBpcyBpbnRlbmRlZCBvbmx5IGZvciB0aGUgcGVyc29uKHMp
-IGFkZHJlc3NlZCBhYm92ZS4gDQo+IEFueSB1bmF1dGhvcml6ZWQgdXNlLCBkaXN0cmlidXRpb24s
-IGNvcHlpbmcgb3IgZGlzY2xvc3VyZSBvZiANCj4gY29uZmlkZW50aWFsIGFuZC9vciBwcml2aWxl
-Z2VkIGluZm9ybWF0aW9uIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIA0KPiB5b3UgaGF2ZSBy
-ZWNlaXZlZCB0aGlzIGNvbW11bmljYXRpb24gaW4gZXJyb3IsIHBsZWFzZSBlcmFzZSBhbGwgY29w
-aWVzIA0KPiBvZiB0aGUgbWVzc2FnZSBhbmQgaXRzIGF0dGFjaG1lbnRzIGFuZCBub3RpZnkgdGhl
-IHNlbmRlciBpbW1lZGlhdGVseSANCj4gdmlhIHJlcGx5IGUtbWFpbC4gKioNCj4gLS0NCj4gVG8g
-dW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIHN0
-Z3QiIGluIHRoZSANCj4gYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVs
-Lm9yZyBNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICANCj4gaHR0cDovL3ZnZXIua2VybmVsLm9yZy9t
-YWpvcmRvbW8taW5mby5odG1sDQo=
+On Wed, 16 Sep 2015 12:49:14 -0700
+ronnie sahlberg <ronniesahlberg@gmail.com> wrote:
+
+> On Tue, Sep 15, 2015 at 2:54 AM, FUJITA Tomonori
+> <fujita.tomonori@lab.ntt.co.jp> wrote:
+>> On Wed,  9 Sep 2015 11:43:54 -0700
+>> Ronnie Sahlberg <ronniesahlberg@gmail.com> wrote:
+>>
+>>> Please find attached a patch that adds support for the new opcode
+>>> WRITE_ATOMIC_16 to the bs_rdwr backend.
+>>>
+>>> I try to make it as atomic as possible by using mmap and mlock to ensure that
+>>> both the write buffer and the file region we are writing to will be all
+>>> present and locked down in memory before I just memcpy() the data.
+>>> At that stage it is then assumed that the memcpy() will never fail short.
+>>
+>> But it's still possible that the data written to the underlying file
+>> system in 'non-atomic' manner in the case of linux kernel crash or
+>> such?
+> 
+> True.
+> If there is a kernel panic between when we issue msync() and until the
+> kernel has fully destaged all the data, the write will not be atomic
+> and we will end up with a short write :-(
+> 
+> That should be rare-ish though so we should be able to live with it?
+> If not, since the backing file is supposed to be a plain posix file,
+> do you have any suggestions or pointers on how I can make the
+> atomicity
+> stronger, I have tried to think about it but since filesystems is not
+> my strongest side I can not come up with anything better right now.
+
+Btrfs doesn't guarantee this yet? EXT3's data=journal is still broken?

@@ -1,73 +1,80 @@
-From: ronnie sahlberg <ronniesahlberg@gmail.com>
-Subject: Re: Problems with targets.conf syntax
-Date: Thu, 24 Sep 2015 09:25:41 -0700
-Message-ID: <CAN05THSUDeW9PSqtQGo2S1ajdbVSruaTUN_EFocrBYBUMyDzHA@mail.gmail.com>
+From: Jon Heese <jheese@inetu.net>
+Subject: RE: Problems with targets.conf syntax
+Date: Thu, 24 Sep 2015 18:42:02 +0000
+Message-ID: <bbc1ce7bd069468f8ea72545f981cbc2@int-exch6.int.inetu.net>
 References: <3e3e0c715f06419c84f8883fcd102b1b@int-exch6.int.inetu.net>
+ <CAN05THSUDeW9PSqtQGo2S1ajdbVSruaTUN_EFocrBYBUMyDzHA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=IiyF0OXDUejwGttKcZsgHi8A9ic8ojbE/5AAzdX/Nhg=;
-        b=b8argn1WKgUwk6hTs2VjgkBRfceAPF1AhawdWPkDcv0Zl7hxvAGs1emY8Cm+k+yEbF
-         iG/BJUOF2wd9VfFxVYlTpuT3Q83DDMsrCIGCycgMz8gQSGxNkGXu2uLzLeV5GUNRjupb
-         PK/4HN/9Hm8s4wR02S7PTcgkzefhDoqCtAV3cWZQvnZRmLTlzp455QAbhSZB+5XFCp5y
-         mGHKK1fTqDAi6/zKsWqnk1D3baBExqhXl0TzgsIOT0saYkVbWDQE1QJwfib8oOSsAQky
-         oiwckPY580jHktGFKj7EYSOIt2Vmxg3iFSykf9GAwHfcYfVr9SoppWBeAmt8alLOtqUG
-         y2iw==
-In-Reply-To: <3e3e0c715f06419c84f8883fcd102b1b@int-exch6.int.inetu.net>
+In-Reply-To: <CAN05THSUDeW9PSqtQGo2S1ajdbVSruaTUN_EFocrBYBUMyDzHA@mail.gmail.com>
+Content-Language: en-US
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Jon Heese <jheese@inetu.net>
+To: ronnie sahlberg <ronniesahlberg@gmail.com>
 Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
-On Wed, Sep 23, 2015 at 11:22 AM, Jon Heese <jheese@inetu.net> wrote:
-> Hello,
->
-> I'm using tgtd 1.0.60 on CentOS 7 to provide iSCSI targets on top of Ceph RBD storage, and I'm having some trouble working out the proper targets.conf syntax to make it work how I want...
->
-> So here's a snippet of my current targets.conf:
->
-> <target iqn.1996-12.net.inetu.ceph-storage01>
->         bs-type rbd
->         <backing-store cmikolay-sqlcluster_mssql>
->                 initiator-name iqn.1996-12.net.inetu:cmikolay-winlab.cslabs.inetu.net-r4zsbpwh2nfy
->         </backing-store>
->         ...
-> </target>
->
-> This works on a basic level - that is, it provides an iSCSI LUN for the "cmikolay-sqlcluster_mssql" RBD device, but the "initiator-name" directive appears to be being ignored.  If I switch from the container format to the inline format, i.e.:
->
-> <target iqn.1996-12.net.inetu.ceph-storage01>
->         bs-type rbd
->        backing-store cmikolay-sqlcluster_mssql
->        initiator-name iqn.1996-12.net.inetu:cmikolay-winlab.cslabs.inetu.net-r4zsbpwh2nfy
->         ...
-> </target>
->
-> Then the ACL by IQN works, but I can't add any more LUs to that target without breaking the ACL.
->
-> What I'm looking for is a way to have a single target with multiple LUNs under it, each ACL'd to a set of IQNs.  Does anyone know of a way to do this?  Thanks in advance!
-
-I am not sure you can do that.  Afaik the ACLs are per target level
-and not per LUN.
-So if you want different LUNs for different initiators and have ACLs
-to protect access you will need to use multiple targets.
-
-
->
-> Jon Heese
-> Systems Engineer
-> INetU Managed Hosting
-> P: 610.266.7441 x 261
-> F: 610.266.7434
-> www.inetu.net
->
-> ** This message contains confidential information, which also may be privileged, and is intended only for the person(s) addressed above. Any unauthorized use, distribution, copying or disclosure of confidential and/or privileged information is strictly prohibited. If you have received this communication in error, please erase all copies of the message and its attachments and notify the sender immediately via reply e-mail. **
-> --
-> To unsubscribe from this list: send the line "unsubscribe stgt" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+WWVhaCwgdGhhbmtzLCBJIGd1ZXNzIHlvdSdyZSByaWdodC4NCg0KVGhhbmtzIGZvciBldmVyeW9u
+ZSdzIGhlbHAgLS0gaXQncyBiZWNvbWluZyBjbGVhciB0aGF0IHRndGQgaXMganVzdCBub3QgZ29p
+bmcgdG8gd29yayBmb3IgdGhpcyBwcm9qZWN0LiAgSSdtIHVzZWQgdG8gd29ya2luZyB3aXRoIFNv
+bGFyaXMncyBTVE1GIGlTQ1NJIHRhcmdldCBmcmFtZXdvcmssIGFuZCB0aGVyZSBqdXN0IGFyZW4n
+dCB0aGUgc2FtZSBmZWF0dXJlcyBhdmFpbGFibGUgaW4gdGd0ZC4NCg0KSSdtIGxvb2tpbmcgYXQg
+dGhlIHRhcmdldGNsaSBzdHVmZiBmcm9tIExJTyBub3csIGFuZCBpdCdzIGFibGUgdG8gZG8gd2hh
+dCBJIG5lZWQuICBUaGFua3MgYWdhaW4uDQoNCkpvbiBIZWVzZQ0KU3lzdGVtcyBFbmdpbmVlcg0K
+SU5ldFUgTWFuYWdlZCBIb3N0aW5nDQpQOiA2MTAuMjY2Ljc0NDEgeCAyNjENCkY6IDYxMC4yNjYu
+NzQzNA0Kd3d3LmluZXR1Lm5ldA0KDQoqKiBUaGlzIG1lc3NhZ2UgY29udGFpbnMgY29uZmlkZW50
+aWFsIGluZm9ybWF0aW9uLCB3aGljaCBhbHNvIG1heSBiZSBwcml2aWxlZ2VkLCBhbmQgaXMgaW50
+ZW5kZWQgb25seSBmb3IgdGhlIHBlcnNvbihzKSBhZGRyZXNzZWQgYWJvdmUuIEFueSB1bmF1dGhv
+cml6ZWQgdXNlLCBkaXN0cmlidXRpb24sIGNvcHlpbmcgb3IgZGlzY2xvc3VyZSBvZiBjb25maWRl
+bnRpYWwgYW5kL29yIHByaXZpbGVnZWQgaW5mb3JtYXRpb24gaXMgc3RyaWN0bHkgcHJvaGliaXRl
+ZC4gSWYgeW91IGhhdmUgcmVjZWl2ZWQgdGhpcyBjb21tdW5pY2F0aW9uIGluIGVycm9yLCBwbGVh
+c2UgZXJhc2UgYWxsIGNvcGllcyBvZiB0aGUgbWVzc2FnZSBhbmQgaXRzIGF0dGFjaG1lbnRzIGFu
+ZCBub3RpZnkgdGhlIHNlbmRlciBpbW1lZGlhdGVseSB2aWEgcmVwbHkgZS1tYWlsLiAqKg0KLS0t
+LS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IHJvbm5pZSBzYWhsYmVyZyBbbWFpbHRvOnJv
+bm5pZXNhaGxiZXJnQGdtYWlsLmNvbV0gDQpTZW50OiBUaHVyc2RheSwgU2VwdGVtYmVyIDI0LCAy
+MDE1IDEyOjI2IFBNDQpUbzogSm9uIEhlZXNlIDxqaGVlc2VAaW5ldHUubmV0Pg0KQ2M6IHN0Z3RA
+dmdlci5rZXJuZWwub3JnDQpTdWJqZWN0OiBSZTogUHJvYmxlbXMgd2l0aCB0YXJnZXRzLmNvbmYg
+c3ludGF4DQoNCk9uIFdlZCwgU2VwIDIzLCAyMDE1IGF0IDExOjIyIEFNLCBKb24gSGVlc2UgPGpo
+ZWVzZUBpbmV0dS5uZXQ+IHdyb3RlOg0KPiBIZWxsbywNCj4NCj4gSSdtIHVzaW5nIHRndGQgMS4w
+LjYwIG9uIENlbnRPUyA3IHRvIHByb3ZpZGUgaVNDU0kgdGFyZ2V0cyBvbiB0b3Agb2YgQ2VwaCBS
+QkQgc3RvcmFnZSwgYW5kIEknbSBoYXZpbmcgc29tZSB0cm91YmxlIHdvcmtpbmcgb3V0IHRoZSBw
+cm9wZXIgdGFyZ2V0cy5jb25mIHN5bnRheCB0byBtYWtlIGl0IHdvcmsgaG93IEkgd2FudC4uLg0K
+Pg0KPiBTbyBoZXJlJ3MgYSBzbmlwcGV0IG9mIG15IGN1cnJlbnQgdGFyZ2V0cy5jb25mOg0KPg0K
+PiA8dGFyZ2V0IGlxbi4xOTk2LTEyLm5ldC5pbmV0dS5jZXBoLXN0b3JhZ2UwMT4NCj4gICAgICAg
+ICBicy10eXBlIHJiZA0KPiAgICAgICAgIDxiYWNraW5nLXN0b3JlIGNtaWtvbGF5LXNxbGNsdXN0
+ZXJfbXNzcWw+DQo+ICAgICAgICAgICAgICAgICBpbml0aWF0b3ItbmFtZSBpcW4uMTk5Ni0xMi5u
+ZXQuaW5ldHU6Y21pa29sYXktd2lubGFiLmNzbGFicy5pbmV0dS5uZXQtcjR6c2Jwd2gybmZ5DQo+
+ICAgICAgICAgPC9iYWNraW5nLXN0b3JlPg0KPiAgICAgICAgIC4uLg0KPiA8L3RhcmdldD4NCj4N
+Cj4gVGhpcyB3b3JrcyBvbiBhIGJhc2ljIGxldmVsIC0gdGhhdCBpcywgaXQgcHJvdmlkZXMgYW4g
+aVNDU0kgTFVOIGZvciB0aGUgImNtaWtvbGF5LXNxbGNsdXN0ZXJfbXNzcWwiIFJCRCBkZXZpY2Us
+IGJ1dCB0aGUgImluaXRpYXRvci1uYW1lIiBkaXJlY3RpdmUgYXBwZWFycyB0byBiZSBiZWluZyBp
+Z25vcmVkLiAgSWYgSSBzd2l0Y2ggZnJvbSB0aGUgY29udGFpbmVyIGZvcm1hdCB0byB0aGUgaW5s
+aW5lIGZvcm1hdCwgaS5lLjoNCj4NCj4gPHRhcmdldCBpcW4uMTk5Ni0xMi5uZXQuaW5ldHUuY2Vw
+aC1zdG9yYWdlMDE+DQo+ICAgICAgICAgYnMtdHlwZSByYmQNCj4gICAgICAgIGJhY2tpbmctc3Rv
+cmUgY21pa29sYXktc3FsY2x1c3Rlcl9tc3NxbA0KPiAgICAgICAgaW5pdGlhdG9yLW5hbWUgaXFu
+LjE5OTYtMTIubmV0LmluZXR1OmNtaWtvbGF5LXdpbmxhYi5jc2xhYnMuaW5ldHUubmV0LXI0enNi
+cHdoMm5meQ0KPiAgICAgICAgIC4uLg0KPiA8L3RhcmdldD4NCj4NCj4gVGhlbiB0aGUgQUNMIGJ5
+IElRTiB3b3JrcywgYnV0IEkgY2FuJ3QgYWRkIGFueSBtb3JlIExVcyB0byB0aGF0IHRhcmdldCB3
+aXRob3V0IGJyZWFraW5nIHRoZSBBQ0wuDQo+DQo+IFdoYXQgSSdtIGxvb2tpbmcgZm9yIGlzIGEg
+d2F5IHRvIGhhdmUgYSBzaW5nbGUgdGFyZ2V0IHdpdGggbXVsdGlwbGUgTFVOcyB1bmRlciBpdCwg
+ZWFjaCBBQ0wnZCB0byBhIHNldCBvZiBJUU5zLiAgRG9lcyBhbnlvbmUga25vdyBvZiBhIHdheSB0
+byBkbyB0aGlzPyAgVGhhbmtzIGluIGFkdmFuY2UhDQoNCkkgYW0gbm90IHN1cmUgeW91IGNhbiBk
+byB0aGF0LiAgQWZhaWsgdGhlIEFDTHMgYXJlIHBlciB0YXJnZXQgbGV2ZWwgYW5kIG5vdCBwZXIg
+TFVOLg0KU28gaWYgeW91IHdhbnQgZGlmZmVyZW50IExVTnMgZm9yIGRpZmZlcmVudCBpbml0aWF0
+b3JzIGFuZCBoYXZlIEFDTHMgdG8gcHJvdGVjdCBhY2Nlc3MgeW91IHdpbGwgbmVlZCB0byB1c2Ug
+bXVsdGlwbGUgdGFyZ2V0cy4NCg0KDQo+DQo+IEpvbiBIZWVzZQ0KPiBTeXN0ZW1zIEVuZ2luZWVy
+DQo+IElOZXRVIE1hbmFnZWQgSG9zdGluZw0KPiBQOiA2MTAuMjY2Ljc0NDEgeCAyNjENCj4gRjog
+NjEwLjI2Ni43NDM0DQo+IHd3dy5pbmV0dS5uZXQNCj4NCj4gKiogVGhpcyBtZXNzYWdlIGNvbnRh
+aW5zIGNvbmZpZGVudGlhbCBpbmZvcm1hdGlvbiwgd2hpY2ggYWxzbyBtYXkgYmUgDQo+IHByaXZp
+bGVnZWQsIGFuZCBpcyBpbnRlbmRlZCBvbmx5IGZvciB0aGUgcGVyc29uKHMpIGFkZHJlc3NlZCBh
+Ym92ZS4gDQo+IEFueSB1bmF1dGhvcml6ZWQgdXNlLCBkaXN0cmlidXRpb24sIGNvcHlpbmcgb3Ig
+ZGlzY2xvc3VyZSBvZiANCj4gY29uZmlkZW50aWFsIGFuZC9vciBwcml2aWxlZ2VkIGluZm9ybWF0
+aW9uIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIA0KPiB5b3UgaGF2ZSByZWNlaXZlZCB0aGlz
+IGNvbW11bmljYXRpb24gaW4gZXJyb3IsIHBsZWFzZSBlcmFzZSBhbGwgY29waWVzIA0KPiBvZiB0
+aGUgbWVzc2FnZSBhbmQgaXRzIGF0dGFjaG1lbnRzIGFuZCBub3RpZnkgdGhlIHNlbmRlciBpbW1l
+ZGlhdGVseSANCj4gdmlhIHJlcGx5IGUtbWFpbC4gKioNCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUg
+ZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIHN0Z3QiIGluIHRoZSAN
+Cj4gYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyBNb3JlIG1h
+am9yZG9tbyBpbmZvIGF0ICANCj4gaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5m
+by5odG1sDQo=

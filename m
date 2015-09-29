@@ -1,19 +1,43 @@
-From: "yangruifeng.09209@h3c.com" <yangruifeng.09209@h3c.com>
-Subject: about print_disksize
-Date: Tue, 29 Sep 2015 03:38:09 +0000
-Message-ID: <0C3F6DA3760D0C4691E69E5BE224FF495E158CC6@H3CMLB12-EX.srv.huawei-3com.com>
+From: =?UTF-8?Q?Marcin_Miros=c5=82aw?= <marcin@mejor.pl>
+Subject: Does tgt-admin supports bs-type sheepdog?
+Date: Tue, 29 Sep 2015 14:00:28 +0200
+Message-ID: <560A7D5C.9030909@mejor.pl>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-Content-Language: zh-CN
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=mejor.pl;
+	 s=cokolwiek; h=Content-Transfer-Encoding:Content-Type:MIME-Version:Date:
+	Message-ID:Subject:From:To; bh=j9otZ+2M71ltZwCx4BPK6GLqYHmYq+KjA1YhNufQLPQ=;
+	 b=F3GwQS1hrHwCBc8jpwvvRkHjGPAOTBOZbOyl35BEisG6oFe030Aw/InfuGsQEYj9sKl8Fw4z7o
+	BmpLS0AbDAFrvchTRPlH8NrOVtjF/LJP3cIVMEkfLzqLkGsmofJHYE;
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
-Cc: "zhengbin.08747@h3c.com" <zhengbin.08747@h3c.com>
+Content-Type: text/plain; charset="us-ascii"
+To: stgt@vger.kernel.org
 
-SGkgQWxso6wNCg0KSW4gcHJpbnRfZGlza3NpemUodGFyZ2V0LmMpDQptYiA9ICgoc2l6ZSAvIDUx
-MikgLSAoKChzaXplIC8gNTEyKSAvIDYyNSkgLSA5NzQpKSAvIDE5NTA7IA0KDQpXaHkgdGhpcz8g
-DQo1MTKhojYyNaGiOTc0oaIxOTUwIG1lYW4gd2hhdD8NCg0KV2h5IG5vdCBsaWtlIHRoaXMsDQpN
-YiA9IHNpemUgLyAoMTAwMCAqIDEwMDApP1NpbXBsZXIgYW5kIGVhc2llciB0byB1bmRlcnN0YW5k
-DQoNClRoYW5rc6OsDQpSdWlmZW5nIFlhbmcNCg==
+Hello all!
+
+I've got installed tgt-1.0.60, iI'm trying to define sheepdog store in
+targets.conf file. Content of targets.conf is:
+# cat /etc/tgt/targets.conf
+default-driver iscsi
+
+<target iqn.backup.sheep:usun>
+        bs-type sheepdog
+        backing-store tcp:127.0.0.1:7000:usun
+</target>
+
+but tgt-admin throws:
+# tgt-admin -p -e
+# Adding target: iqn.backup.sheep:usun
+tgtadm -C 0 --lld iscsi --op new --mode target --tid 1 -T
+iqn.backup.sheep:usun
+# Skipping device: tcp:127.0.0.1:7000:usun
+# tcp:127.0.0.1:7000:usun does not exist - please check the
+configuration file
+tgtadm -C 0 --lld iscsi --op bind --mode target --tid 1 -I ALL
+
+
+Does tgt-admin supports sheepdog or I made a mistake in targets.conf?
+
+Marcin

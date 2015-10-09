@@ -1,78 +1,62 @@
-From: Steven Graf <sgraf@resolutech.net>
-Subject: Re: about print_disksize
-Date: Wed, 30 Sep 2015 08:39:57 -0400
-Message-ID: <D2091F72-36DE-4840-8454-4E879FB42088@resolutech.net>
+From: "yangruifeng.09209@h3c.com" <yangruifeng.09209@h3c.com>
+Subject: =?utf-8?B?562U5aSNOiBhYm91dCBwcmludF9kaXNrc2l6ZQ==?=
+Date: Fri, 9 Oct 2015 11:10:32 +0000
+Message-ID: <0C3F6DA3760D0C4691E69E5BE224FF495E15AC71@H3CMLB12-EX.srv.huawei-3com.com>
 References: <0C3F6DA3760D0C4691E69E5BE224FF495E158CC6@H3CMLB12-EX.srv.huawei-3com.com>
-Mime-Version: 1.0 (1.0)
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+ <D2091F72-36DE-4840-8454-4E879FB42088@resolutech.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=resolutech.net; h=
-	cc:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to:x-sasl-enc
-	:x-sasl-enc; s=mesmtp; bh=kqrX3aJpd/7plYq7xboL5mL6AoM=; b=Z/Jq1m
-	ZdPD4DoRNHQbGonYFNGIRPVMFfwVBX91RZHPZ04ST+FXZ7LBZB/0n3Uloda0mMyi
-	23/qZEXhXFK0109N0KhJZk7zJIqr8HYH64crrdPtm4enaE+ctwlLg0qdXhhlTGuT
-	JLOVvS40RCPR8IsG/Bavgc1Xqxwr+g8pL6rYw=
-DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:content-transfer-encoding:content-type
-	:date:from:in-reply-to:message-id:mime-version:references
-	:subject:to:x-sasl-enc:x-sasl-enc; s=smtpout; bh=kqrX3aJpd/7plYq
-	7xboL5mL6AoM=; b=aiGDmdGO2/Ju5dyXKmo9deeGzecnrZS6GEEzfSq2jZzj4xQ
-	RJ/qVrUJ5WkEmh4FMLsdRhfyPTLNYTERAgP5J9Shw+n4T3stf619zcdUMefkjo+3
-	uDgXojUPLqz+C9Sw7UdmVz5IU3uIXRzk1Pp4iNbKisejBgxtPLaSHy7HkWNQ=
-In-Reply-To: <0C3F6DA3760D0C4691E69E5BE224FF495E158CC6@H3CMLB12-EX.srv.huawei-3com.com>
+In-Reply-To: <D2091F72-36DE-4840-8454-4E879FB42088@resolutech.net>
+Content-Language: zh-CN
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="windows-1254"
-To: "yangruifeng.09209@h3c.com" <yangruifeng.09209@h3c.com>
-Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>, "zhengbin.08747@h3c.com" <zhengbin.08747@h3c.com>
+To: Steven Graf <sgraf@resolutech.net>
+Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
-Yang,
-
-I believe your computation has over simplified the calculation taking p=
-lace.  A megabyte is actually 1024 * 1024.  Furthermore the calculation=
- is being run against an existing number so the result is the existing =
-number expressed as MB.  Lastly the calculations seem very deliberate s=
-o my assumption is that there is some additional data is in band with t=
-he underlying data and needs to be stripped from the calculation.
-
-Cheers,
-
--S
-
-Sent from your iPhone
-
-> On Sep 28, 2015, at 11:38 PM, "yangruifeng.09209@h3c.com" <yangruifen=
-g.09209@h3c.com> wrote:
->=20
-> Hi All=C2=A3=C2=AC
->=20
-> In print_disksize(target.c)
-> mb =3D ((size / 512) - (((size / 512) / 625) - 974)) / 1950;=20
->=20
-> Why this?=20
-> 512=C2=A1=C2=A2625=C2=A1=C2=A2974=C2=A1=C2=A21950 mean what?
->=20
-> Why not like this,
-> Mb =3D size / (1000 * 1000)?Simpler and easier to understand
->=20
-> Thanks=C2=A3=C2=AC
-> Ruifeng Yang
-> =04=C3=A8=C2=BA{.n=C3=87+=E2=80=B0=C2=B7=C5=B8=C2=AE=E2=80=B0=C2=AD=E2=
-=80=A0+%=C5=A0=C3=8Blzwm=E2=80=A6=C3=A9b=C2=9D=C3=AB=C2=A7=C2=B2=C3=A6=C3=
-=ACr=C2=B8=E2=80=BAz=C3=8B`=C2=B6)=C3=AD=E2=80=A6=C3=A6=C3=A8w*=1Fjg=C2=
-=AC=C2=B1=C2=A8=1E=C2=B6=E2=80=B0=C5=A1=C5=BD=C5=A0=C3=9D=C2=A2j/=C2=81=
-=C3=AA=C3=A4z=C2=B9=C3=9E=E2=80=93=C5=A0=C3=A02=C5=A0=C3=9E=E2=84=A2=C2=
-=A8=C3=A8=C2=AD=C3=9A&=C2=A2)=C3=9F=C2=A1=C2=ABa=C2=B6=C3=9A=7F=C3=BE=C3=
-=B8=1E=C2=AEG=C2=AB=C2=9D=C3=A9h=C2=AE=0F=C3=A6j:+v=E2=80=B0=C2=A8=C5=A0=
-w=C3=A8=E2=80=A0=C3=99=C2=A5
-This email and any files transmitted with it are confidential and inten=
-ded solely for the use of the individual or entity to whom they are add=
-ressed. If you have received this email in error please notify the syst=
-em manager. Please note that any views or opinions presented in this em=
-ail are solely those of the author and do not necessarily represent tho=
-se of the company. Finally, the recipient should check this email and a=
-ny attachments for the presence of viruses. The company accepts no liab=
-ility for any damage caused by any virus transmitted by this email.
-
-Resolutech, LLC, PO Box 650991, Sterling, VA 20165, www.resolutech.net
+U3RldmVu77yMDQoNCglUaGFua3MgZm9yIHlvdXIgcmVwbHkuIEkgZm91bmQgYSBwb3NzaWJsZSBy
+ZWFzb24sDQoNCgkrIC8qIEdpdmUgc2l6ZSBpbiBtZWdhYnl0ZXMgKE1CKSwgbm90IG1lYmlieXRl
+cyAoTWlCKS4gKi8gDQoJKyAvKiBXZSBjb21wdXRlIHRoZSBleGFjdCByb3VuZGVkIHZhbHVlLCBh
+dm9pZGluZyBvdmVyZmxvdy4gKi8gDQoJKyBwcmludGsgKCIgKCVsZCBNQikiLCAoY2FwYWNpdHkg
+LSBjYXBhY2l0eS82MjUgKyA5NzQpLzE5NTApOw0KDQoJdGhhdCBpcyBmb3VuZCBpbiBodHRwOi8v
+d3d3Lmdvc3NhbWVyLXRocmVhZHMuY29tL2xpc3RzL2xpbnV4L2tlcm5lbC8xMjkzMzcNCg0KQ2hl
+ZXJzDQoNCi0tLS0t6YKu5Lu25Y6f5Lu2LS0tLS0NCuWPkeS7tuS6ujogc3RndC1vd25lckB2Z2Vy
+Lmtlcm5lbC5vcmcgW21haWx0bzpzdGd0LW93bmVyQHZnZXIua2VybmVsLm9yZ10g5Luj6KGoIFN0
+ZXZlbiBHcmFmDQrlj5HpgIHml7bpl7Q6IDIwMTXlubQ55pyIMzDml6UgMjA6NDANCuaUtuS7tuS6
+ujogeWFuZ3J1aWZlbmcgMDkyMDkgKFJEKQ0K5oqE6YCBOiBzdGd0QHZnZXIua2VybmVsLm9yZzsg
+emhlbmdiaW4gMDg3NDcgKFJEKQ0K5Li76aKYOiBSZTogYWJvdXQgcHJpbnRfZGlza3NpemUNCg0K
+WWFuZywNCg0KSSBiZWxpZXZlIHlvdXIgY29tcHV0YXRpb24gaGFzIG92ZXIgc2ltcGxpZmllZCB0
+aGUgY2FsY3VsYXRpb24gdGFraW5nIHBsYWNlLiAgQSBtZWdhYnl0ZSBpcyBhY3R1YWxseSAxMDI0
+ICogMTAyNC4gIEZ1cnRoZXJtb3JlIHRoZSBjYWxjdWxhdGlvbiBpcyBiZWluZyBydW4gYWdhaW5z
+dCBhbiBleGlzdGluZyBudW1iZXIgc28gdGhlIHJlc3VsdCBpcyB0aGUgZXhpc3RpbmcgbnVtYmVy
+IGV4cHJlc3NlZCBhcyBNQi4gIExhc3RseSB0aGUgY2FsY3VsYXRpb25zIHNlZW0gdmVyeSBkZWxp
+YmVyYXRlIHNvIG15IGFzc3VtcHRpb24gaXMgdGhhdCB0aGVyZSBpcyBzb21lIGFkZGl0aW9uYWwg
+ZGF0YSBpcyBpbiBiYW5kIHdpdGggdGhlIHVuZGVybHlpbmcgZGF0YSBhbmQgbmVlZHMgdG8gYmUg
+c3RyaXBwZWQgZnJvbSB0aGUgY2FsY3VsYXRpb24uDQoNCkNoZWVycywNCg0KLVMNCg0KU2VudCBm
+cm9tIHlvdXIgaVBob25lDQoNCj4gT24gU2VwIDI4LCAyMDE1LCBhdCAxMTozOCBQTSwgInlhbmdy
+dWlmZW5nLjA5MjA5QGgzYy5jb20iIDx5YW5ncnVpZmVuZy4wOTIwOUBoM2MuY29tPiB3cm90ZToN
+Cj4gDQo+IEhpIEFsbMKjwqwNCj4gDQo+IEluIHByaW50X2Rpc2tzaXplKHRhcmdldC5jKQ0KPiBt
+YiA9ICgoc2l6ZSAvIDUxMikgLSAoKChzaXplIC8gNTEyKSAvIDYyNSkgLSA5NzQpKSAvIDE5NTA7
+DQo+IA0KPiBXaHkgdGhpcz8gDQo+IDUxMsKhwqI2MjXCocKiOTc0wqHCojE5NTAgbWVhbiB3aGF0
+Pw0KPiANCj4gV2h5IG5vdCBsaWtlIHRoaXMsDQo+IE1iID0gc2l6ZSAvICgxMDAwICogMTAwMCk/
+U2ltcGxlciBhbmQgZWFzaWVyIHRvIHVuZGVyc3RhbmQNCj4gDQo+IFRoYW5rc8KjwqwNCj4gUnVp
+ZmVuZyBZYW5nDQo+IATDqMK6ey5uw4cr4oCwwrfFuMKu4oCwwq3igKArJcWgw4tsendt4oCmw6li
+wp3Dq8KnwrLDpsOscsK44oC6esOLYMK2KcOt4oCmw6bDqHcqamfCrMKxwqgewrbigLDFocW9xaDD
+ncKiai/CgcOqw6R6wrnDnuKAk8WgDQo+IMOgMsWgw57ihKLCqMOowq3DmibCoinDn8KhwqthwrbD
+mn/DvsO4HsKuR8Krwp3DqWjCrg/Dpmo6K3bigLDCqMWgd8Oo4oCgw5nCpQ0KVGhpcyBlbWFpbCBh
+bmQgYW55IGZpbGVzIHRyYW5zbWl0dGVkIHdpdGggaXQgYXJlIGNvbmZpZGVudGlhbCBhbmQgaW50
+ZW5kZWQgc29sZWx5IGZvciB0aGUgdXNlIG9mIHRoZSBpbmRpdmlkdWFsIG9yIGVudGl0eSB0byB3
+aG9tIHRoZXkgYXJlIGFkZHJlc3NlZC4gSWYgeW91IGhhdmUgcmVjZWl2ZWQgdGhpcyBlbWFpbCBp
+biBlcnJvciBwbGVhc2Ugbm90aWZ5IHRoZSBzeXN0ZW0gbWFuYWdlci4gUGxlYXNlIG5vdGUgdGhh
+dCBhbnkgdmlld3Mgb3Igb3BpbmlvbnMgcHJlc2VudGVkIGluIHRoaXMgZW1haWwgYXJlIHNvbGVs
+eSB0aG9zZSBvZiB0aGUgYXV0aG9yIGFuZCBkbyBub3QgbmVjZXNzYXJpbHkgcmVwcmVzZW50IHRo
+b3NlIG9mIHRoZSBjb21wYW55LiBGaW5hbGx5LCB0aGUgcmVjaXBpZW50IHNob3VsZCBjaGVjayB0
+aGlzIGVtYWlsIGFuZCBhbnkgYXR0YWNobWVudHMgZm9yIHRoZSBwcmVzZW5jZSBvZiB2aXJ1c2Vz
+LiBUaGUgY29tcGFueSBhY2NlcHRzIG5vIGxpYWJpbGl0eSBmb3IgYW55IGRhbWFnZSBjYXVzZWQg
+YnkgYW55IHZpcnVzIHRyYW5zbWl0dGVkIGJ5IHRoaXMgZW1haWwuDQoNClJlc29sdXRlY2gsIExM
+QywgUE8gQm94IDY1MDk5MSwgU3RlcmxpbmcsIFZBIDIwMTY1LCB3d3cucmVzb2x1dGVjaC5uZXQN
+Ci0tDQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJz
+Y3JpYmUgc3RndCIgaW4gdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtl
+cm5lbC5vcmcgTW9yZSBtYWpvcmRvbW8gaW5mbyBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9t
+YWpvcmRvbW8taW5mby5odG1sDQo=

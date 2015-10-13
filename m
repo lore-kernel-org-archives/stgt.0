@@ -1,62 +1,75 @@
-From: "yangruifeng.09209@h3c.com" <yangruifeng.09209@h3c.com>
-Subject: =?utf-8?B?562U5aSNOiBhYm91dCBwcmludF9kaXNrc2l6ZQ==?=
-Date: Fri, 9 Oct 2015 11:10:32 +0000
-Message-ID: <0C3F6DA3760D0C4691E69E5BE224FF495E15AC71@H3CMLB12-EX.srv.huawei-3com.com>
-References: <0C3F6DA3760D0C4691E69E5BE224FF495E158CC6@H3CMLB12-EX.srv.huawei-3com.com>
- <D2091F72-36DE-4840-8454-4E879FB42088@resolutech.net>
+From: Lee Duncan <lduncan@suse.com>
+Subject: [PATCH] Handle access of a target that has been removed
+Date: Tue, 13 Oct 2015 11:10:17 -0700
+Message-ID: <561D4909.8040006@suse.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: 8bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <D2091F72-36DE-4840-8454-4E879FB42088@resolutech.net>
-Content-Language: zh-CN
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1254"
-To: Steven Graf <sgraf@resolutech.net>
-Cc: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: stgt@vger.kernel.org
 
-U3RldmVu77yMDQoNCglUaGFua3MgZm9yIHlvdXIgcmVwbHkuIEkgZm91bmQgYSBwb3NzaWJsZSBy
-ZWFzb24sDQoNCgkrIC8qIEdpdmUgc2l6ZSBpbiBtZWdhYnl0ZXMgKE1CKSwgbm90IG1lYmlieXRl
-cyAoTWlCKS4gKi8gDQoJKyAvKiBXZSBjb21wdXRlIHRoZSBleGFjdCByb3VuZGVkIHZhbHVlLCBh
-dm9pZGluZyBvdmVyZmxvdy4gKi8gDQoJKyBwcmludGsgKCIgKCVsZCBNQikiLCAoY2FwYWNpdHkg
-LSBjYXBhY2l0eS82MjUgKyA5NzQpLzE5NTApOw0KDQoJdGhhdCBpcyBmb3VuZCBpbiBodHRwOi8v
-d3d3Lmdvc3NhbWVyLXRocmVhZHMuY29tL2xpc3RzL2xpbnV4L2tlcm5lbC8xMjkzMzcNCg0KQ2hl
-ZXJzDQoNCi0tLS0t6YKu5Lu25Y6f5Lu2LS0tLS0NCuWPkeS7tuS6ujogc3RndC1vd25lckB2Z2Vy
-Lmtlcm5lbC5vcmcgW21haWx0bzpzdGd0LW93bmVyQHZnZXIua2VybmVsLm9yZ10g5Luj6KGoIFN0
-ZXZlbiBHcmFmDQrlj5HpgIHml7bpl7Q6IDIwMTXlubQ55pyIMzDml6UgMjA6NDANCuaUtuS7tuS6
-ujogeWFuZ3J1aWZlbmcgMDkyMDkgKFJEKQ0K5oqE6YCBOiBzdGd0QHZnZXIua2VybmVsLm9yZzsg
-emhlbmdiaW4gMDg3NDcgKFJEKQ0K5Li76aKYOiBSZTogYWJvdXQgcHJpbnRfZGlza3NpemUNCg0K
-WWFuZywNCg0KSSBiZWxpZXZlIHlvdXIgY29tcHV0YXRpb24gaGFzIG92ZXIgc2ltcGxpZmllZCB0
-aGUgY2FsY3VsYXRpb24gdGFraW5nIHBsYWNlLiAgQSBtZWdhYnl0ZSBpcyBhY3R1YWxseSAxMDI0
-ICogMTAyNC4gIEZ1cnRoZXJtb3JlIHRoZSBjYWxjdWxhdGlvbiBpcyBiZWluZyBydW4gYWdhaW5z
-dCBhbiBleGlzdGluZyBudW1iZXIgc28gdGhlIHJlc3VsdCBpcyB0aGUgZXhpc3RpbmcgbnVtYmVy
-IGV4cHJlc3NlZCBhcyBNQi4gIExhc3RseSB0aGUgY2FsY3VsYXRpb25zIHNlZW0gdmVyeSBkZWxp
-YmVyYXRlIHNvIG15IGFzc3VtcHRpb24gaXMgdGhhdCB0aGVyZSBpcyBzb21lIGFkZGl0aW9uYWwg
-ZGF0YSBpcyBpbiBiYW5kIHdpdGggdGhlIHVuZGVybHlpbmcgZGF0YSBhbmQgbmVlZHMgdG8gYmUg
-c3RyaXBwZWQgZnJvbSB0aGUgY2FsY3VsYXRpb24uDQoNCkNoZWVycywNCg0KLVMNCg0KU2VudCBm
-cm9tIHlvdXIgaVBob25lDQoNCj4gT24gU2VwIDI4LCAyMDE1LCBhdCAxMTozOCBQTSwgInlhbmdy
-dWlmZW5nLjA5MjA5QGgzYy5jb20iIDx5YW5ncnVpZmVuZy4wOTIwOUBoM2MuY29tPiB3cm90ZToN
-Cj4gDQo+IEhpIEFsbMKjwqwNCj4gDQo+IEluIHByaW50X2Rpc2tzaXplKHRhcmdldC5jKQ0KPiBt
-YiA9ICgoc2l6ZSAvIDUxMikgLSAoKChzaXplIC8gNTEyKSAvIDYyNSkgLSA5NzQpKSAvIDE5NTA7
-DQo+IA0KPiBXaHkgdGhpcz8gDQo+IDUxMsKhwqI2MjXCocKiOTc0wqHCojE5NTAgbWVhbiB3aGF0
-Pw0KPiANCj4gV2h5IG5vdCBsaWtlIHRoaXMsDQo+IE1iID0gc2l6ZSAvICgxMDAwICogMTAwMCk/
-U2ltcGxlciBhbmQgZWFzaWVyIHRvIHVuZGVyc3RhbmQNCj4gDQo+IFRoYW5rc8KjwqwNCj4gUnVp
-ZmVuZyBZYW5nDQo+IATDqMK6ey5uw4cr4oCwwrfFuMKu4oCwwq3igKArJcWgw4tsendt4oCmw6li
-wp3Dq8KnwrLDpsOscsK44oC6esOLYMK2KcOt4oCmw6bDqHcqamfCrMKxwqgewrbigLDFocW9xaDD
-ncKiai/CgcOqw6R6wrnDnuKAk8WgDQo+IMOgMsWgw57ihKLCqMOowq3DmibCoinDn8KhwqthwrbD
-mn/DvsO4HsKuR8Krwp3DqWjCrg/Dpmo6K3bigLDCqMWgd8Oo4oCgw5nCpQ0KVGhpcyBlbWFpbCBh
-bmQgYW55IGZpbGVzIHRyYW5zbWl0dGVkIHdpdGggaXQgYXJlIGNvbmZpZGVudGlhbCBhbmQgaW50
-ZW5kZWQgc29sZWx5IGZvciB0aGUgdXNlIG9mIHRoZSBpbmRpdmlkdWFsIG9yIGVudGl0eSB0byB3
-aG9tIHRoZXkgYXJlIGFkZHJlc3NlZC4gSWYgeW91IGhhdmUgcmVjZWl2ZWQgdGhpcyBlbWFpbCBp
-biBlcnJvciBwbGVhc2Ugbm90aWZ5IHRoZSBzeXN0ZW0gbWFuYWdlci4gUGxlYXNlIG5vdGUgdGhh
-dCBhbnkgdmlld3Mgb3Igb3BpbmlvbnMgcHJlc2VudGVkIGluIHRoaXMgZW1haWwgYXJlIHNvbGVs
-eSB0aG9zZSBvZiB0aGUgYXV0aG9yIGFuZCBkbyBub3QgbmVjZXNzYXJpbHkgcmVwcmVzZW50IHRo
-b3NlIG9mIHRoZSBjb21wYW55LiBGaW5hbGx5LCB0aGUgcmVjaXBpZW50IHNob3VsZCBjaGVjayB0
-aGlzIGVtYWlsIGFuZCBhbnkgYXR0YWNobWVudHMgZm9yIHRoZSBwcmVzZW5jZSBvZiB2aXJ1c2Vz
-LiBUaGUgY29tcGFueSBhY2NlcHRzIG5vIGxpYWJpbGl0eSBmb3IgYW55IGRhbWFnZSBjYXVzZWQg
-YnkgYW55IHZpcnVzIHRyYW5zbWl0dGVkIGJ5IHRoaXMgZW1haWwuDQoNClJlc29sdXRlY2gsIExM
-QywgUE8gQm94IDY1MDk5MSwgU3RlcmxpbmcsIFZBIDIwMTY1LCB3d3cucmVzb2x1dGVjaC5uZXQN
-Ci0tDQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJz
-Y3JpYmUgc3RndCIgaW4gdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtl
-cm5lbC5vcmcgTW9yZSBtYWpvcmRvbW8gaW5mbyBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9t
-YWpvcmRvbW8taW5mby5odG1sDQo=
+Hello:
+
+I recently got a report of a tgtd core dump from our opencloud
+group. The stack trace showed that a strcmp against a NULL was causing
+the failure:
+
+----------------------------------------------------------------
+Program terminated with signal 11, Segmentation fault.
+(gdb) bt
+#0  0x00007fa701817576 in __strcmp_sse42 () from /lib64/libc.so.6
+#1  0x0000000000408012 in target_find_by_name (
+    name=0x6ac16f "iqn.2010-10.org.openstack:volume-e812c705-80bc-4064-a84c-5559cda8b1ca") at iscsi/target.c:216
+#2  0x0000000000406042 in login_start (conn=0x6abea8) at iscsi/iscsid.c:478
+#3  0x0000000000406e77 in cmnd_exec_login (conn=<optimized out>)
+    at iscsi/iscsid.c:654
+#4  cmnd_execute (conn=<optimized out>) at iscsi/iscsid.c:914
+#5  iscsi_rx_handler (conn=0x6abea8) at iscsi/iscsid.c:2064
+#6  0x0000000000409e98 in iscsi_tcp_event_handler (fd=<optimized out>, 
+    events=1, data=0x63a480 <target_list>) at iscsi/iscsi_tcp.c:158
+#7  0x0000000000418f1e in event_loop () at tgtd.c:272
+#8  0x0000000000419405 in main (argc=1, argv=<optimized out>) at tgtd.c:438
+----------------------------------------------------------------
+
+It looks like target_find_by_name() uses tgt_targetname(), but doesn't
+account for the fact that it can return a NULL when the target being
+looked up does not (now) exist:
+
+----------------------------------------------------------------
+char *tgt_targetname(int tid)            
+{               
+        struct target *target;      
+                        
+        target = target_lookup(tid);
+        if (!target)
+                return NULL;
+        
+        return target->name;
+}                                   
+----------------------------------------------------------------
+
+I propose the following patch to address this:
+
+--- 
+diff --git a/usr/iscsi/target.c b/usr/iscsi/target.c
+index 7afd7fd0ba87..b0a36e7de7b4 100644
+--- a/usr/iscsi/target.c
++++ b/usr/iscsi/target.c
+@@ -369,9 +369,11 @@ void target_list_build(struct iscsi_connection *conn, char *addr, char *name)
+ struct iscsi_target *target_find_by_name(const char *name)
+ {
+        struct iscsi_target *target;
++       char *tname;
+ 
+        list_for_each_entry(target, &iscsi_targets_list, tlist) {
+-               if (!strcmp(tgt_targetname(target->tid), name))
++               tname = tgt_targetname(target->tid);
++               if (tname && !strcmp(tname, name))
+                        return target;
+        }
+ 
+
+-- 
+Lee Duncan

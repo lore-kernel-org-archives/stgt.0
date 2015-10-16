@@ -1,75 +1,49 @@
-From: Lee Duncan <lduncan@suse.com>
-Subject: [PATCH] Handle access of a target that has been removed
-Date: Tue, 13 Oct 2015 11:10:17 -0700
-Message-ID: <561D4909.8040006@suse.com>
+From: Frank Michel <fmfranck@gmail.com>
+Subject: Tgtd dirty pages issue
+Date: Fri, 16 Oct 2015 12:43:42 +0200
+Message-ID: <CAKn=86PDwiWgVMKRkCCKuv8YddnBO6LVcCe1aSA1pZdi85058Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <stgt-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:date:message-id:subject:from:to:content-type
+         :content-transfer-encoding;
+        bh=qFIo3UEnK7T30xaFD71ENhTGY2669wDjsYBDDRvPCFE=;
+        b=he0Gg3xv7gIRCGysOmPigH/DwckPINXUOlV+uKKUUWynjwXkK8UAdUMPkIPuyY3ZYK
+         +MvT9i4T/3Vjwk7NT5w1xX17pInaFQ9+PnsNpxULf2sT6QqlZxXReHskQFwonF1IIpxk
+         oNq0ruOL0+F0S6PlxAbWc7h2NqIaDrpTRAweORUY3XFkPA9Mks95fkRpC1+gVR54QgfR
+         3HdZLlAHM+1bafNB/u7O/Y3PYgUzVz9vPapLBAWERP/2S4AE6npChSq6J44ODP0YnZPO
+         RGbJaffGsZUGbn4t0mlJZXxpMtd41bXF6GZV2T4ntpHOe7BJQxkpA5oBQoNST1H6m+0c
+         xv5A==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 To: stgt@vger.kernel.org
 
-Hello:
+Hello,
 
-I recently got a report of a tgtd core dump from our opencloud
-group. The stack trace showed that a strcmp against a NULL was causing
-the failure:
+We are encountering a backup problem using tgtd.
 
-----------------------------------------------------------------
-Program terminated with signal 11, Segmentation fault.
-(gdb) bt
-#0  0x00007fa701817576 in __strcmp_sse42 () from /lib64/libc.so.6
-#1  0x0000000000408012 in target_find_by_name (
-    name=0x6ac16f "iqn.2010-10.org.openstack:volume-e812c705-80bc-4064-a84c-5559cda8b1ca") at iscsi/target.c:216
-#2  0x0000000000406042 in login_start (conn=0x6abea8) at iscsi/iscsid.c:478
-#3  0x0000000000406e77 in cmnd_exec_login (conn=<optimized out>)
-    at iscsi/iscsid.c:654
-#4  cmnd_execute (conn=<optimized out>) at iscsi/iscsid.c:914
-#5  iscsi_rx_handler (conn=0x6abea8) at iscsi/iscsid.c:2064
-#6  0x0000000000409e98 in iscsi_tcp_event_handler (fd=<optimized out>, 
-    events=1, data=0x63a480 <target_list>) at iscsi/iscsi_tcp.c:158
-#7  0x0000000000418f1e in event_loop () at tgtd.c:272
-#8  0x0000000000419405 in main (argc=1, argv=<optimized out>) at tgtd.c:438
-----------------------------------------------------------------
+Though, we believe it to be a kernel problem, you might have
+encountered such an issue before and have some lights about it.
 
-It looks like target_find_by_name() uses tgt_targetname(), but doesn't
-account for the fact that it can return a NULL when the target being
-looked up does not (now) exist:
+We backup a Linux RHEL 6 system using an iSCSI link connected to an
+usb3 drive on another system. The problem is that the backup process
+on the source system is writing too fast for the network to send data.
 
-----------------------------------------------------------------
-char *tgt_targetname(int tid)            
-{               
-        struct target *target;      
-                        
-        target = target_lookup(tid);
-        if (!target)
-                return NULL;
-        
-        return target->name;
-}                                   
-----------------------------------------------------------------
+The number of dirty pages of unwritten data keep rising on the source
+system because of the network bottleneck.This keep growing until the
+source system freeze because of too much allocated memory.
 
-I propose the following patch to address this:
+We believe it=E2=80=99s a kernel issue which has not been fixed even in=
+ the
+most recent kernel versions (3.3). To fix that, it would require a max
+dirty pages per device kernel parameter which is not available at this
+moment.
 
---- 
-diff --git a/usr/iscsi/target.c b/usr/iscsi/target.c
-index 7afd7fd0ba87..b0a36e7de7b4 100644
---- a/usr/iscsi/target.c
-+++ b/usr/iscsi/target.c
-@@ -369,9 +369,11 @@ void target_list_build(struct iscsi_connection *conn, char *addr, char *name)
- struct iscsi_target *target_find_by_name(const char *name)
- {
-        struct iscsi_target *target;
-+       char *tname;
- 
-        list_for_each_entry(target, &iscsi_targets_list, tlist) {
--               if (!strcmp(tgt_targetname(target->tid), name))
-+               tname = tgt_targetname(target->tid);
-+               if (tname && !strcmp(tname, name))
-                        return target;
-        }
- 
+Have you heard of any =C2=AB strategy =C2=BB which we could use as a wo=
+rkaround
+for this specific problem ?
 
--- 
-Lee Duncan
+Thanks for your help,

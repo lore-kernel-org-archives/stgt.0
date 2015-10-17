@@ -1,121 +1,87 @@
-From: ronnie sahlberg <ronniesahlberg@gmail.com>
-Subject: Re: Tgtd dirty pages issue
-Date: Fri, 16 Oct 2015 08:41:08 -0700
-Message-ID: <CAN05THQPr0HQDQtoNRUP3WMy3-WY6XjZz0JdofktpNr-=kv8ew@mail.gmail.com>
-References: <CAKn=86PDwiWgVMKRkCCKuv8YddnBO6LVcCe1aSA1pZdi85058Q@mail.gmail.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH] Handle access of a target that has been removed
+Date: Sat, 17 Oct 2015 21:57:37 +0900 (JST)
+Message-ID: <20151017.215737.1568838937885765085.fujita.tomonori@lab.ntt.co.jp>
+References: <561D4909.8040006@suse.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=rfvvS0IQFo0otjw4Dv194h+Z4oaEl3jNESY4h2QR3Cg=;
-        b=GNV89t+rO1oC51eR+VdKLJYNRrykklOF+PLp0qYabq0aIPNTP+sE/Na5sX7Wr4HYIH
-         1GsPoH6jIJtXRhfRmGKbvWSl8dv2z64pu73eTBiWqvUJEeoE1+zwiqHnIxJI15U6bIU9
-         9NSL3fxwhkXViDiH1JtihgAhh1tvX1qCRt0j21A5sEPrwqNwurTxb4SYcuRLCArqjBCd
-         1RdlOxqnTU3z5vZw/Pvc1lNpU/3eCoI7VoDtk+SOnvXp2+yfIOTigey916VHapBziCxX
-         eaB64dAsVZnhdkUApcV51wNlWP+QFVf+7Mj2HcFvpkAfJWvkH8mBUp7dum12fcT01yNP
-         mklA==
-In-Reply-To: <CAKn=86PDwiWgVMKRkCCKuv8YddnBO6LVcCe1aSA1pZdi85058Q@mail.gmail.com>
+In-Reply-To: <561D4909.8040006@suse.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: Frank Michel <fmfranck@gmail.com>
-Cc: stgt <stgt@vger.kernel.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: lduncan@suse.com
+Cc: stgt@vger.kernel.org
 
-On Fri, Oct 16, 2015 at 3:43 AM, Frank Michel <fmfranck@gmail.com> wrot=
-e:
-> Hello,
->
-> We are encountering a backup problem using tgtd.
->
-> Though, we believe it to be a kernel problem, you might have
-> encountered such an issue before and have some lights about it.
->
-> We backup a Linux RHEL 6 system using an iSCSI link connected to an
-> usb3 drive on another system. The problem is that the backup process
-> on the source system is writing too fast for the network to send data=
-=2E
->
-> The number of dirty pages of unwritten data keep rising on the source
-> system because of the network bottleneck.This keep growing until the
-> source system freeze because of too much allocated memory.
+On Tue, 13 Oct 2015 11:10:17 -0700
+Lee Duncan <lduncan@suse.com> wrote:
 
-That sounds likely.
-I often encounter similar issues, for example using rsync to copy a
-lot of data from one usb drive to another.
-Very very annoying.
+> Hello:
+> 
+> I recently got a report of a tgtd core dump from our opencloud
+> group. The stack trace showed that a strcmp against a NULL was causing
+> the failure:
+> 
+> ----------------------------------------------------------------
+> Program terminated with signal 11, Segmentation fault.
+> (gdb) bt
+> #0  0x00007fa701817576 in __strcmp_sse42 () from /lib64/libc.so.6
+> #1  0x0000000000408012 in target_find_by_name (
+>     name=0x6ac16f "iqn.2010-10.org.openstack:volume-e812c705-80bc-4064-a84c-5559cda8b1ca") at iscsi/target.c:216
+> #2  0x0000000000406042 in login_start (conn=0x6abea8) at iscsi/iscsid.c:478
+> #3  0x0000000000406e77 in cmnd_exec_login (conn=<optimized out>)
+>     at iscsi/iscsid.c:654
+> #4  cmnd_execute (conn=<optimized out>) at iscsi/iscsid.c:914
+> #5  iscsi_rx_handler (conn=0x6abea8) at iscsi/iscsid.c:2064
+> #6  0x0000000000409e98 in iscsi_tcp_event_handler (fd=<optimized out>, 
+>     events=1, data=0x63a480 <target_list>) at iscsi/iscsi_tcp.c:158
+> #7  0x0000000000418f1e in event_loop () at tgtd.c:272
+> #8  0x0000000000419405 in main (argc=1, argv=<optimized out>) at tgtd.c:438
+> ----------------------------------------------------------------
+> 
+> It looks like target_find_by_name() uses tgt_targetname(), but doesn't
+> account for the fact that it can return a NULL when the target being
+> looked up does not (now) exist:
 
->
-> We believe it=E2=80=99s a kernel issue which has not been fixed even =
-in the
-> most recent kernel versions (3.3). To fix that, it would require a ma=
-x
-> dirty pages per device kernel parameter which is not available at thi=
-s
-> moment.
->
-> Have you heard of any =C2=AB strategy =C2=BB which we could use as a =
-workaround
-> for this specific problem ?
+Thanks for the patch. But I'm confused why this happens. target with
+the same tid as iscsi_target must exist?
 
-Since you say it is the pagecache that completely fills up, I assume
-you are mounting the remote iSCSI device locally ?
-
-I don't have any great strategies, but you could try :
-
-* mount the filesystem using 'sync' mount option. It MIGHT prevent the
-buildup of dirty pages.
-
-* the tool you use to copy/write the files to the backup direcotry,
-does it support O_DIRECT ? That might allow writing to the destination
-completely bypassing  the page cache.
-
-Both these suggestions are probably likely to have a HUGE negative
-impact on performance when accessing a block device across the
-network. :-(  Maybe that is not critical in a backup application ?
-
-
-Or, you could also do this, it is very likely to guarantee to avoid
-this issue,  but it means that what you store on the remote USB device
-is no longer just a copy of the directory structure :
-
-* Use TGTD as a virtual tape library  and do backups to "virtual tape"
-instead. Since this is no longer a block device as far as the kernel
-is concerned it will not consume any pagecache. Also, since tape
-access is designed to be in streaming mode you will likely still have
-very high throughput when writing your backup. I.e. you will not have
-the performance issues from above.
-
-TGTD supports VTL emulation , yey!
-
-If you are willing to do "virtual tape" I would recommend that you set
-your USB device to keep as many xxxGB files as possible.
-The command to create and initialize a file to be used as a "virtual
-tape" is tgtimg.
-
-This document describes the basics on how to set TGTD up as a virtual
-tape library :
-https://github.com/fujita/tgt/blob/master/doc/README.vtl
-
-
-Since VTL means you will have to talk to the virtual media changer to
-switch tapes,   you can use the mtx tool that should be available on
-every linux distro.
-
-It you rather want a simple but nice GUI to swap/load/unload tapes,
-you can use this:
-https://github.com/rosjat/mtx-gui
-
-
-
-
-regards
-ronnie sahlberg
-
->
-> Thanks for your help,
+> ----------------------------------------------------------------
+> char *tgt_targetname(int tid)            
+> {               
+>         struct target *target;      
+>                         
+>         target = target_lookup(tid);
+>         if (!target)
+>                 return NULL;
+>         
+>         return target->name;
+> }                                   
+> ----------------------------------------------------------------
+> 
+> I propose the following patch to address this:
+> 
+> --- 
+> diff --git a/usr/iscsi/target.c b/usr/iscsi/target.c
+> index 7afd7fd0ba87..b0a36e7de7b4 100644
+> --- a/usr/iscsi/target.c
+> +++ b/usr/iscsi/target.c
+> @@ -369,9 +369,11 @@ void target_list_build(struct iscsi_connection *conn, char *addr, char *name)
+>  struct iscsi_target *target_find_by_name(const char *name)
+>  {
+>         struct iscsi_target *target;
+> +       char *tname;
+>  
+>         list_for_each_entry(target, &iscsi_targets_list, tlist) {
+> -               if (!strcmp(tgt_targetname(target->tid), name))
+> +               tname = tgt_targetname(target->tid);
+> +               if (tname && !strcmp(tname, name))
+>                         return target;
+>         }
+>  
+> 
+> -- 
+> Lee Duncan
 > --
 > To unsubscribe from this list: send the line "unsubscribe stgt" in
 > the body of a message to majordomo@vger.kernel.org

@@ -1,80 +1,66 @@
 From: Lee Duncan <lduncan@suse.com>
-Subject: Re: [PATCH] Handle access of a target that has been removed
-Date: Fri, 13 Nov 2015 20:15:50 +0100
-Message-ID: <564636E6.1020801@suse.com>
-References: <561D4909.8040006@suse.com>
- <20151017.215737.1568838937885765085.fujita.tomonori@lab.ntt.co.jp>
- <56251296.7000600@suse.com>
- <20151028.142854.1568838937885774624.fujita.tomonori@lab.ntt.co.jp>
+Subject: Bug: "could not open backing-store directory:
+ /usr/lib/tgt/backing-store" message at startup
+Date: Fri, 13 Nov 2015 20:36:47 +0100
+Message-ID: <56463BCF.6020001@suse.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20151028.142854.1568838937885774624.fujita.tomonori@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: stgt@vger.kernel.org
+To: stgt@vger.kernel.org
 
-On 10/28/2015 06:28 AM, FUJITA Tomonori wrote:
-> On Mon, 19 Oct 2015 08:56:06 -0700
-> Lee Duncan <lduncan@suse.com> wrote:
+Hello:
+
+I have found a small problem recently when tgtd is configured for no
+back-end support modules.
+
+The Makefile in usr has these lines:
+
+> install: $(PROGRAMS) $(MODULES)
+> 	install -d -m 755 $(DESTDIR)$(sbindir)
+> 	install -m 755 $(PROGRAMS) $(DESTDIR)$(sbindir)
+> ifneq ($(MODULES),)
+> 	install -d -m 755 $(DESTDIR)$(libdir)/backing-store
+> 	install -m 755 $(MODULES) $(DESTDIR)$(libdir)/backing-store
+> endif
 > 
->> On 10/17/2015 05:57 AM, FUJITA Tomonori wrote:
->>> On Tue, 13 Oct 2015 11:10:17 -0700
->>> Lee Duncan <lduncan@suse.com> wrote:
->>>
->>>> Hello:
->>>>
->>>> I recently got a report of a tgtd core dump from our opencloud
->>>> group. The stack trace showed that a strcmp against a NULL was causing
->>>> the failure:
->>>>
->>>> ----------------------------------------------------------------
->>>> Program terminated with signal 11, Segmentation fault.
->>>> (gdb) bt
->>>> #0  0x00007fa701817576 in __strcmp_sse42 () from /lib64/libc.so.6
->>>> #1  0x0000000000408012 in target_find_by_name (
->>>>     name=0x6ac16f "iqn.2010-10.org.openstack:volume-e812c705-80bc-4064-a84c-5559cda8b1ca") at iscsi/target.c:216
->>>> #2  0x0000000000406042 in login_start (conn=0x6abea8) at iscsi/iscsid.c:478
->>>> #3  0x0000000000406e77 in cmnd_exec_login (conn=<optimized out>)
->>>>     at iscsi/iscsid.c:654
->>>> #4  cmnd_execute (conn=<optimized out>) at iscsi/iscsid.c:914
->>>> #5  iscsi_rx_handler (conn=0x6abea8) at iscsi/iscsid.c:2064
->>>> #6  0x0000000000409e98 in iscsi_tcp_event_handler (fd=<optimized out>, 
->>>>     events=1, data=0x63a480 <target_list>) at iscsi/iscsi_tcp.c:158
->>>> #7  0x0000000000418f1e in event_loop () at tgtd.c:272
->>>> #8  0x0000000000419405 in main (argc=1, argv=<optimized out>) at tgtd.c:438
->>>> ----------------------------------------------------------------
->>>>
->>>> It looks like target_find_by_name() uses tgt_targetname(), but doesn't
->>>> account for the fact that it can return a NULL when the target being
->>>> looked up does not (now) exist:
->>>
->>> Thanks for the patch. But I'm confused why this happens. target with
->>> the same tid as iscsi_target must exist?
->>>
->>
->> No, I believe this is happening because the targets are getting
->> dynamically removed. But I will verify that. Because if tgt_targetname()
->> can return a NULL (as apparently it did this time), there are probably
->> other places in the code that need to check for that.
+
+So if no modules are defined, that the backing-store directory will
+never get created. Which makes sense I suppose -- it will never be
+needed, since it is only used for modules.
+
+But then the code in usr/bs.c seems to consider it an error when the
+directory does not exist:
+
+> static int bs_init_signalfd(void)
+> {
+> 	sigset_t mask;
+> 	int ret;
+> 	DIR *dir;
 > 
-> Ok, I'm still confused but applied the patch. Let's see if it would
-> help.
-> 
-> Thanks,
+> 	dir = opendir(BSDIR);
+> 	if (dir == NULL) {
+> 		eprintf("could not open backing-store module directory %s\n",
+> 			BSDIR);
+> 	} else {
+> ...
+> }
 
-I am still trying to look more deeply into how this could happen.
+causing an error message each time tgtd starts, and this shows up on the
+systemd status output, which is not good.
 
-This bug was triggered when using cloud storage as the back-end for for
-their target, and that cloud storage "goes away". (I am still trying to
-determine what that actually means.) If so, I should be able to simulate
-by allowing my back-end storage to go away.
+This seems like more of an informational message in this case, since the
+bs_init_signalfd() function does not return a failure code in this case.
 
-As you say, let's see if we see any other instances of tgt_targetname()
-returning null, in other spots in the code.
+It seems like the "right" way to fix it would be change this code to not
+consider this case an error -- perhaps just a debugging message?
 
-Thank you.
+Another simple solution would be to change the Makefile so that the
+backing-store directory always gets created, and only the installation
+of MODULES becomes conditional on having MODULES.
+
+I can supply a patch for either case. Which would you prefer?
 -- 
 Lee Duncan

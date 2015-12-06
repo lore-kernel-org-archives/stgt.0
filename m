@@ -1,31 +1,37 @@
-From: eric pretorious <epretorious@gmail.com>
-Subject: Support for Multipath?
-Date: Fri, 4 Dec 2015 14:40:44 -0800
-Message-ID: <CAHtv24W651AWGB6VyZz_d6Hnx9Zp5t4NSNAPMpzrLJjgS9RzVw@mail.gmail.com>
+From: Roi Dayan <roid@mellanox.com>
+Subject: RE: Support for Multipath?
+Date: Sun, 6 Dec 2015 12:32:27 +0000
+Message-ID: <VI1PR05MB13901D8D419FFE777C882600B50A0@VI1PR05MB1390.eurprd05.prod.outlook.com>
+References: <CAHtv24W651AWGB6VyZz_d6Hnx9Zp5t4NSNAPMpzrLJjgS9RzVw@mail.gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:date:message-id:subject:from:to:content-type;
-        bh=JRKfnxvVSYcj6lJlpdJzTeCMwT9wbkZ3x1BCmfw3pdw=;
-        b=mgeqF9Rq4vzZLT+qcyOf8fdOJiYSu8bzM2dwvE6GApkuxDepp8i94feIoE/3dgrhvg
-         l5EiiMKW3H6uTYrfhGzBPr/9AUag4F2smC4QYoyrWbifo5HVKqXGgZYNsRV+vpc/lZgN
-         kO69u9UUbb7ABf1cSp7X+dkC8JP4kQ4Am8QC4SdQG2CHboYVodj+4/kCUo0nGwgQdyLi
-         TD3moD3yZncve1RDklsSjipLBa0MW/Ief7cD6h+6c5z+HHCDM/ln5Lr4fd0kCJCog1xO
-         gn/DS7HcjzE71hFXr3RNa8raLFXgi0tguvNo6rmhG0FcfCcSrbZPCYYGpj0rUx8SGjS4
-         aKTQ==
+In-Reply-To: <CAHtv24W651AWGB6VyZz_d6Hnx9Zp5t4NSNAPMpzrLJjgS9RzVw@mail.gmail.com>
+Content-Language: en-US
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: stgt@vger.kernel.org
+Content-Type: text/plain; charset="windows-1252"
+To: eric pretorious <epretorious@gmail.com>, "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
-Hello:
-
-Does stgt include support for multipath?
-Is there any special configuration required on the target?
-How is multipath enabled/disabled/tested in stgt?
-
---
-Eric Pretorious
-Portland, OR
+SGkgRXJpYywNCg0KRG8geW91IG1lYW4gc3VwcG9ydCBmb3IgZGV2aWNlIG1hcHBlciBtdWx0aXBh
+dGg/DQpZb3UgZG9u4oCZdCBuZWVkIGFueXRoaW5nIHNwZWNpYWwuIENvbm5lY3QgdG8gdGd0ZCBm
+cm9tIDIgcG9ydHMgYW5kIHlvdSdsbCBoYXZlIDIgYmxvY2sgZGV2aWNlcyAoaWYgaXRzIDEgdGFy
+Z2V0IGFuZCAxIGx1bikuDQpJbiB0aGUgaW5pdGlhdG9yIHJlc2NhbiB0aGUgZGV2aWNlcyBieSBl
+eGVjdXRpbmcgbXVsdGlwYXRoIGFuZCB1c2luZyAibXVsdGlwYXRoIC1sIiB5b3UgY2FuIHNlZSBh
+IGRtIHRoYXQgaXMgb3ZlciB0aGUgMiBibG9jayBkZXZpY2VzLg0KDQpUaGFua3MsDQpSb2kNCg0K
+LS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IHN0Z3Qtb3duZXJAdmdlci5rZXJuZWwu
+b3JnIFttYWlsdG86c3RndC1vd25lckB2Z2VyLmtlcm5lbC5vcmddIE9uIEJlaGFsZiBPZiBlcmlj
+IHByZXRvcmlvdXMNClNlbnQ6IFNhdHVyZGF5LCBEZWNlbWJlciAwNSwgMjAxNSAxMjo0MSBBTQ0K
+VG86IHN0Z3RAdmdlci5rZXJuZWwub3JnDQpTdWJqZWN0OiBTdXBwb3J0IGZvciBNdWx0aXBhdGg/
+DQoNCkhlbGxvOg0KDQpEb2VzIHN0Z3QgaW5jbHVkZSBzdXBwb3J0IGZvciBtdWx0aXBhdGg/DQpJ
+cyB0aGVyZSBhbnkgc3BlY2lhbCBjb25maWd1cmF0aW9uIHJlcXVpcmVkIG9uIHRoZSB0YXJnZXQ/
+DQpIb3cgaXMgbXVsdGlwYXRoIGVuYWJsZWQvZGlzYWJsZWQvdGVzdGVkIGluIHN0Z3Q/DQoNCi0t
+DQpFcmljIFByZXRvcmlvdXMNClBvcnRsYW5kLCBPUg0KLS0NClRvIHVuc3Vic2NyaWJlIGZyb20g
+dGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBzdGd0IiBpbiB0aGUgYm9keSBv
+ZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyBNb3JlIG1ham9yZG9tbyBp
+bmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg0KX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fXw0KVGhpcyBlbWFpbCBoYXMgYmVlbiBzY2FubmVkIGJ5IHRoZSBTeW1hbnRlYyBF
+bWFpbCBTZWN1cml0eS5jbG91ZCBzZXJ2aWNlLg0KRm9yIG1vcmUgaW5mb3JtYXRpb24gcGxlYXNl
+IHZpc2l0IGh0dHA6Ly93d3cuc3ltYW50ZWNjbG91ZC5jb20gX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXw0K

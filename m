@@ -1,37 +1,63 @@
-From: Roi Dayan <roid@mellanox.com>
-Subject: RE: Support for Multipath?
-Date: Sun, 6 Dec 2015 12:32:27 +0000
-Message-ID: <VI1PR05MB13901D8D419FFE777C882600B50A0@VI1PR05MB1390.eurprd05.prod.outlook.com>
-References: <CAHtv24W651AWGB6VyZz_d6Hnx9Zp5t4NSNAPMpzrLJjgS9RzVw@mail.gmail.com>
+From: Michael Grover <michaelgrover@gmail.com>
+Subject: Unable to create target drives in non-root directory in CentOS 6.5
+Date: Mon, 7 Dec 2015 14:59:29 -0500
+Message-ID: <CAAGs95CfsBMRTMjgH=sg=Z+bZMwr460CHOZ+ArzDQi=4uMb51g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <CAHtv24W651AWGB6VyZz_d6Hnx9Zp5t4NSNAPMpzrLJjgS9RzVw@mail.gmail.com>
-Content-Language: en-US
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:date:message-id:subject:from:to:content-type;
+        bh=i3LVju2NMqZQgJGpC1aU3V9PFjXcnmZWG2HUMYIfuXw=;
+        b=NgPf8qxK0+zdS/bcnAxZ5hbrf2jk9NU86Co//Ql80eBL2NXGLQq+DFF/XPdpEbG600
+         9eW7sCtyLQZFf36LURy4ZHsfOYujRcZY2oq7AVWpGbG/Cl0K1kw/cw001yC9ihFQn7GV
+         rrJAHYyagzR7xK4UUR3u3UJlAjoojp9xfcSICcLWF9VBeEBzDGQvxEXaauFnE2uymMT1
+         939UI2trGTard42U14rCC187Nm0xIXjY/cUSULeze8GAv42bu5xssQUiJNam/5vxVGhl
+         hM01bNcpyyRKYZmL3oWHQ8dfPt0mX2lhlzZQalsKxik3teVltqa/EGFw60VB4HpZxYDi
+         /i2w==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: eric pretorious <epretorious@gmail.com>, "stgt@vger.kernel.org" <stgt@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
 
-SGkgRXJpYywNCg0KRG8geW91IG1lYW4gc3VwcG9ydCBmb3IgZGV2aWNlIG1hcHBlciBtdWx0aXBh
-dGg/DQpZb3UgZG9u4oCZdCBuZWVkIGFueXRoaW5nIHNwZWNpYWwuIENvbm5lY3QgdG8gdGd0ZCBm
-cm9tIDIgcG9ydHMgYW5kIHlvdSdsbCBoYXZlIDIgYmxvY2sgZGV2aWNlcyAoaWYgaXRzIDEgdGFy
-Z2V0IGFuZCAxIGx1bikuDQpJbiB0aGUgaW5pdGlhdG9yIHJlc2NhbiB0aGUgZGV2aWNlcyBieSBl
-eGVjdXRpbmcgbXVsdGlwYXRoIGFuZCB1c2luZyAibXVsdGlwYXRoIC1sIiB5b3UgY2FuIHNlZSBh
-IGRtIHRoYXQgaXMgb3ZlciB0aGUgMiBibG9jayBkZXZpY2VzLg0KDQpUaGFua3MsDQpSb2kNCg0K
-LS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IHN0Z3Qtb3duZXJAdmdlci5rZXJuZWwu
-b3JnIFttYWlsdG86c3RndC1vd25lckB2Z2VyLmtlcm5lbC5vcmddIE9uIEJlaGFsZiBPZiBlcmlj
-IHByZXRvcmlvdXMNClNlbnQ6IFNhdHVyZGF5LCBEZWNlbWJlciAwNSwgMjAxNSAxMjo0MSBBTQ0K
-VG86IHN0Z3RAdmdlci5rZXJuZWwub3JnDQpTdWJqZWN0OiBTdXBwb3J0IGZvciBNdWx0aXBhdGg/
-DQoNCkhlbGxvOg0KDQpEb2VzIHN0Z3QgaW5jbHVkZSBzdXBwb3J0IGZvciBtdWx0aXBhdGg/DQpJ
-cyB0aGVyZSBhbnkgc3BlY2lhbCBjb25maWd1cmF0aW9uIHJlcXVpcmVkIG9uIHRoZSB0YXJnZXQ/
-DQpIb3cgaXMgbXVsdGlwYXRoIGVuYWJsZWQvZGlzYWJsZWQvdGVzdGVkIGluIHN0Z3Q/DQoNCi0t
-DQpFcmljIFByZXRvcmlvdXMNClBvcnRsYW5kLCBPUg0KLS0NClRvIHVuc3Vic2NyaWJlIGZyb20g
-dGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBzdGd0IiBpbiB0aGUgYm9keSBv
-ZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyBNb3JlIG1ham9yZG9tbyBp
-bmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg0KX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fXw0KVGhpcyBlbWFpbCBoYXMgYmVlbiBzY2FubmVkIGJ5IHRoZSBTeW1hbnRlYyBF
-bWFpbCBTZWN1cml0eS5jbG91ZCBzZXJ2aWNlLg0KRm9yIG1vcmUgaW5mb3JtYXRpb24gcGxlYXNl
-IHZpc2l0IGh0dHA6Ly93d3cuc3ltYW50ZWNjbG91ZC5jb20gX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXw0K
+I'm trying to create target drive files on CentOS 6.5 using stgt. I am
+not able to create the drives on a non-root directory. Here's what I
+do:
+
+
+I create two drive files, one on the root directory and one on a
+directory owned by a user called "iscsi_target":
+
+dd if=/dev/zero of=/iscsi_drives/temp
+dd if=/dev/zero of=/home/iscsi_target/iscsi_drives/temp
+
+
+I do a little SELinux management:
+
+semanage fcontext -a -t tgtd_var_lib_t /iscsi_drives/temp
+semanage fcontext -a -t tgtd_var_lib_t /home/iscsi_target/iscsi_drives/temp
+restorecon -Rv /iscsi_drives/temp
+restorecon -Rv /home/iscsi_target/iscsi_drives/temp
+
+
+
+Here is what the pertinent lines in my targets.conf file look like:
+
+<target iqn.2015.12.com.mysite:temp_target>
+  #backing-store /home/iscsi_target/iscsi_drives/temp
+  backing-store /iscsi_drives/temp
+</target>
+
+If I start the tgtd service, I get no errors. However, if I toggle the
+comments on the two backing-store lines, switching which drive my
+target uses, I get the following error:
+
+Command:
+    tgtadm -C 0 --lld iscsi --op new --mode logicalunit --tid 1 --lun
+1 -b /home/iscsi_target/iscsi_drives/temp
+exited with code: 22.
+
+
+Do you know what might be going on here?
+
+Thanks for any help.

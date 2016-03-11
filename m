@@ -1,27 +1,24 @@
-From: FUJITA Tomonori <tomof@acm.org>
-Subject: 1.0.63 released
-Date: Tue, 02 Feb 2016 09:22:40 +0900 (JST)
-Message-ID: <20160202.092240.1305564732068172791.tomof@acm.org>
-References: <20140602092616Z.fujita.tomonori@lab.ntt.co.jp>
+From: Chris Friesen <chris.friesen@windriver.com>
+Subject: race condition in tgt-admin ?
+Date: Fri, 11 Mar 2016 11:05:39 -0600
+Message-ID: <56E2FAE3.6010409@windriver.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20140602092616Z.fujita.tomonori@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"
 To: stgt@vger.kernel.org
 
 Hi,
 
-Here's version 1.0.63 release.
+We're running tgt-1.0.55 and have run into an interesting problem.
+Under heavy load we seem to be hitting a race in tgt-admin where it
+ends up using the same "--tid" value for multiple volumes.
 
-=
-Andy Grover (1):
-      targets.conf manpage should not refer to Wikipedia
+This seems to cause an error, "Could not create target because it already exists for volume: volume-65324c83-b534-4c81-aecc-07a7f18de92f".
 
-FUJITA Tomonori (1):
-      tgt 1.0.63
+Does anyone know if this issue has been resolved in more recent versions?
 
-Ryan Harper (1):
-      tgtd: oom_adjust don't fail on EACCES error
+Thanks,
+Chris

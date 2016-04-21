@@ -1,32 +1,92 @@
-From: FUJITA Tomonori <tomof@acm.org>
-Subject: Re: [PATCH] Enable tgt-admin to bring up Gluster backing stores
-Date: Wed, 06 Apr 2016 05:49:27 +0900 (JST)
-Message-ID: <20160406.054927.1305564732068158670.tomof@acm.org>
-References: <1459809134-17751-1-git-send-email-agrover@redhat.com>
+From: Ryan Harper <ryan.harper@canonical.com>
+Subject: [PATCH] fix errno use after strtoull
+Date: Thu, 21 Apr 2016 11:22:40 -0500
+Message-ID: <20160421162240.GA15513@foudres>
+Reply-To: Ryan Harper <ryan.harper@canonical.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="jRHKVT23PllUwdXP"
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1459809134-17751-1-git-send-email-agrover@redhat.com>
+Content-Disposition: inline
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: agrover@redhat.com
-Cc: stgt@vger.kernel.org, nathan@bravenet.com
+To: stgt@vger.kernel.org
+Cc: Stas Sergeev <stsp@users.sourceforge.net>
 
-On Mon,  4 Apr 2016 15:32:14 -0700
-Andy Grover <agrover@redhat.com> wrote:
 
-> As reported in:
-> 
-> https://bugzilla.redhat.com/show_bug.cgi?id=1323356
-> 
-> tgt-admin needs a small change to properly bring up Gluster glfs
-> backing stores, which do not have an associated local block device.
-> 
-> Reported-by: Nathan Coulson <nathan@bravenet.com>
-> Signed-off-by: Andy Grover <agrover@redhat.com>
-> ---
->  scripts/tgt-admin | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+--jRHKVT23PllUwdXP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Applied, thanks!
+As described in this bug:
+
+https://bugs.launchpad.net/ubuntu/+source/tgt/+bug/1547060
+
+Patch comes from an outstanding pull request from Stas Sergeev here:
+
+https://github.com/fujita/tgt/pull/18/
+
+I've tested this patch and verified that it resolves the issue with use=20
+of parameters with numbers in our Ubuntu package.  I've also filed
+a similar bug in Debian here:
+
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=3D822160
+
+Please consider accepting the patch.
+
+--=20
+Ryan Harper
+Canonical, Ltd.
+
+=3D=3D
+
+=46rom 3f3991ee3345f9728928711f6be7a0020568faf6 Mon Sep 17 00:00:00 2001
+=46rom: Stas Sergeev <stsp@users.sourceforge.net>
+Date: Thu, 18 Feb 2016 18:35:23 +0300
+Subject: [PATCH] fix errno check
+
+errno can only be checked if the return value indicates an error.
+The result of this bug is the following:
+
+ ./tgtd -d 1
+-d argument value '1' invalid
+Try `tgtd --help' for more information.
+
+As can be seen, it rejects the valid parameter because errno just
+happens to be non-zero.
+---
+ usr/util.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/usr/util.h b/usr/util.h
+index 0e34c35..019ff1c 100644
+--- a/usr/util.h
++++ b/usr/util.h
+@@ -148,7 +148,7 @@ struct signalfd_siginfo {
+ 	unsigned long long ull_val;     		\
+ 	ull_val =3D strtoull(str, &ptr, 0);       	\
+ 	val =3D (typeof(val)) ull_val;    		\
+-	if (errno || ptr =3D=3D str)			\
++	if (ull_val =3D=3D ULONG_MAX || ptr =3D=3D str)		\
+ 		ret =3D EINVAL;   			\
+ 	else if (val !=3D ull_val)			\
+ 		ret =3D ERANGE;   			\
+
+--jRHKVT23PllUwdXP
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQEcBAEBAgAGBQJXGP5QAAoJEJoxTsX0cKCs9k8IAIwSauCe55tpYrMqbHqJ8FT6
+19y0SGCx5kJ2cq8SrIWV+wPWH53F+Tjfst3oxbOqwGKl0aJi4sGNOvianwbviDmo
+wG/fFJRa7dhGsW/GppE68vVfkncb7YpWQLPafY06zjBD0SF+9RaMpZYesBR/4qaw
+Az+FzbJJXUV+w6k7DkwqZ594suwmsf3YLg0uvAQziDHHE7NBDQYjWPZgf0jjfsST
+oDln+CcUnuGXA8r6MuQj5gtJKnz9KG97t4CKqrLi1Q23JEHCemz7bQLCC7qLU8rf
+aQKkzjl4a00Z+DQnrSF65faEdqLuSxwZLzQK3prGyPkRdPDo5Egvn/2aV9KtBQI=
+=yyvj
+-----END PGP SIGNATURE-----
+
+--jRHKVT23PllUwdXP--

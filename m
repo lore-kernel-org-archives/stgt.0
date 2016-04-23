@@ -1,51 +1,37 @@
-From: Horace <horace@zmail.hkisl.net>
-Subject: multipath and VPD 83 problem
-Date: Fri, 22 Apr 2016 11:55:15 +0800 (HKT)
-Message-ID: <1175090433.13678228.1461297315219.JavaMail.zimbra@zmail.hkisl.net>
-References: <S1752338AbcDVDZZ/20160422032525Z+1212@vger.kernel.org>
-Reply-To: Horace Ng <horace@hkisl.net>
+From: FUJITA Tomonori <tomof@acm.org>
+Subject: Re: [PATCH] fix errno use after strtoull
+Date: Sun, 24 Apr 2016 08:46:35 +0900 (JST)
+Message-ID: <20160424.084635.2201605309636487716.tomof@acm.org>
+References: <20160421162240.GA15513@foudres>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <S1752338AbcDVDZZ/20160422032525Z+1212@vger.kernel.org>
+In-Reply-To: <20160421162240.GA15513@foudres>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: stgt@vger.kernel.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: ryan.harper@canonical.com
+Cc: stgt@vger.kernel.org, stsp@users.sourceforge.net
 
-Dear all,
+On Thu, 21 Apr 2016 11:22:40 -0500
+Ryan Harper <ryan.harper@canonical.com> wrote:
 
-I'm trying to set up multipath on the same target across two hosts, however, since the tgtd version on each of the host is different, they're presenting different VPD INQUIRY and hence I could not set it up on vmware. Is there a way that I can disable "Designation descriptor number 3" on the newer version of tgtd? Thanks in advance.
+> From 3f3991ee3345f9728928711f6be7a0020568faf6 Mon Sep 17 00:00:00 2001
+> From: Stas Sergeev <stsp@users.sourceforge.net>
+> Date: Thu, 18 Feb 2016 18:35:23 +0300
+> Subject: [PATCH] fix errno check
+> 
+> errno can only be checked if the return value indicates an error.
+> The result of this bug is the following:
+> 
+>  ./tgtd -d 1
+> -d argument value '1' invalid
+> Try `tgtd --help' for more information.
+> 
+> As can be seen, it rejects the valid parameter because errno just
+> happens to be non-zero.
+> ---
+>  usr/util.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-[root@vmc8520 ~]# sg_inq --vpd --page=0x83 /dev/sdc
-VPD INQUIRY: Device Identification page
-  Designation descriptor number 1, descriptor length: 40
-    designator_type: T10 vendor identification,  code_set: ASCII
-    associated with the addressed logical unit
-      vendor id: vclouds0
-      vendor specific: 
-  Designation descriptor number 2, descriptor length: 12
-    designator_type: NAA,  code_set: Binary
-    associated with the addressed logical unit
-      NAA 3, Locally assigned:
-      [0x3000000400000001]
-[root@vmc8520 ~]# sg_inq --vpd --page=0x83 /dev/sdf
-VPD INQUIRY: Device Identification page
-  Designation descriptor number 1, descriptor length: 40
-    designator_type: T10 vendor identification,  code_set: ASCII
-    associated with the addressed logical unit
-      vendor id: vclouds0
-      vendor specific: 
-  Designation descriptor number 2, descriptor length: 12
-    designator_type: NAA,  code_set: Binary
-    associated with the addressed logical unit
-      NAA 3, Locally assigned:
-      [0x3000000300000001]
-  Designation descriptor number 3, descriptor length: 20
-    designator_type: NAA,  code_set: Binary
-    associated with the addressed logical unit
-      NAA 6, IEEE Company_id: 0x0
-      Vendor Specific Identifier: 0x0
-      Vendor Specific Identifier Extension: 0x11111
-      [0x60000000000000000000000000011111]
+Applied, thanks!

@@ -1,37 +1,25 @@
 From: FUJITA Tomonori <tomof@acm.org>
-Subject: Re: Resend [PATCH 2/2] convert scsi_cmnd.h macro to normal
- functions
-Date: Fri, 03 Jun 2016 07:54:27 +0900 (JST)
-Message-ID: <20160603.075427.1545942096518976934.tomof@acm.org>
-References: <1464851831-105676-1-git-send-email-li.feng@oracle.com>
-	<1464851831-105676-2-git-send-email-li.feng@oracle.com>
+Subject: 1.0.65 released
+Date: Fri, 03 Jun 2016 07:55:30 +0900 (JST)
+Message-ID: <20160603.075530.1682271453232742477.tomof@acm.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1464851831-105676-2-git-send-email-li.feng@oracle.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: li.feng@oracle.com
-Cc: stgt@vger.kernel.org, lifeng1519@gmail.com
+To: stgt@vger.kernel.org
 
-On Thu,  2 Jun 2016 15:17:11 +0800
-Feng Li <li.feng@oracle.com> wrote:
+Hi,
 
-> From: Feng Li <lifeng1519@gmail.com>
-> 
-> When I read this code, I found it's hard to understand about these macros.
-> I hardly find where are the definitions of some functions.
-> Therefore, I expand them to normal functions for convience.
-> 
-> Signed-off-by: Feng Li <lifeng1519@gmail.com>
-> ---
->  usr/scsi_cmnd.h | 298 ++++++++++++++++++++++++++++++++------------------------
->  1 file changed, 170 insertions(+), 128 deletions(-)
+Here's version 1.0.65 release.
 
-Sorry, I'm not inclined to apply this.
+=
+Apollon Oikonomopoulos (1):
+      Use ULLONG_MAX when checking for strtoull overflow
 
-I agree that it's hard to understand these macros however it has been
-working. Also it's unlikely that we would need to change them
-frequently. So I want to avoid change the working code just for
-readability.
+FUJITA Tomonori (1):
+      tgt 1.0.65
+
+Feng Li (1):
+      fix memory leak in session.c

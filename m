@@ -1,60 +1,127 @@
-From: =?GB2312?B?t+vBpg==?= <lifeng1519@gmail.com>
-Subject: Re: Resend [PATCH 2/2] convert scsi_cmnd.h macro to normal functions
-Date: Sat, 4 Jun 2016 08:05:31 +0800
-Message-ID: <432A95CE-D974-42D8-97BC-F05E9172A510@gmail.com>
-References: <1464851831-105676-1-git-send-email-li.feng@oracle.com> <1464851831-105676-2-git-send-email-li.feng@oracle.com> <20160603.075427.1545942096518976934.tomof@acm.org>
-Mime-Version: 1.0 (1.0)
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: "M. Piscaer" <debian@masterpe.nl>
+Subject: vmware esx iscsi
+Date: Thu, 16 Jun 2016 17:11:08 +0200
+Message-ID: <5762C18C.7000803@masterpe.nl>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=content-transfer-encoding:from:mime-version:subject:date:message-id
-         :references:cc:in-reply-to:to;
-        bh=Gjla+r0YUEj9PnAlrr9BAdK9nnZGEqhec888Cowzqyg=;
-        b=YQZ1x5tidCAHBf62hO6Tza8X4eIU3kPm2W1O0GELQdMeHX/feELk3qruTRDsgPoN8U
-         nPLWAiMdih0hld5kTmNk3OKH9d6IFXS4BLABYAh0Y/zWEdgEtDZ2OcbA+28hP46M6RYV
-         1PW++70QKxyErYd8ol7TJ/zuJuh2H+Oxysz/f5hRtESfHWmVzfMR8du8hy4G5kjhBfer
-         bRSGTdz5rQhyWpFtMj9jlsDha777VUqpEmd6WCBe2CJsn4XO4Tp5kYG/Ci/pfponqsYA
-         2ap3rqT8w2WaFoeO+S5rfmWZRrjFbFtvdM9Cw2TWutgumdFaV41XVVxHaB6Q5c4nIy93
-         PJNQ==
-In-Reply-To: <20160603.075427.1545942096518976934.tomof@acm.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="gb2312"
-To: FUJITA Tomonori <tomof@acm.org>
-Cc: li.feng@oracle.com, stgt@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+To: stgt@vger.kernel.org
 
-OK, I agree with you. This is a very low level API. We don't need make =
-a change unless it has a problem.
+Hi,
 
-Meanwhile, this tgt is an excellent project for learning iSCSI.
+I'm trying to connect an vmware esxi hosts to an stgt target.
 
-Thank you.
+I have this little config:
 
-/Alex
+<target iqn.2014-04.rbdstore.example.com:loop>
+    driver iscsi
+    backing-store /var/tgt/store1
+    scsi_id 00010005
+</target>
 
-> =D4=DA 2016=C4=EA6=D4=C23=C8=D5=A3=AC=C9=CF=CE=E76:54=A3=ACFUJITA Tom=
-onori <tomof@acm.org> =D0=B4=B5=C0=A3=BA
->=20
-> On Thu,  2 Jun 2016 15:17:11 +0800
-> Feng Li <li.feng@oracle.com> wrote:
->=20
->> From: Feng Li <lifeng1519@gmail.com>
->>=20
->> When I read this code, I found it's hard to understand about these m=
-acros.
->> I hardly find where are the definitions of some functions.
->> Therefore, I expand them to normal functions for convience.
->>=20
->> Signed-off-by: Feng Li <lifeng1519@gmail.com>
->> ---
->> usr/scsi_cmnd.h | 298 ++++++++++++++++++++++++++++++++--------------=
-----------
->> 1 file changed, 170 insertions(+), 128 deletions(-)
->=20
-> Sorry, I'm not inclined to apply this.
->=20
-> I agree that it's hard to understand these macros however it has been
-> working. Also it's unlikely that we would need to change them
-> frequently. So I want to avoid change the working code just for
-> readability.
+
+tgt-admin -s
+Target 1: iqn.2014-04.rbdstore.example.com:loop
+    System information:
+        Driver: iscsi
+        State: ready
+    I_T nexus information:
+        I_T nexus: 9
+            Initiator: iqn.1998-01.com.vmware:test-esx-02-795ba8ca
+alias: none
+            Connection: 0
+                IP Address: 10.114.13.124
+    LUN information:
+        LUN: 0
+            Type: controller
+            SCSI ID: IET     00010000
+            SCSI SN: beaf10
+            Size: 0 MB, Block size: 1
+            Online: Yes
+            Removable media: No
+            Prevent removal: No
+            Readonly: No
+            SWP: No
+            Thin-provisioning: No
+            Backing store type: null
+            Backing store path: None
+            Backing store flags:
+        LUN: 1
+            Type: disk
+            SCSI ID: 00010005
+            SCSI SN: beaf11
+            Size: 21475 MB, Block size: 512
+            Online: Yes
+            Removable media: No
+            Prevent removal: No
+            Readonly: No
+            SWP: No
+            Thin-provisioning: No
+            Backing store type: rdwr
+            Backing store path: /var/tgt/store1
+            Backing store flags:
+    Account information:
+    ACL information:
+        ALL
+
+ls -l /var/tgt/store1
+-rw-rw-rw- 1 root root 21474836480 Jun 16 16:15 /var/tgt/store1
+
+
+The problem is that I get vmware error when I try to mount the datastore.
+
+
+From vmkernel.log I see the following:
+
+2016-06-16T15:09:46.005Z cpu0:33350)WARNING: iscsi_vmk:
+iscsivmk_StopConnection: vmhba38:CH:0 T:0 CN:0: iSCSI connection is
+being marked "OFFLINE" (Event:4)
+2016-06-16T15:09:46.006Z cpu0:33350)WARNING: iscsi_vmk:
+iscsivmk_StopConnection: Sess [ISID: 00023d000001 TARGET:
+iqn.2014-04.rbdstore.example.com:loop TPGT: 1 TSIH: 0]
+2016-06-16T15:09:46.006Z cpu0:33350)WARNING: iscsi_vmk:
+iscsivmk_StopConnection: Conn [CID: 0 L: 10.114.13.124:31270 R:
+10.114.13.61:3260]
+2016-06-16T15:09:46.006Z cpu0:33350)WARNING: iscsi_vmk:
+iscsivmk_TaskMgmtIssue: vmhba38:CH:0 T:0 L:1 : Task mgmt "Abort Task"
+with itt=0x739 (refITT=0x737) timed out.
+2016-06-16T15:09:46.293Z cpu1:32838)WARNING: NMP:
+nmp_DeviceRequestFastDeviceProbe:237: NMP device
+"t10.0001000500000000000000000000000000000000000000000000000000000000"
+state in doubt; requested fast path state update...
+2016-06-16T15:09:46.670Z cpu1:32800)ScsiDeviceIO: 2651:
+Cmd(0x43a5c07a8f40) 0x2a, CmdSN 0x17 from world 39720 to dev
+"t10.0001000500000000000000000000000000000000000000000000000000000000"
+failed H:0x3 D:0x0 P:0x0 Possible sense data: 0x0 0x0 0x0.
+2016-06-16T15:09:46.671Z cpu15:39720)BC: 2430: Failed to write
+(uncached) object
+'t10.0001000500000000000000000000000000000000000000000000000000000000':
+Timeout
+2016-06-16T15:09:48.778Z cpu0:33350)iscsi_vmk: iscsivmk_ConnNetRegister:
+socket 0x4304164f13f0 network resource pool netsched.pools.persist.iscsi
+associated
+2016-06-16T15:09:48.778Z cpu0:33350)iscsi_vmk: iscsivmk_ConnNetRegister:
+socket 0x4304164f13f0 network tracker id 16768
+tracker.iSCSI.10.114.13.61 associated
+2016-06-16T15:09:49.031Z cpu0:33350)WARNING: iscsi_vmk:
+iscsivmk_StartConnection: vmhba38:CH:0 T:0 CN:0: iSCSI connection is
+being marked "ONLINE"
+2016-06-16T15:09:49.031Z cpu0:33350)WARNING: iscsi_vmk:
+iscsivmk_StartConnection: Sess [ISID: 00023d000001 TARGET:
+iqn.2014-04.rbdstore.example.com:loop TPGT: 1 TSIH: 0]
+2016-06-16T15:09:49.031Z cpu0:33350)WARNING: iscsi_vmk:
+iscsivmk_StartConnection: Conn [CID: 0 L: 10.114.13.124:47349 R:
+10.114.13.61:3260]
+2016-06-16T15:09:49.035Z cpu11:39586)ScsiCore: 1609: Power-on Reset
+occurred on vmhba38:C0:T0:L1
+2016-06-16T15:09:49.408Z cpu1:32800)NMP: nmp_ThrottleLogForDevice:3298:
+Cmd 0x9e (0x439dc0784f00, 0) to dev "mpx.vmhba32:C0:T0:L0" on path
+"vmhba32:C0:T0:L0" Failed: H:0x0 D:0x2 P:0x0 Valid sense data: 0x5 0x20
+0x0. Act:NONE
+2016-06-16T15:10:13.286Z cpu8:33251)NMP:
+nmp_ResetDeviceLogThrottling:3349: last error status from device
+t10.0001000500000000000000000000000000000000000000000000000000000000
+repeated 108 times

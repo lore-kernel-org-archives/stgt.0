@@ -1,25 +1,26 @@
 From: fx chen <chenfx2014@gmail.com>
 Subject: fix stgt crash in conn_close
-Date: Fri, 22 Jul 2016 11:49:48 +0800
-Message-ID: <CAKbOEttnmAh6Jn5sGSBFjOdjEQvB-aSYYdtjWb9PSzz5KzkoKg@mail.gmail.com>
+Date: Fri, 22 Jul 2016 16:26:01 +0800
+Message-ID: <CAKbOEtuRKZXM4VGMRErbtWwtEA=0Mk5siH3WRQgOdH7jqzOONg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=001a1133314a8506ea05383153df
+Content-Type: multipart/mixed; boundary=94eb2c09ccaa5976160538352fe0
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=vbMrZI3CbLlm6qQ9jK8twTATi+LCv58TCOkZq7IavAo=;
-        b=Sbq6/0nAPl5wQNrOpq44GGd6cZkDnS+QacxE/Vz0lH0IK278+p3ToSnrh99nPHAykc
-         bx0Nk4BdDR0T2pJEwUw6VziOJM4E2di40pDjW7oHz4HemHYM5+34F/yhQd98MZpJtJIX
-         xCA7seR0Om4wTZtVXv8RPlA4JX2Sqc3ff6OoBXg0fUJb1Wx4Kj1D0HTsvZ1I0eko2Jny
-         E8vHTWwZW6Bg6hkArveCArUGfqzL+GSL2Wu/9x2NV6eVdONQz2yfrQSuFcT8OTMW/xJL
-         J5o15CTbwww4Kns6zhJO3CsSLphPQbkySLfkH3jSnrlp7yCzGFTBnPhN4KNkSnlZaiPd
-         fV4w==
+        h=mime-version:from:date:message-id:subject:to:cc;
+        bh=w9Lmy9nmpmUXMms9D4RBOYr2WZLYcOS2hjX+YET4N4I=;
+        b=Po+8tSOtLBhAentNoGWE0fSOhcf1FAXG7YUe7qDLmKzFrAe5oI2l6hhLwDf/gXgilN
+         3esjsNnSIJEg5/0f0nMjGrJLmxBS/sAca7KTKFDMxUhpOJAVopxgT6wMpHD4E52JY8YX
+         GOTnKEhQ7pEkghCw30e4dZVCJimjQjLAkSsdkL7gaGenIjsrckuFuymePGWBE4k8kZ8g
+         SvT8346+6Q8SHnSv23nszJQlvDMayMd66UysNH4ZUnWUTAoqM7klJv8tAhqHDaKDSqzN
+         +fxLgh/YywPS1o72MJ4Dzkm6kmIFtTgX6BqGJmN6EgyWcjKdDHbiKM2YO9o/PnD9Z7Cg
+         p14A==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 To: stgt@vger.kernel.org
+Cc: wangdongxu@cmss.chinamobile.com, menglingkun@cmss.chinamobile.com, wangzhengyong@cmss.chinamobile.com, chenfangxian@cmss.chinamobile.com
 
---001a1133314a8506ea05383153df
+--94eb2c09ccaa5976160538352fe0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
@@ -192,16 +193,17 @@ index e7d4e8c..3ed08a8 100644
   iscsi_free_task(task);
   }
  done:
---=20
+
+--
 1.8.3.1
 
---001a1133314a8506ea05383153df
+--94eb2c09ccaa5976160538352fe0
 Content-Type: application/octet-stream; 
 	name="0001-iscsi-fix-segfault-at-conn_close.patch"
 Content-Disposition: attachment; 
 	filename="0001-iscsi-fix-segfault-at-conn_close.patch"
 Content-Transfer-Encoding: base64
-X-Attachment-Id: f_iqx7jp4i0
+X-Attachment-Id: f_iqxhfcyq0
 
 RnJvbSAyYWJmOTIyOWVhMjA2MTcyZjJmZTI0NDUzOWY3Zjg3ZWQ0MDRlZmY4IE1vbiBTZXAgMTcg
 MDA6MDA6MDAgMjAwMQpGcm9tOiBDaGVuIEZhbmd4aWFuIDxjaGVuZmFuZ3hpYW5AY21zcy5jaGlu
@@ -265,4 +267,4 @@ Y3Rpb24gKmNvbm4pCiAJCSAqLwogCQlpZiAodGFza19pbl9zY3NpKHRhc2spKQogCQkJY29udGlu
 dWU7CisKKwkJaWYgKGZpbmRfdGFza19pbl9jbWRfbGlzdChjb25uLCB0YXNrKSkKKwkJCWxpc3Rf
 ZGVsKCZ0YXNrLT5jX2hsaXN0KTsKKwogCQlpc2NzaV9mcmVlX3Rhc2sodGFzayk7CiAJfQogZG9u
 ZToKLS0gCjEuOC4zLjEKCg==
---001a1133314a8506ea05383153df--
+--94eb2c09ccaa5976160538352fe0--

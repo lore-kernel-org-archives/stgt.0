@@ -1,40 +1,34 @@
-From: Anton Kovalenko <anton.kovalenko@acronis.com>
-Subject: Re: fix stgt crash in conn_close
-Date: Mon, 25 Jul 2016 11:11:33 +0300
-Message-ID: <87shuyyw5m.fsf@desktop-ng.home.sw4me.com>
-References: <CAKbOEttnmAh6Jn5sGSBFjOdjEQvB-aSYYdtjWb9PSzz5KzkoKg@mail.gmail.com>
-	<87zip6yx2s.fsf@desktop-ng.home.sw4me.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Roi Dayan <roid@mellanox.com>
+Subject: [PATCH] iser: fix segfault when not passing options to iser param
+Date: Mon, 25 Jul 2016 17:00:38 +0300
+Message-ID: <1469455238-26716-1-git-send-email-roid@mellanox.com>
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: fujita.tomonori@lab.ntt.co.jp
+Cc: stgt@vger.kernel.org, Roi Dayan <roid@mellanox.com>
 
-Anton Kovalenko <anton.kovalenko@acronis.com> writes:
+Signed-off-by: Roi Dayan <roid@mellanox.com>
+---
+ usr/iscsi/iser.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
->
->> hello!
->> we found tgtd happen core dump and fix it=E3=80=82
-
-[...]
-
-> I'm attaching my own version of a preliminary fix, that avoids examin=
-ing
-> the entire cmd_list on each task deallocation.
-
-On a second though, I think a conditional list_del(&task->c_hlist) in
-iscsi_free_task is good enough, but then we'd probably get rid of the
-*unconditional* list_del in iscsi_free_cmd_task, making iscsi_free_task
-responsible for task unlinking from c_hlist (it *is* responsible for
-unlinking from c_siblings anyway).
-
-What bothers me now is that a task removed from cmdlist, being a SCSI
-command, is probably not supposed to be freed without calling
-target_cmd_done (or is it?). I'm unsure if it might cause a resource
-leak of some kind.
-
-
---=20
-Regards, Anton Kovalenko | +7(916)345-34-02 | Elektrostal' MO, Russia
+diff --git a/usr/iscsi/iser.c b/usr/iscsi/iser.c
+index 7befd06..67d5c83 100644
+--- a/usr/iscsi/iser.c
++++ b/usr/iscsi/iser.c
+@@ -3583,6 +3583,9 @@ static int iser_param_parser(char *p)
+ 	int err = 0;
+ 	char *q;
+ 
++	if (!p)
++	    return 0;
++
+ 	while (*p) {
+ 		if (!strncmp(p, lld_param_port, strlen(lld_param_port))) {
+ 			short int port_val;
+-- 
+1.8.4.3

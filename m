@@ -1,93 +1,40 @@
 From: Anton Kovalenko <anton.kovalenko@acronis.com>
 Subject: Re: fix stgt crash in conn_close
-Date: Mon, 25 Jul 2016 10:51:39 +0300
-Message-ID: <87zip6yx2s.fsf@desktop-ng.home.sw4me.com>
+Date: Mon, 25 Jul 2016 11:11:33 +0300
+Message-ID: <87shuyyw5m.fsf@desktop-ng.home.sw4me.com>
 References: <CAKbOEttnmAh6Jn5sGSBFjOdjEQvB-aSYYdtjWb9PSzz5KzkoKg@mail.gmail.com>
+	<87zip6yx2s.fsf@desktop-ng.home.sw4me.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-=-="
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <stgt-owner@vger.kernel.org>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
+Content-Type: text/plain; charset="windows-1252"
 To: stgt@vger.kernel.org
 
---=-=-=
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Anton Kovalenko <anton.kovalenko@acronis.com> writes:
 
-
-fx chen writes:
-
-> hello!
-> we found tgtd happen core dump and fix it。
+>
+>> hello!
+>> we found tgtd happen core dump and fix it=E3=80=82
 
 [...]
 
-Hi,
+> I'm attaching my own version of a preliminary fix, that avoids examin=
+ing
+> the entire cmd_list on each task deallocation.
 
-I believe we've hit the same problem recently (a free'd command hanging
-on a session's cmd_list), and I have the same suspicion about conn_close.
+On a second though, I think a conditional list_del(&task->c_hlist) in
+iscsi_free_task is good enough, but then we'd probably get rid of the
+*unconditional* list_del in iscsi_free_cmd_task, making iscsi_free_task
+responsible for task unlinking from c_hlist (it *is* responsible for
+unlinking from c_siblings anyway).
 
-I'm attaching my own version of a preliminary fix, that avoids examining
-the entire cmd_list on each task deallocation.
-
-I make use of the fact that a task's c_hlist during iscsi_free_task is
-one of the following:
-
-* an empty list head (task->c_hlist->next == task->c_hlist), if a task
-  was allocated by iscsi_alloc_task and c_hlist was INIT_LIST_HEAD'ed
-  and never touched
-  
-* a pair of null pointers for next and prev, if a task has been
-  list_del'ed from a cmd_list (or allocated by raw iscsi_tcp_alloc_task,
-  with all fields memset to 0 -- happens to "ping" NOOP-INs).
-
-* a valid non-empty member of a cmd_list chain, in all other cases
-  (prev!=next captures this condition perfectly).
-
-Therefore when we have c_hlist->prev!=c_hlist->next in iscsi_free_task,
-we can list_del safely, removing the task from whatever cmd_list it was
-on.
-
-Do you see any problem with my version of a fix? (see attachment)
-
-P.S.
-I believe it would be better to learn _where exactly_ does conn_close
-call iscsi_free_task instead of iscsi_free_cmd_task, and why it happens,
-and fix it more "precisely" in that place. 
-
-However, having a crude, overprotective fix is better than not having
-any. And as crude fixes go, I'd prefer the one which doesn't walk
-cmd_list on a task deallocation.
+What bothers me now is that a task removed from cmdlist, being a SCSI
+command, is probably not supposed to be freed without calling
+target_cmd_done (or is it?). I'm unsure if it might cause a resource
+leak of some kind.
 
 
-
---=-=-=
-Content-Type: text/x-diff
-Content-Disposition: inline; filename=task_chlist_cleanup_on_free.patch
-
-diff --git a/usr/iscsi/iscsid.c b/usr/iscsi/iscsid.c
-index b7ee0ad..dbb80a7 100644
---- a/usr/iscsi/iscsid.c
-+++ b/usr/iscsi/iscsid.c
-@@ -1225,6 +1225,12 @@ void iscsi_free_task(struct iscsi_task *task)
- 
- 	list_del(&task->c_siblings);
- 
-+	if (task->c_hlist.next != task->c_hlist.prev) {
-+		eprintf("task on c_hlist: %p %p %p\n",
-+			task, task->c_hlist.prev, task->c_hlist.next);
-+		list_del(&task->c_hlist);
-+	}
-+
- 	conn->tp->free_data_buf(conn, scsi_get_in_buffer(&task->scmd));
- 	conn->tp->free_data_buf(conn, scsi_get_out_buffer(&task->scmd));
- 
-
---=-=-=
-Content-Type: text/plain
-
-
--- 
+--=20
 Regards, Anton Kovalenko | +7(916)345-34-02 | Elektrostal' MO, Russia
-
---=-=-=--

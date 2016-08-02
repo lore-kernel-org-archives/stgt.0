@@ -1,38 +1,27 @@
 From: FUJITA Tomonori <tomof@acm.org>
-Subject: 1.0.66 released
-Date: Tue, 02 Aug 2016 12:30:05 +0900 (JST)
-Message-ID: <20160802.123005.1305564732068170243.tomof@acm.org>
+Subject: Re: [PATCH] Fix accepting invalid block size
+Date: Tue, 02 Aug 2016 12:31:40 +0900 (JST)
+Message-ID: <20160802.123140.653026525707339900.tomof@acm.org>
+References: <1469531192-30570-1-git-send-email-roid@mellanox.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
+In-Reply-To: <1469531192-30570-1-git-send-email-roid@mellanox.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: stgt@vger.kernel.org
-Cc: tomof@acm.org
+To: roid@mellanox.com
+Cc: fujita.tomonori@lab.ntt.co.jp, stgt@vger.kernel.org
 
-Hi,
+On Tue, 26 Jul 2016 14:06:32 +0300
+Roi Dayan <roid@mellanox.com> wrote:
 
-Here's version 1.0.66 release; several critical fixes included.
+> bshift can be negative so its type should not be unsigned or the
+> comparison of its negative never succeeds.
+> 
+> Signed-off-by: Roi Dayan <roid@mellanox.com>
+> ---
+>  usr/target.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks!
- 
-=
-Anton Kovalenko (2):
-      Fix iscsi-tcp unsolicited NOP-IN (ping) task leak
-      Call tgt_event_del before closing the eventfd
-
-Chen Fangxian (1):
-      iscsi: fix segfault at conn_close
-
-FUJITA Tomonori (1):
-      tgt 1.0.66
-
-Roi Dayan (3):
-      iser: fix segfault when not passing options to iser param
-      tgt-setup-lun: fix error when blocksize not given
-      Fix accepting invalid block size
-
-gecegezen (1):
-      Update tgt-setup-lun for AF 4K disks.
-
+Applied, thanks.

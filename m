@@ -1,39 +1,162 @@
 From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH 0/6] sheepdog driver cleanup
-Date: Tue,  6 Sep 2016 16:37:23 +0900
-Message-ID: <1473147449-29377-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH 2/6] sheepdog: serialize overwrapping request
+Date: Tue,  6 Sep 2016 16:37:25 +0900
+Message-ID: <1473147449-29377-3-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+References: <1473147449-29377-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id;
-        bh=4pqVetdqnonOEifhItKSTn7n3svsbjxswNy1IHhnUv4=;
-        b=B/giXwlOzzXgbx6ISMcqJKdj5YWNfl/2I9a5vXZiZtzuLP4hIIofucO4djOVEWBduk
-         3ZuMkSfnOUJXQrOQVzB9mzYxQqOa0f8QwTNi/FU8+GmVuAFvZ5EShEuKtcibuybimzCh
-         L6u601gcox9rEPfUoBrg/vcm9338S/EDs/Xnfyut4QWfy/BxUXSsTlxolSHPwJc0U+Z9
-         /yMxk/D/dAejK/udWlAeng371HKh/JliENh7GvdX9UWtkiyk6C2ch0iXSbXHDA+IWKX4
-         UTCpCrJT900+eTZQjHvzJT2aVc2TWMYDl5JUZf8nP0yphJ7X++DCzf4mjGKwYm040o3i
-         3uCw==
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=jiQsyvc9fGCKMLH1pnV+VVDA9i1ZJdYilbWuuiNCezc=;
+        b=Mcf3WZPxaCQs56dul3A9P+UmGhXFs8WxmmYTjWlwmqRWfc0JjsJZRRyKw9yHQjidQo
+         FRrH5jEROqRSG+6XYPBc9W15huFRRTuqEYm/PbrONpcGBenfsvjNfHXJiI0EB5Ze9Ti4
+         Isa5Gk3Li08DLoNRfNl2HesPty7jJYLxhQDkKbaYan3sWKj64OReXZ9FGvbVSd9aWaeC
+         XAET59LVTctgBpGyHvcUNmMFBSqY2fJF0I7I3CXM/gTljQEPOJapbKPFiMeEKlhanGDN
+         0PCjwZL8ESYKF0cXQZEtbA+1jdV7ue54hJSn+POlkq0OQjxeUUrtAK59WRxHO0Y40LDy
+         VwBg==
+In-Reply-To: <1473147449-29377-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
-Cc: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+Cc: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>, Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>, Takashi Menjo <menjo.takashi@lab.ntt.co.jp>
 
-This patchset does some cleaning of the sheepdog driver related to the
-iSCSI multipath functionality.
+iSCSI initiators can issue read and write requests that target
+overlapping areas. In such a case, current sheepdog driver cannot
+serialize these requests so the semantics of virtual drive will be
+corrupt. This patch implements a mechanism for serializing such
+requests.
 
-Hitoshi Mitake (6):
-  sheepdog: prevent double locking during inode reload
-  sheepdog: serialize overwrapping request
-  sheepdog: pass a correct flag to reload_inode()
-  sheepdog: handle a case of snapshot -> failover
-  sheepdog: don't let ai have min and max dirty data indexes
-  sheepdog: handle an inconsistent state of metadata
+Cc: Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
+Cc: Takashi Menjo <menjo.takashi@lab.ntt.co.jp>
+Tested-by: Takashi Menjo <menjo.takashi@lab.ntt.co.jp>
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
+---
+ usr/bs_sheepdog.c | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 68 insertions(+)
 
- usr/bs_sheepdog.c | 182 +++++++++++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 153 insertions(+), 29 deletions(-)
-
+diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
+index 21d7dac..be6d321 100644
+--- a/usr/bs_sheepdog.c
++++ b/usr/bs_sheepdog.c
+@@ -294,6 +294,10 @@ struct sheepdog_access_info {
+ 
+ 	pthread_mutex_t inode_version_mutex;
+ 	uint64_t inode_version;
++
++	struct list_head inflight_list_head;
++	pthread_mutex_t inflight_list_mutex;
++	pthread_cond_t inflight_list_cond;
+ };
+ 
+ static inline int is_data_obj_writeable(struct sheepdog_inode *inode,
+@@ -1252,6 +1256,11 @@ trans_to_expect_nothing:
+ 		goto out;
+ 
+ 	ret = 0;
++
++	INIT_LIST_HEAD(&ai->inflight_list_head);
++	pthread_mutex_init(&ai->inflight_list_mutex, NULL);
++	pthread_cond_init(&ai->inflight_list_cond, NULL);
++
+ out:
+ 	strcpy(filename, orig_filename);
+ 	free(orig_filename);
+@@ -1349,6 +1358,41 @@ out:
+ 	return ret;
+ }
+ 
++struct inflight_thread {
++	unsigned long min_idx, max_idx;
++	struct list_head list;
++};
++
++static void inflight_block(struct sheepdog_access_info *ai,
++			   struct inflight_thread *myself)
++{
++	struct inflight_thread *inflight;
++
++	pthread_mutex_lock(&ai->inflight_list_mutex);
++
++retry:
++	list_for_each_entry(inflight, &ai->inflight_list_head, list) {
++		if (!(myself->max_idx < inflight->min_idx ||
++		      inflight->max_idx < myself->min_idx)) {
++			pthread_cond_wait(&ai->inflight_list_cond,
++					  &ai->inflight_list_mutex);
++			goto retry;
++		}
++	}
++
++	list_add_tail(&myself->list, &ai->inflight_list_head);
++	pthread_mutex_unlock(&ai->inflight_list_mutex);
++}
++ void inflight_release(struct sheepdog_access_info *ai,
++			     struct inflight_thread *myself)
++{
++	pthread_mutex_lock(&ai->inflight_list_mutex);
++	list_del(&myself->list);
++	pthread_mutex_unlock(&ai->inflight_list_mutex);
++
++	pthread_cond_signal(&ai->inflight_list_cond);
++}
++
+ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ {
+ 	int ret = 0;
+@@ -1360,6 +1404,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 	struct sheepdog_access_info *ai =
+ 		(struct sheepdog_access_info *)(info + 1);
+ 
++	uint32_t object_size = (UINT32_C(1) << ai->inode.block_size_shift);
++	struct inflight_thread myself;
++	int inflight = 0;
++
++	memset(&myself, 0, sizeof(myself));
++	INIT_LIST_HEAD(&myself.list);
++
+ 	switch (cmd->scb[0]) {
+ 	case SYNCHRONIZE_CACHE:
+ 	case SYNCHRONIZE_CACHE_16:
+@@ -1383,6 +1434,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 		}
+ 
+ 		length = scsi_get_out_length(cmd);
++
++		myself.min_idx = cmd->offset / object_size;
++		myself.max_idx = (cmd->offset + length + (object_size - 1))
++			/ object_size;
++		inflight_block(ai, &myself);
++		inflight = 1;
++
+ 		ret = sd_io(ai, 1, scsi_get_out_buffer(cmd),
+ 			    length, cmd->offset);
+ 
+@@ -1394,6 +1452,13 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 	case READ_12:
+ 	case READ_16:
+ 		length = scsi_get_in_length(cmd);
++
++		myself.min_idx = cmd->offset / object_size;
++		myself.max_idx = (cmd->offset + length + (object_size - 1))
++			/ object_size;
++		inflight_block(ai, &myself);
++		inflight = 1;
++
+ 		ret = sd_io(ai, 0, scsi_get_in_buffer(cmd),
+ 			    length, cmd->offset);
+ 		if (ret)
+@@ -1413,6 +1478,9 @@ static void bs_sheepdog_request(struct scsi_cmd *cmd)
+ 			cmd, cmd->scb[0], ret, length, cmd->offset);
+ 		sense_data_build(cmd, key, asc);
+ 	}
++
++	if (inflight)
++		inflight_release(ai, &myself);
+ }
+ 
+ static int bs_sheepdog_open(struct scsi_lu *lu, char *path,
 -- 
 2.7.4

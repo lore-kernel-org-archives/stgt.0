@@ -1,19 +1,19 @@
 From: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
-Subject: [PATCH 3/6] sheepdog: pass a correct flag to reload_inode()
-Date: Tue,  6 Sep 2016 16:37:26 +0900
-Message-ID: <1473147449-29377-4-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
+Subject: [PATCH 6/6] sheepdog: handle an inconsistent state of metadata
+Date: Tue,  6 Sep 2016 16:37:29 +0900
+Message-ID: <1473147449-29377-7-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 References: <1473147449-29377-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <stgt-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=Q04niVhG07nS8JzSPtIkkkPoDwCPRi6Y1QUTTZqu9HM=;
-        b=wI1yUM9e/tYBjaW68c/MkvEybgCRdN6bke9PsxRKW+wYa3ZeUUsbNM3GQBzfm3nm2R
-         o3P+F0ShzCBX0QLx/NAIPPWN84WvZdtmJWB0uPc5oFLStBQGjF6mebG9yVGsvm+Gbmac
-         7oyKZPPwO6TbKBw/PHoibD85IqOFv9tt+nobT4yDjaVND+rXd7JiVaYUtj4IsVnhf7Vp
-         NuGubfNhJJxk05Zedouw98ZWr5oAn7XPa5Ov1Ct3DJ7KGT/qAj46A9OsgZDS47EAGMIo
-         5/DsEBVMGSFaBbcGioSOlE9SmcpNdATeaaUvPr51WzQBXO1ssaYo2ogNd9Ux/LZrXGUP
-         9/eA==
+        bh=8K+eKRjhFFqnQzDbZPfv7WIBkUed09/9m3bE+i+G+WY=;
+        b=QIFmz1q8vUa0XhIt5EPViM4cEVy0rR8q8kuJLlvabcXvI79YsB9dRVenAYuOlkHEsW
+         YZWDZeKk8JEUSYSnSefvIbpOlz6WDlLAB2msmBxiRqOJ4D3VhvDLihhyuJ/fG6RjrOT8
+         kIblXRwaEIrL8SUy/OVUyIFPoREARrofpec2+FxlMlRK3MYo81d2PQQOFdmnw+o0gcJE
+         CKAK5P9/BlYnXkE8SrnDwCKnryow/g7M2mCBxqqy6Y+Jo+nxA9xBe/SbIuARjPLs72wR
+         +f/M6fAhAlXOfCa/+Dx0Z6e2GbGTsCKW556Fs08F8aCd95RJ6hsdW947bpWlWLt38vHX
+         zi6w==
 In-Reply-To: <1473147449-29377-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
@@ -23,55 +23,47 @@ Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 Cc: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>, Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>, Takashi Menjo <menjo.takashi@lab.ntt.co.jp>
 
-Current usage of reload_inode() is invalid because it is called with
-is_snapshot == 0 even for a case of readonly. This patch fixes the
-problem.
+This commit lets the sheepdog driver to handle the case of no VDI
+found during inode reloading. It can happen because sheepdog does not
+provide metadata transaction.
 
 Cc: Teruaki Ishizaki <ishizaki.teruaki@lab.ntt.co.jp>
 Cc: Takashi Menjo <menjo.takashi@lab.ntt.co.jp>
 Tested-by: Takashi Menjo <menjo.takashi@lab.ntt.co.jp>
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi@lab.ntt.co.jp>
 ---
- usr/bs_sheepdog.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ usr/bs_sheepdog.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/usr/bs_sheepdog.c b/usr/bs_sheepdog.c
-index be6d321..ecb5033 100644
+index 12bcfd9..fc91ad1 100644
 --- a/usr/bs_sheepdog.c
 +++ b/usr/bs_sheepdog.c
-@@ -905,6 +905,7 @@ static int sd_io(struct sheepdog_access_info *ai, int write, char *buf, int len,
- 	int need_update_inode = 0, need_reload_inode;
- 	int nr_copies = ai->inode.nr_copies;
- 	int need_write_lock, check_idx;
-+	int read_reload_snap = 0;
+@@ -750,6 +750,7 @@ static int read_write_object(struct sheepdog_access_info *ai, char *buf,
+ 	unsigned int wlen, rlen;
+ 	int ret;
  
- 	goto do_req;
++retry:
+ 	memset(&hdr, 0, sizeof(hdr));
  
-@@ -912,7 +913,7 @@ reload_in_read_path:
- 	pthread_rwlock_unlock(&ai->inode_lock); /* unlock current read lock */
- 
- 	pthread_rwlock_wrlock(&ai->inode_lock);
--	ret = reload_inode(ai, 0);
-+	ret = reload_inode(ai, read_reload_snap);
- 	if (ret) {
- 		eprintf("failed to reload in read path\n");
- 		goto out;
-@@ -1008,6 +1009,8 @@ retry:
- 					dprintf("reload in read path for not"\
- 						" written area\n");
- 					size = orig_size;
-+					read_reload_snap =
-+						need_reload_inode == 1;
- 					goto reload_in_read_path;
- 				}
- 			}
-@@ -1019,6 +1022,7 @@ retry:
- 			if (need_reload_inode) {
- 				dprintf("reload in ordinal read path\n");
- 				size = orig_size;
-+				read_reload_snap = need_reload_inode == 1;
- 				goto reload_in_read_path;
- 			}
- 		}
+ 	hdr.proto_ver = SD_PROTO_VER;
+@@ -791,6 +792,17 @@ static int read_write_object(struct sheepdog_access_info *ai, char *buf,
+ 	case SD_RES_READONLY:
+ 		*need_reload = 1;
+ 		return 0;
++	case SD_RES_NO_OBJ:
++		if (!write && oid & (UINT64_C(1) << 63))
++			/*
++			 * sheepdog doesn't provide a mechanism of metadata
++			 * transaction, so tgt can see an inconsistent state
++			 * like this (old working VDI became snapshot already
++			 * but an inode object of new working VDI isn't
++			 * created yet).
++			 */
++			goto retry;
++		return -1;
+ 	default:
+ 		eprintf("%s (oid: %" PRIx64 ", old_oid: %" PRIx64 ")\n",
+ 			sd_strerror(rsp->result), oid, old_oid);
 -- 
 2.7.4

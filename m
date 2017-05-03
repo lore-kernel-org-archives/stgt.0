@@ -1,44 +1,93 @@
-From: Lee Duncan <lduncan@suse.com>
-Subject: Re: open-iscsi Cannot connect to my tgt target
-Date: Thu, 23 Mar 2017 17:07:12 -0400
-Message-ID: <9d379ddd-623a-4fdc-aaf9-bbf4ba8973d6@suse.com>
-References: <CANVNt1axh1GoC28Y+Ztph_=gQP1zHeG-8BDdW47onAFX3dSH9Q@mail.gmail.com>
- <CAJt62OeYC9HWjWFfoKcf0dhKYMT7d3gkvy5HC8pjiW4D3QKXkw@mail.gmail.com>
- <CANVNt1Y7UO53J63Z=Rn1DCXRX4pUmbSddDQvjz2P5ZBUEUk9Lg@mail.gmail.com>
+From: Anton Kovalenko <Anton.Kovalenko@acronis.com>
+Subject: [PATCH] use-after-free while iterating session->conn_list (two
+ places)
+Date: Wed, 3 May 2017 16:35:45 +0000
+Message-ID: <1493829345850.48512@acronis.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="_003_149382934585048512acroniscom_"
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <CANVNt1Y7UO53J63Z=Rn1DCXRX4pUmbSddDQvjz2P5ZBUEUk9Lg@mail.gmail.com>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=acronis.com
+        ; s=exim; h=MIME-Version:Content-Type:Message-ID:Date:Subject:To:From:Sender:
+        Reply-To:Cc:Content-Transfer-Encoding:Content-ID:Content-Description:
+        Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+        In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+        List-Post:List-Owner:List-Archive;
+        bh=vWRx/UgpfG+82EkroUOilbpmbtFOE+XHuX0ihUcJ/hI=; b=DaTT4z4IBNGLpKgqf+i4r8w/rY
+        n332GRCWjXoXcmO9D5KyHoqwgyJ75ucmXO++ISzUamNOBQAuR0jUF/02m/4pQsMgc9pIh09lQBZjq
+        JY5b3oGXxXVHhDOZ0Nwu56dXkCLS3NJ6nJDblJCHaXGm8zqjwNGVPtixLrlqCgj3xvt4=;
+Content-Language: ru-RU
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Mr Dini <diniboy74@gmail.com>, "Ovi Chis (OviOS Linux Project)" <ovios.storage@gmail.com>, stgt@vger.kernel.org
+To: "stgt@vger.kernel.org" <stgt@vger.kernel.org>
 
-On 01/01/2017 03:02 PM, Mr Dini wrote:
-> Thanks for Your quick reply!
-> 
-> And Your tip worked. :) If I configure the target without user
-> authentication, everything works perfectly. But if there is a CHAP
-> user and pass, the open-iscsi Cannot connect. But the Windows PCs Can
-> handle the CHAP data, So that is a half win. I just have to figure
-> out, how Can I specify the user and pass parameters at the open-iscsi
-> connect command.
-> 
+--_003_149382934585048512acroniscom_
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-The file /etc/iscsi/iscsid.conf, the iscsi daemon configuration file,
-tells you how to set up CHAP for iSCSI, and it certainly should be working.
+4oCLCgpIaSwKUGxlYXNlIGNvbnNpZGVyIGFwcGx5aW5nIHR3byBwYXRjaGVzIGluIHRoZSBhdHRh
+Y2htZW50LgpUaGUgcHJvYmxlbSAoYWNjZXNzaW5nIHNlc3Npb24tPmNvbm5fbGlzdCBhZnRlciBm
+cmVlaW5nIHNlc3Npb24pIHdhcyBkaXNjb3ZlcmVkIHVzaW5nIHZhbGdyaW5kLgoKTm90ZSB0aGF0
+IHdoaWxlIGxpc3RfZm9yX2VhY2hfZW50cnlfc2FmZSBpcyBzYWZlIGFnYWluc3QgY3VycmVudCBs
+aXN0IGVsZW1lbnQgZGVzdHJ1Y3Rpb24sIAppdCBpcyBVTlNBRkUgYWdhaW5zdCB0aGUgdHJhdmVy
+c2VkIGxpc3RfaGVhZCAodGhpcmQgYXJndW1lbnQpIGJlY29taW5nIGludmFsaWQgZHVyaW5nIGl0
+ZXJhdGlvbi4KVGhhdCdzIGV4YWN0bHkgd2hhdCBoYXBwZW5zIHdoZW4gdGhlIGxhc3QgY29ubmVj
+dGlvbiBvZiBhIHNlc3Npb24gZ29lcyBhd2F5IChjb25uX2V4aXQgLT4gc2Vzc2lvbl9wdXQgLT4g
+dXNlLWFmdGVyLWZyZWUpLgoKLS0gCkJlc3QgcmVnYXJkcywKQW50b24gS292YWxlbmtvCg==
 
+--_003_149382934585048512acroniscom_
+Content-Type: text/x-patch;
+	name="0002-Avoid-dangling-session-reference-in-login_security_d.patch"
+Content-Description: 0002-Avoid-dangling-session-reference-in-login_security_d.patch
+Content-Disposition: attachment;
+	filename="0002-Avoid-dangling-session-reference-in-login_security_d.patch";
+	size=853; creation-date="Wed, 03 May 2017 16:31:18 GMT";
+	modification-date="Wed, 03 May 2017 16:31:18 GMT"
+Content-Transfer-Encoding: base64
 
-> secondly, the target name isn't conforming to the required standards.
-> 
-> 
-> The name is correct. I just edited the target name because I don't
-> want to share my domain and etc.
-> 
-> 
-> Many thanks!
-> 
+RnJvbSAxNmU2NGIxMGNiZTgyOWQwYjBkMDZkMjJhNTRlZmQ3OWIxNjE0MjdhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbnRvbiBLb3ZhbGVua28gPGFudG9uLmtvdmFsZW5rb0BhY3Jv
+bmlzLmNvbT4KRGF0ZTogV2VkLCAzIE1heSAyMDE3IDE0OjQ2OjM4ICswMzAwClN1YmplY3Q6IFtQ
+QVRDSCAyLzNdIEF2b2lkIGRhbmdsaW5nIHNlc3Npb24gcmVmZXJlbmNlIGluIGxvZ2luX3NlY3Vy
+aXR5X2RvbmUKCi0tLQogdXNyL2lzY3NpL2lzY3NpZC5jIHwgMyArKy0KIDEgZmlsZSBjaGFuZ2Vk
+LCAyIGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24oLSkKCmRpZmYgLS1naXQgYS91c3IvaXNjc2kv
+aXNjc2lkLmMgYi91c3IvaXNjc2kvaXNjc2lkLmMKaW5kZXggNzAwZTJhZi4uZDVmZTZiMyAxMDA2
+NDQKLS0tIGEvdXNyL2lzY3NpL2lzY3NpZC5jCisrKyBiL3Vzci9pc2NzaS9pc2NzaWQuYwpAQCAt
+MjY3LDExICsyNjcsMTIgQEAgc3RhdGljIHZvaWQgbG9naW5fc2VjdXJpdHlfZG9uZShzdHJ1Y3Qg
+aXNjc2lfY29ubmVjdGlvbiAqY29ubikKIAkJCXN0cnVjdCBpc2NzaV9jb25uZWN0aW9uICplbnQs
+ICpuZXh0OwogCiAJCQkvKiBkbyBzZXNzaW9uIHJlaW5zdGF0ZW1lbnQgKi8KLQorCQkJc2Vzc2lv
+bl9nZXQoc2Vzc2lvbik7CiAJCQlsaXN0X2Zvcl9lYWNoX2VudHJ5X3NhZmUoZW50LCBuZXh0LCAm
+c2Vzc2lvbi0+Y29ubl9saXN0LAogCQkJCQkJIGNsaXN0KSB7CiAJCQkJY29ubl9jbG9zZShlbnQp
+OwogCQkJfQorCQkJc2Vzc2lvbl9wdXQoc2Vzc2lvbik7CiAKIAkJCXNlc3Npb24gPSBOVUxMOwog
+CQl9IGVsc2UgaWYgKHJlcS0+dHNpaCAhPSBzZXNzaW9uLT50c2loKSB7Ci0tIAoyLjExLjAKCg==
 
--- 
-Lee Duncan
-SUSE Labs
+--_003_149382934585048512acroniscom_
+Content-Type: text/x-patch;
+	name="0003-Avoid-session-dangling-reference-on-forced-target-de.patch"
+Content-Description: 0003-Avoid-session-dangling-reference-on-forced-target-de.patch
+Content-Disposition: attachment;
+	filename="0003-Avoid-session-dangling-reference-on-forced-target-de.patch";
+	size=1041; creation-date="Wed, 03 May 2017 16:31:18 GMT";
+	modification-date="Wed, 03 May 2017 16:31:18 GMT"
+Content-Transfer-Encoding: base64
+
+RnJvbSA2N2Y3YjUxZTZlZGRjNTU3MzZhMGJiODVjYmIzYWY5NWU3M2I2OGQ2IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbnRvbiBLb3ZhbGVua28gPGFudG9uLmtvdmFsZW5rb0BhY3Jv
+bmlzLmNvbT4KRGF0ZTogV2VkLCAzIE1heSAyMDE3IDEyOjQ2OjUzICswMzAwClN1YmplY3Q6IFtQ
+QVRDSCAzLzNdIEF2b2lkIHNlc3Npb24qIGRhbmdsaW5nIHJlZmVyZW5jZSBvbiBmb3JjZWQgdGFy
+Z2V0CiBkZXN0cm95LgoKQ2xvc2luZyB0aGUgbGFzdCBjb25uZWN0aW9uIG9mIGEgc2Vzc2lvbiBh
+bHNvIHJlbGVhc2VzIHRoZSBzZXNzaW9uCml0c2VsZiwgbWFraW5nIHNlc3Npb24tPmNvbm5fbGlz
+dCBpbmFjY2Vzc2libGUuCgpXcmFwcGluZyBjb25uX2xpc3QgaXRlcmF0aW9uIGludG8gc2Vzc2lv
+bl9nZXQvc2Vzc2lvbl9wdXQgcHJldmVudHMKc2Vzc2lvbiBkZXN0cnVjdGlvbiB3aGlsZSBpdHMg
+Y29ubl9saXN0IGlzIGJlaW5nIGl0ZXJhdGVkLgotLS0KIHVzci9pc2NzaS90YXJnZXQuYyB8IDIg
+KysKIDEgZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlvbnMoKykKCmRpZmYgLS1naXQgYS91c3IvaXNj
+c2kvdGFyZ2V0LmMgYi91c3IvaXNjc2kvdGFyZ2V0LmMKaW5kZXggYmY1NDE5MC4uN2Q3MTIwNiAx
+MDA2NDQKLS0tIGEvdXNyL2lzY3NpL3RhcmdldC5jCisrKyBiL3Vzci9pc2NzaS90YXJnZXQuYwpA
+QCAtNDExLDkgKzQxMSwxMSBAQCB2b2lkIGlzY3NpX3RhcmdldF9kZXN0cm95KGludCB0aWQsIGlu
+dCBmb3JjZSkKIAl9CiAKIAlsaXN0X2Zvcl9lYWNoX2VudHJ5X3NhZmUoc2Vzc2lvbiwgc3RtcCwg
+JnRhcmdldC0+c2Vzc2lvbnNfbGlzdCwgc2xpc3QpIHsKKwkJc2Vzc2lvbl9nZXQoc2Vzc2lvbik7
+CiAJCWxpc3RfZm9yX2VhY2hfZW50cnlfc2FmZShjb25uLCBjdG1wLCAmc2Vzc2lvbi0+Y29ubl9s
+aXN0LCBjbGlzdCkgewogCQkJY29ubl9jbG9zZShjb25uKTsKIAkJfQorCQlzZXNzaW9uX3B1dChz
+ZXNzaW9uKTsKIAl9CiAKIAlpZiAoIWxpc3RfZW1wdHkoJnRhcmdldC0+c2Vzc2lvbnNfbGlzdCkp
+IHsKLS0gCjIuMTEuMAoK
+
+--_003_149382934585048512acroniscom_--

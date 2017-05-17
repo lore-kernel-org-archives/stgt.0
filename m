@@ -1,28 +1,85 @@
-From: FUJITA Tomonori <tomof@acm.org>
-Subject: Re: [PATCH] use-after-free while iterating session->conn_list (two
- places)
-Date: Wed, 10 May 2017 10:34:55 +0900 (JST)
-Message-ID: <20170510.103455.1306558653114725733.tomof@acm.org>
-References: <1493829345850.48512@acronis.com>
+From: Benedikt Fraunhofer <fraunhofer@traced.net>
+Subject: undeletable targets with connections fixed with last commits?
+Date: Wed, 17 May 2017 16:30:38 +0200
+Message-ID: <CAD_6HTExuEA8-xPp30KoyL-qpe2h+CovoCUY+F1xtj58btaLyQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <1493829345850.48512@acronis.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:sender:from:date:message-id:subject:to;
+        bh=mFCSRbedcI9hPN79Hcq/1DyxSADEWlJwzWjz4Rt7uco=;
+        b=lg/COfaazaClU+44LbR/jxxQVulJHdsR3BxKj/mBkdlDGUovtTpOgWK6NAhGv43pwN
+         8EV9odmJoLhykjDIOaabJjTbwIJkDY+fvXXL3Zi/O0PCo3g36ZKejfm7Er9kMGO2+gDf
+         IdPGlmdzp3UE+/orzEMfH1JXoRQPiGFknvL8imzEeOItcGSX6kiwZK/3eRlrANoGdDQM
+         olj6EJvDADD7MzerOL2lirQuYYU8hbJbT36i7UyOQoN5KHPlBh83CitUZ8mCdXstKkrl
+         SK5wRF5ph875LIXNbwL7J8Q33SSmMZLaYr7T9iAgBRXk6vLENe95vwniBVnLGaulYQpC
+         j/hA==
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Anton.Kovalenko@acronis.com
-Cc: stgt@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
 
-On Wed, 3 May 2017 16:35:45 +0000
-Anton Kovalenko <Anton.Kovalenko@acronis.com> wrote:
+Hello List!
 
-> The problem (accessing session->conn_list after freeing session) was discovered using valgrind.
-> 
-> Note that while list_for_each_entry_safe is safe against current list element destruction, 
-> it is UNSAFE against the traversed list_head (third argument) becoming invalid during iteration.
-> That's exactly what happens when the last connection of a session goes away (conn_exit -> session_put -> use-after-free).
+do the last commits
 
-Great catch, applied both. Any other places like this?
+Avoid session* dangling reference on forced target destroy.
+and
+Avoid dangling session reference in login_security_done
 
-Thanks a lot!
+address the problem of targets that just won't go away?
+
+We're running 1.0.63 and quite often have the problem that we can't
+delete targets and stgt think's there are connections while the
+connection has already been shut down.
+Also, those connections seem to pile up. We've some targets with >100
+Connections to it while the initiator itself sees only one.
+
+:# tgt-admin -v --force --delete iqn.2016-01.net.g:xbbs-szq8:iscsi
+# Removing target: iqn.2016-01.net.g:xbbs-szq8:iscsi
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1016 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1012 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 10 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 436 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1017 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1013 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 530 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 435 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1014 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 554 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1019 --cid 1
+tgtadm -C 0 --mode target --op delete --tid=27
+tgtadm: this target is still active
+Command:
+        tgtadm -C 0 --mode target --op delete --tid=27
+        exited with code: 22.
+
+## trying with force one connection to go away
+
+:# tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1016 --cid 1 --force
+:# tgt-admin -v --force --delete iqn.2016-01.net.g:xbbs-szq8:iscsi
+# Removing target: iqn.2016-01.net.g:xbbs-szq8:iscsi
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 10 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 554 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1013 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1016 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1019 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1012 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1014 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 435 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 1017 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 530 --cid 1
+tgtadm -C 0 --op delete --mode conn --tid 27 --sid 436 --cid 1
+tgtadm -C 0 --mode target --op delete --tid=27
+tgtadm: this target is still active
+Command:
+        tgtadm -C 0 --mode target --op delete --tid=27
+        exited with code: 22.
+
+##connection still there
+
+Offlineing the target, removing initiators (unbind) doesn't change anything.
+
+Thx in advance
+  Benedikt

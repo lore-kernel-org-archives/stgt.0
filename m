@@ -1,35 +1,26 @@
-From: Heinrich Schuchardt <xypron.glpk@gmx.de>
-Subject: [PATCH 1/1] doc: tgtd.8.xml: add reference to targets.conf.5
-Date: Mon,  5 Jun 2017 17:20:08 +0200
-Message-ID: <20170605152008.31254-1-xypron.glpk@gmx.de>
+From: FUJITA Tomonori <tomof@acm.org>
+Subject: Re: [PATCH 1/1] doc: tgtd.8.xml: add reference to targets.conf.5
+Date: Tue, 06 Jun 2017 07:13:46 +0900 (JST)
+Message-ID: <20170606.071346.1305564732068179913.tomof@acm.org>
+References: <20170605152008.31254-1-xypron.glpk@gmx.de>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <stgt-owner@vger.kernel.org>
+In-Reply-To: <20170605152008.31254-1-xypron.glpk@gmx.de>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: stgt@vger.kernel.org
-Cc: Andy Grover <agrover@redhat.com>, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, Heinrich Schuchardt <xypron.glpk@gmx.de>
+Content-Type: Text/Plain; charset="us-ascii"
+To: xypron.glpk@gmx.de
+Cc: stgt@vger.kernel.org, agrover@redhat.com, fujita.tomonori@lab.ntt.co.jp
 
-It is helpful to know targets.conf to understand tgtd.
+On Mon,  5 Jun 2017 17:20:08 +0200
+Heinrich Schuchardt <xypron.glpk@gmx.de> wrote:
 
-Signed-off-by: Heinrich Schuchardt <xypron.glpk@gmx.de>
----
- doc/tgtd.8.xml | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> It is helpful to know targets.conf to understand tgtd.
+> 
+> Signed-off-by: Heinrich Schuchardt <xypron.glpk@gmx.de>
+> ---
+>  doc/tgtd.8.xml | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/doc/tgtd.8.xml b/doc/tgtd.8.xml
-index 57ac805..65c1684 100644
---- a/doc/tgtd.8.xml
-+++ b/doc/tgtd.8.xml
-@@ -173,7 +173,7 @@
- 
-   <refsect1><title>SEE ALSO</title>
-     <para>
--      tgtadm(8), tgt-admin(8), tgtimg(8), tgt-setup-lun(8).
-+      targets.conf(5), tgtadm(8), tgt-admin(8), tgtimg(8), tgt-setup-lun(8).
-       <ulink url="http://stgt.sourceforge.net/"/>
-     </para>
-   </refsect1>
--- 
-2.11.0
+Applied, thanks.

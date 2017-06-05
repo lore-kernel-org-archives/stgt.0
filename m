@@ -1,35 +1,35 @@
-From: FUJITA Tomonori <tomof@acm.org>
-Subject: Re: [PATCH] Fix compiler error in tgtd.c call_program
-Date: Sun, 04 Jun 2017 08:30:12 +0900 (JST)
-Message-ID: <20170604.083012.1545942096518956291.tomof@acm.org>
-References: <20170603213359.16089-1-agrover@redhat.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Heinrich Schuchardt <xypron.glpk@gmx.de>
+Subject: [PATCH 1/1] doc: tgtd.8.xml: add reference to targets.conf.5
+Date: Mon,  5 Jun 2017 17:20:08 +0200
+Message-ID: <20170605152008.31254-1-xypron.glpk@gmx.de>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20170603213359.16089-1-agrover@redhat.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: agrover@redhat.com
-Cc: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
+Cc: Andy Grover <agrover@redhat.com>, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, Heinrich Schuchardt <xypron.glpk@gmx.de>
 
-On Sat,  3 Jun 2017 14:33:59 -0700
-Andy Grover <agrover@redhat.com> wrote:
+It is helpful to know targets.conf to understand tgtd.
 
-> Using a newer version of gcc, we see an error:
-> 
-> tgtd.c:313:14: error: comparison between pointer and zero character
->  constant [-Werror=pointer-compare]
->    while (pos != '\0')
->               ^~
-> tgtd.c:313:10: note: did you mean to dereference the pointer?
->    while (pos != '\0')
->           ^
-> I think gcc is right, so deref pos.
-> 
-> Signed-off-by: Andy Grover <agrover@redhat.com>
-> ---
->  usr/tgtd.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+Signed-off-by: Heinrich Schuchardt <xypron.glpk@gmx.de>
+---
+ doc/tgtd.8.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Looks good, applied. Thanks!
+diff --git a/doc/tgtd.8.xml b/doc/tgtd.8.xml
+index 57ac805..65c1684 100644
+--- a/doc/tgtd.8.xml
++++ b/doc/tgtd.8.xml
+@@ -173,7 +173,7 @@
+ 
+   <refsect1><title>SEE ALSO</title>
+     <para>
+-      tgtadm(8), tgt-admin(8), tgtimg(8), tgt-setup-lun(8).
++      targets.conf(5), tgtadm(8), tgt-admin(8), tgtimg(8), tgt-setup-lun(8).
+       <ulink url="http://stgt.sourceforge.net/"/>
+     </para>
+   </refsect1>
+-- 
+2.11.0

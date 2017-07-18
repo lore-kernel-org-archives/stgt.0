@@ -1,27 +1,37 @@
-From: FUJITA Tomonori <tomof@acm.org>
-Subject: Re: [PATCH] doc: install targets.conf(5) as well
-Date: Wed, 07 Jun 2017 08:52:49 +0900 (JST)
-Message-ID: <20170607.085249.1305564732068181010.tomof@acm.org>
-References: <20170606215230.25215-1-apoikos@debian.org>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Andy Grover <agrover@redhat.com>
+Subject: [PATCH 1/2] Fix header warning with GCC 7 for major()
+Date: Tue, 18 Jul 2017 13:52:57 -0700
+Message-ID: <20170718205258.6246-2-agrover@redhat.com>
+References: <20170718205258.6246-1-agrover@redhat.com>
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20170606215230.25215-1-apoikos@debian.org>
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com 74CE4C0587FA
+In-Reply-To: <20170718205258.6246-1-agrover@redhat.com>
 Sender: stgt-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: apoikos@debian.org
-Cc: stgt@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: stgt@vger.kernel.org
 
-On Wed,  7 Jun 2017 00:52:30 +0300
-Apollon Oikonomopoulos <apoikos@debian.org> wrote:
+With GCC 7, there is a warning to include sys/sysmacros.h for "major"
+instead of sys/types.h.
 
-> doc/Makefile would only install section 8 manpages. Extend this to
-> include targets.conf(5) as well.
-> 
-> Signed-off-by: Apollon Oikonomopoulos <apoikos@debian.org>
-> ---
->  doc/Makefile | 8 +++++---
->  1 file changed, 5 insertions(+), 3 deletions(-)
+Signed-off-by: Andy Grover <agrover@redhat.com>
+---
+ usr/bs_sg.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-Applied, thanks!
+diff --git a/usr/bs_sg.c b/usr/bs_sg.c
+index 66f4a3b..6d03aa4 100644
+--- a/usr/bs_sg.c
++++ b/usr/bs_sg.c
+@@ -35,6 +35,7 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/epoll.h>
++#include <sys/sysmacros.h>
+ #include <scsi/sg.h>
+ 
+ #include "bsg.h" /* Copied from include/linux/bsg.h */
+-- 
+2.9.4

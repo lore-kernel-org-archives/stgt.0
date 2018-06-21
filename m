@@ -1,77 +1,50 @@
-From: =?UTF-8?Q?C=c3=a9dric_Lemarchand?= <cedric.lemarchand@tdf.fr>
-Subject: Re: ext4 corruption with MPIO and path_grouping_policy "multibus"
-Date: Wed, 17 Jan 2018 16:08:22 +0100
-Message-ID: <da4703e9-d6fd-fb8b-0ea3-3a084c97b939@tdf.fr>
-References: <63aea0d2-ac82-914d-6abd-10a20538646b@tdf.fr>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH] sg, bsg: mitigate read/write abuse, block uaccess in
+ release
+Date: Thu, 21 Jun 2018 06:03:27 -0700
+Message-ID: <20180621130327.GB24925@infradead.org>
+References: <20180615152335.208202-1-jannh@google.com>
+ <20180615164009.GD30522@ZenIV.linux.org.uk>
+ <90063ef3-68fa-e983-9b47-838e6076b0f4@interlog.com>
+ <813e817b-bb2f-4a47-6225-9e39f19be278@kernel.dk>
+ <20180621123431.GA558@infradead.org>
+ <CAG48ez3BWeZkW5XG814K4o7p0KWXVm9Gpzh2rTthNei=4fhH-A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <stgt-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=TDF1.onmicrosoft.com;
- s=selector1-tdf-fr; h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
- bh=hljHTELgBBq8Jn0iPNeZ6zwqfbVBXSSPN7IGrs3e3rQ=;
- b=dbBkoOVjmfy+NTVHI2FeM/ASy3AKq+1lSWC4xVIdh2X3OB8HDAiX75IPuZ54d5OnuSi5p4VzFT0OdfQYOxz6zw3coTQIIc/Dk7E5n1E4vo/NI7t/xgk3zynwNxspCcnJKta3h4+2oIJBPw5WhDihOujlrvR72gpNTGEeqtBbAFk=
-In-Reply-To: <63aea0d2-ac82-914d-6abd-10a20538646b@tdf.fr>
-Content-Language: en-US
-Sender: stgt-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
+        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=9IXDWkAXBmF71F26ka05Xhv15UCQmVpOrP73Kt2mfHk=; b=BcrTgjsfSzRN7ycJu/L75BmXq
+        cjgMs4QrXp8ygBEr6TZ3AfU+71Q2+6hmZP6wjPLEGuuH601qRAw4sim51qnPAJMXgUfXD/cr97fQ0
+        PX5TMaSXPHFbaC6S1f1QlBulVS4N57YL3hPYplDUVuU3lsrSN8wC5g+xiXVv+iuIVdmU/8Lx/7EXp
+        AMmfSQT9EMRfQ62tTpJeTVx4nUspt2UI6rGWJUom0A0BXYZTEbX66CGtSJgaBPwzKAWexcDzT80dT
+        bwhISU0jVI58EhdSdKhRR7o5FM25xb2pRz7Ile1mornUF3e3RA6Xrva10Q6P7zjq1JN7UQvXXkvFo
+    
+Content-Disposition: inline
+In-Reply-To: <CAG48ez3BWeZkW5XG814K4o7p0KWXVm9Gpzh2rTthNei=4fhH-A@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-To: stgt@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Jann Horn <jannh@google.com>
+Cc: Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, dgilbert@interlog.com, Al Viro <viro@zeniv.linux.org.uk>, fujita.tomonori@lab.ntt.co.jp, jejb@linux.vnet.ibm.com, martin.petersen@oracle.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, security@kernel.org, Alexander Nezhinsky <alexandern@mellanox.com>, Nicholas Bellinger <nab@linux-iscsi.org>, stgt@vger.kernel.org
 
-For the sake of history, I solve the issue by setting "bstype aio", 
-which is "rdwr" by default.
+On Thu, Jun 21, 2018 at 02:51:16PM +0200, Jann Horn wrote:
+> In the package https://packages.debian.org/stretch/tgt:
+>   https://sources.debian.org/src/tgt/1:1.0.73-1/usr/bs_sg.c/?hl=131#L131
+>   https://sources.debian.org/src/tgt/1:1.0.73-1/usr/bs_sg.c/?hl=236#L236
 
-Cheers
+This is for real, although it is an optional case in an optional plug
+in, so I'm not sure if any one actually uses bsg read/write with it
+for real.
 
+The usual aspects added. (the question is if bsg read/write support
+is actually used in real life or can be removed)
 
-On 15/01/2018 18:55, Cédric Lemarchand wrote:
-> Hello,
->
-> One initiator is accessing 2 TGT instances on 2 hosts where the same 
-> block device is shared among them (actually an RBD volume). The 
-> configuration is as follow:
->
-> TGT1:
-> <target iqn.2017-08.storage:rbd0-1>
-> direct-store /dev/rbd0
-> write-cache off
-> </target>
->
-> TGT2:
-> <target iqn.2017-08.storage:rbd0-2>
-> direct-store /dev/rbd0
-> write-cache off
-> </target>
->
-> On the initiator, when multipath is configured with 
-> 'path_grouping_policy "multibus"' and formated in ext4, the fsck fails 
-> systematically. The output of "multipath -ll" in the MP device :
->
-> 360000000000000000e00000000010001 dm-17 IET,VIRTUAL-DISK
-> size=93G features='1 retain_attached_hw_handler' hwhandler='0' wp=rw
-> `-+- policy='service-time 0' prio=1 status=active
->   |- 11:0:0:1 sds 65:32 active ready running
->   `- 12:0:0:1 sdt 65:48 active ready running
->
-> I not some errors when tgt start :
->
-> read capacity (16): pass through os error: Inappropriate ioctl for device
-> READ CAPACITY (16) failed: Sense category: -1, try '-v' option for 
-> more information
->
-> I cannot reproduce this issue with 'path_grouping_policy "failover"', 
-> nor whit LIO as iSCSI target and 'path_grouping_policy "multibus"'. On 
-> TGT hosts, the rbd cache is disabled ("rbd cache = false").
->
->
-> Did I miss something ? Any enlightenment in order to debug further 
-> will be welcomed.
->
-> Debian Stretch
-> kernel 4.9.65
-> tgtd 1.0.69
-> multipath-tools 0.6.4
-> open-iscsi  2.0-874
+> In the package https://packages.debian.org/stretch/sg3-utils:
+>   https://sources.debian.org/src/sg3-utils/1.42-2/examples/bsg_queue_tst.c/?hl=60#L60
 
--- 
-Cédric Lemarchand
-TDF
+This is just example code.

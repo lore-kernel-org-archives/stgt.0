@@ -1,54 +1,59 @@
 From: Apollon Oikonomopoulos <apoikos@debian.org>
-Subject: [PATCH] Replace __packed with __attribute__(...)
-Date: Tue, 20 Oct 2020 14:55:40 +0300
-Message-ID: <20201020115541.184675-2-apoikos@debian.org>
-References: <20201020115541.184675-1-apoikos@debian.org>
+Subject: [PATCH] Avoid passing NULL pointer to printf
+Date: Tue, 20 Oct 2020 14:55:39 +0300
+Message-ID: <20201020115541.184675-1-apoikos@debian.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <stgt-owner@vger.kernel.org>
-In-Reply-To: <20201020115541.184675-1-apoikos@debian.org>
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: stgt@vger.kernel.org
 Cc: Apollon Oikonomopoulos <apoikos@debian.org>
 
-GCC 10 changed the default from -fcommon to -fno-common. This makes the
-tgt build fail because of multiple definitions of __packed. Change all
-instances of __packed to __attribute__((__packed__)), which is the
-canonical attribute form.
+iscsi_add_portal sometimes passes a NULL pointer as a %s argument to
+printf. This is was already considered an error when using
+-Werror=format-overflow, but it is only since GCC 10 that GCC is able to
+detect this particular case:
+
+ In file included from iscsi/iscsid.h:29,
+                  from iscsi/iscsi_tcp.c:35:
+ In function 'iscsi_add_portal',
+     inlined from 'iscsi_add_portal' at iscsi/iscsi_tcp.c:408:5,
+     inlined from 'iscsi_tcp_init' at iscsi/iscsi_tcp.c:449:3:
+ ./log.h:90:2: error: '%s' directive argument is null [-Werror=format-overflow=]
+    90 |  log_error("%s(%d) " fmt, __FUNCTION__, __LINE__, ##args); \
+       |  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ iscsi/iscsi_tcp.c:411:3: note: in expansion of macro 'eprintf'
+   411 |   eprintf("failed to create/bind to portal %s:%d\n", addr, port);
+       |   ^~~~~~~
+
+Fix this by passing the empty string to eprintf() if addr is NULL.
 
 Signed-off-by: Apollon Oikonomopoulos <apoikos@debian.org>
 ---
- usr/iscsi/iscsid.c | 2 +-
- usr/iscsi/iser.c   | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ usr/iscsi/iscsi_tcp.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/usr/iscsi/iscsid.c b/usr/iscsi/iscsid.c
-index a54a46e..476a760 100644
---- a/usr/iscsi/iscsid.c
-+++ b/usr/iscsi/iscsid.c
-@@ -1074,7 +1074,7 @@ void iscsi_rsp_set_residual(struct iscsi_cmd_rsp *rsp, struct scsi_cmd *scmd)
- struct iscsi_sense_data {
- 	uint16_t length;
- 	uint8_t  data[0];
--} __packed;
-+} __attribute__((__packed__));
+diff --git a/usr/iscsi/iscsi_tcp.c b/usr/iscsi/iscsi_tcp.c
+index 2bb8356..39dfb71 100644
+--- a/usr/iscsi/iscsi_tcp.c
++++ b/usr/iscsi/iscsi_tcp.c
+@@ -407,8 +407,14 @@ int iscsi_tcp_init_portal(char *addr, int port, int tpgt)
  
- static int iscsi_cmd_rsp_build(struct iscsi_task *task)
+ int iscsi_add_portal(char *addr, int port, int tpgt)
  {
-diff --git a/usr/iscsi/iser.c b/usr/iscsi/iser.c
-index c7c43b2..2abb872 100644
---- a/usr/iscsi/iser.c
-+++ b/usr/iscsi/iser.c
-@@ -92,7 +92,7 @@ char *iser_portal_addr;
- struct iscsi_sense_data {
- 	uint16_t length;
- 	uint8_t data[0];
--} __packed;
-+} __attribute__((__packed__));
++	const char *addr_str = "";
++
+ 	if (iscsi_tcp_init_portal(addr, port, tpgt)) {
+-		eprintf("failed to create/bind to portal %s:%d\n", addr, port);
++		if (addr) {
++			addr_str = addr;
++		}
++		eprintf("failed to create/bind to portal %s:%d\n",
++			addr_str, port);
+ 		return -1;
+ 	}
  
- static size_t buf_pool_sz_mb = DEFAULT_POOL_SIZE_MB;
- static int cq_vector = -1;
 -- 
 2.28.0
 

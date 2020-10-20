@@ -1,50 +1,59 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] sg, bsg: mitigate read/write abuse, block uaccess in
- release
-Date: Thu, 21 Jun 2018 06:03:27 -0700
-Message-ID: <20180621130327.GB24925@infradead.org>
-References: <20180615152335.208202-1-jannh@google.com>
- <20180615164009.GD30522@ZenIV.linux.org.uk>
- <90063ef3-68fa-e983-9b47-838e6076b0f4@interlog.com>
- <813e817b-bb2f-4a47-6225-9e39f19be278@kernel.dk>
- <20180621123431.GA558@infradead.org>
- <CAG48ez3BWeZkW5XG814K4o7p0KWXVm9Gpzh2rTthNei=4fhH-A@mail.gmail.com>
+From: Apollon Oikonomopoulos <apoikos@debian.org>
+Subject: [PATCH] scripts/checkpatch.pl: escape literal left braces
+Date: Tue, 20 Oct 2020 14:55:41 +0300
+Message-ID: <20201020115541.184675-3-apoikos@debian.org>
+References: <20201020115541.184675-1-apoikos@debian.org>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=9IXDWkAXBmF71F26ka05Xhv15UCQmVpOrP73Kt2mfHk=; b=BcrTgjsfSzRN7ycJu/L75BmXq
-        cjgMs4QrXp8ygBEr6TZ3AfU+71Q2+6hmZP6wjPLEGuuH601qRAw4sim51qnPAJMXgUfXD/cr97fQ0
-        PX5TMaSXPHFbaC6S1f1QlBulVS4N57YL3hPYplDUVuU3lsrSN8wC5g+xiXVv+iuIVdmU/8Lx/7EXp
-        AMmfSQT9EMRfQ62tTpJeTVx4nUspt2UI6rGWJUom0A0BXYZTEbX66CGtSJgaBPwzKAWexcDzT80dT
-        bwhISU0jVI58EhdSdKhRR7o5FM25xb2pRz7Ile1mornUF3e3RA6Xrva10Q6P7zjq1JN7UQvXXkvFo
-    
-Content-Disposition: inline
-In-Reply-To: <CAG48ez3BWeZkW5XG814K4o7p0KWXVm9Gpzh2rTthNei=4fhH-A@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Transfer-Encoding: 8bit
+Return-path: <stgt-owner@vger.kernel.org>
+In-Reply-To: <20201020115541.184675-1-apoikos@debian.org>
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Jann Horn <jannh@google.com>
-Cc: Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, dgilbert@interlog.com, Al Viro <viro@zeniv.linux.org.uk>, fujita.tomonori@lab.ntt.co.jp, jejb@linux.vnet.ibm.com, martin.petersen@oracle.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, security@kernel.org, Alexander Nezhinsky <alexandern@mellanox.com>, Nicholas Bellinger <nab@linux-iscsi.org>, stgt@vger.kernel.org
+To: stgt@vger.kernel.org
+Cc: Apollon Oikonomopoulos <apoikos@debian.org>
 
-On Thu, Jun 21, 2018 at 02:51:16PM +0200, Jann Horn wrote:
-> In the package https://packages.debian.org/stretch/tgt:
->   https://sources.debian.org/src/tgt/1:1.0.73-1/usr/bs_sg.c/?hl=131#L131
->   https://sources.debian.org/src/tgt/1:1.0.73-1/usr/bs_sg.c/?hl=236#L236
+Since Perl 5.22.0, left braces in regexps should be escaped.
 
-This is for real, although it is an optional case in an optional plug
-in, so I'm not sure if any one actually uses bsg read/write with it
-for real.
+Signed-off-by: Apollon Oikonomopoulos <apoikos@debian.org>
+---
+ scripts/checkpatch.pl | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-The usual aspects added. (the question is if bsg read/write support
-is actually used in real life or can be removed)
+diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
+index b1281ac..30fc77f 100755
+--- a/scripts/checkpatch.pl
++++ b/scripts/checkpatch.pl
+@@ -2397,8 +2397,8 @@ sub process {
+ 
+ # function brace can't be on same line, except for #defines of do while,
+ # or if closed on same line
+-		if (($line=~/$Type\s*$Ident\(.*\).*\s{/) and
+-		    !($line=~/\#\s*define.*do\s{/) and !($line=~/}/)) {
++		if (($line=~/$Type\s*$Ident\(.*\).*\s\{/) and
++		    !($line=~/\#\s*define.*do\s\{/) and !($line=~/\}/)) {
+ 			ERROR("OPEN_BRACE",
+ 			      "open brace '{' following function declarations go on the next line\n" . $herecurr);
+ 		}
+@@ -2673,8 +2673,8 @@ sub process {
+ ## 		}
+ 
+ #need space before brace following if, while, etc
+-		if (($line =~ /\(.*\){/ && $line !~ /\($Type\){/) ||
+-		    $line =~ /do{/) {
++		if (($line =~ /\(.*\)\{/ && $line !~ /\($Type\){/) ||
++		    $line =~ /do\{/) {
+ 			ERROR("SPACING",
+ 			      "space required before the open brace '{'\n" . $herecurr);
+ 		}
+@@ -2964,7 +2964,7 @@ sub process {
+ 			    $dstat !~ /^for\s*$Constant$/ &&				# for (...)
+ 			    $dstat !~ /^for\s*$Constant\s+(?:$Ident|-?$Constant)$/ &&	# for (...) bar()
+ 			    $dstat !~ /^do\s*{/ &&					# do {...
+-			    $dstat !~ /^\({/)						# ({...
++			    $dstat !~ /^\(\{/)						# ({...
+ 			{
+ 				$ctx =~ s/\n*$//;
+ 				my $herectx = $here . "\n";
+-- 
+2.28.0
 
-> In the package https://packages.debian.org/stretch/sg3-utils:
->   https://sources.debian.org/src/sg3-utils/1.42-2/examples/bsg_queue_tst.c/?hl=60#L60
-
-This is just example code.

@@ -1,27 +1,40 @@
 From: Michael Ablassmeier <abi@grinser.de>
-Subject: Re: [PATCH] VTL emulation, no barcodes shown in mtx
-Date: Wed, 6 Jan 2021 23:41:49 +0100
-Message-ID: <20210106224149.hj7pkxgt22dhqnaf@lrrr.dead-link.org>
-References: <20210106185825.h7v4dpn2cg3gdejc@lrrr.dead-link.org>
- <20210106220805.gztfmh7he76pwnci@lrrr.dead-link.org>
- <20210106222842.f7wj3s4leywrg7m4@lrrr.dead-link.org>
+Subject: RFC: Fault injection
+Date: Fri, 8 Jan 2021 15:12:06 +0100
+Message-ID: <20210108141206.hhiamqwn3tbk3kxl@lrrr.dead-link.org>
 Reply-To: Michael Ablassmeier <abi@grinser.de>
 Mime-Version: 1.0
 Return-path: <stgt-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20210106222842.f7wj3s4leywrg7m4@lrrr.dead-link.org>
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: stgt@vger.kernel.org
 
-On Wed, Jan 06, 2021 at 11:28:42PM +0100, Michael Ablassmeier wrote:
-> attached patch should fix this regression.
+hi,
 
-please ignore, this was actually an issue with the old version i was
-using, already beeing addressed in 1.0.80 :)
+im searching for a way to be able to easily simulate faulty tape drives
+for CI/Testing purposes. The VTL emulation in TGT seems to have all the
+functionality required for my purpose and so i went on and implemented a
+proof of concept.
 
-sorry for all the noise,
+The POC uses the VTL Tapes MAM header to store information about which
+errnous behavior should be simulated in case the tape is written.
+Different tapes can as such simulate different fault behaviors.
+
+See following description for more details:
+
+ https://github.com/abbbi/tgt/blob/fault_injection/doc/README.ssc-fault-injection
+
+Is there any interest in getting such a feature into TGT's VTL
+emulation? Full diff here:
+
+ https://github.com/fujita/tgt/compare/master...abbbi:fault_injection
+
+As the MAM header is probably not the best way for storing the
+information, would it be a good solution to store a special file
+alongside to the VTL file, including more meta information related to
+this feature?
 
 bye,
     - michael

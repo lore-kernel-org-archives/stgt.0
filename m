@@ -1,7 +1,7 @@
 From: Michael Ablassmeier <abi@grinser.de>
-Subject: RFC: Fault injection
-Date: Fri, 8 Jan 2021 15:12:06 +0100
-Message-ID: <20210108141206.hhiamqwn3tbk3kxl@lrrr.dead-link.org>
+Subject: VTL: Data block may return twice
+Date: Fri, 8 Jan 2021 23:02:59 +0100
+Message-ID: <20210108220259.thrrvjfzxf6otczn@lrrr.dead-link.org>
 Reply-To: Michael Ablassmeier <abi@grinser.de>
 Mime-Version: 1.0
 Return-path: <stgt-owner@vger.kernel.org>
@@ -13,28 +13,56 @@ To: stgt@vger.kernel.org
 
 hi,
 
-im searching for a way to be able to easily simulate faulty tape drives
-for CI/Testing purposes. The VTL emulation in TGT seems to have all the
-functionality required for my purpose and so i went on and implemented a
-proof of concept.
+while running the bacula tape test via btape, the append suite failed
+against TGT Tape (6bd8382 tgt 1.0.80), it would expect 4 blocks on
+tape but discovers 5:
 
-The POC uses the VTL Tapes MAM header to store information about which
-errnous behavior should be simulated in case the tape is written.
-Different tapes can as such simulate different fault behaviors.
+ >  ./btape -c /etc/bacula/bacula-sd.conf /dev/nst1
+ >  End scanning the tape.
+ >  We should be in file 4. I am at file 5. This is NOT correct!!!!
 
-See following description for more details:
+it seems reading the blocks from the VTL tape if the next position is
+Filemark and then EOD, returns it twice ..  which is reproducible via
+dd:
 
- https://github.com/abbbi/tgt/blob/fault_injection/doc/README.ssc-fault-injection
+Write one block to tape and rewind:
 
-Is there any interest in getting such a feature into TGT's VTL
-emulation? Full diff here:
+ dd if=/dev/zero of=/dev/nst1 bs=65536 count=1
+ mt -f /dev/nst1 rewind
 
- https://github.com/fujita/tgt/compare/master...abbbi:fault_injection
+Now attempt reads:
 
-As the MAM header is probably not the best way for storing the
-information, would it be a good solution to store a special file
-alongside to the VTL file, including more meta information related to
-this feature?
+  dd if=/dev/nst1 of=/dev/zero bs=65536 count=1
+  1+0 records in
+  1+0 records out
+  65536 bytes (66 kB, 64 KiB) copied, 0.000753197 s, 87.0 MB/s
+  dd if=/dev/nst1 of=/dev/zero bs=65536 count=1
+  0+0 records in
+  0+0 records out
+  0 bytes copied, 0.000803429 s, 0.0 kB/s
+  dd if=/dev/nst1 of=/dev/zero bs=65536 count=1
+  1+0 records in
+  1+0 records out
+  65536 bytes (66 kB, 64 KiB) copied, 0.0005939 s, 110 MB/s
+  -> this block here, should never been returned, there is
+  no more data on the VTL
+
+as far as i had time to take a look, the second read operation in
+resp_var_read notices file mark position:
+
+  bs_ssc.c
+  346  if (!length) {
+  347   if (h->blk_type == BLK_FILEMARK)
+  348       goto skip_and_out;                                                                                                                                                       
+
+which in turn calls 
+
+  361 skip_and_out:
+  362    ret = skip_next_header(cmd->dev); 
+
+basically moving the position inside the VTL to the wrong place,
+..making the third read from the tape to return data from the
+same block again :)
 
 bye,
     - michael

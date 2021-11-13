@@ -1,58 +1,56 @@
-From: Michael Ablassmeier <abi@grinser.de>
-Subject: [PATCH] set access flag in storage element descriptor
-Date: Mon, 11 Jan 2021 16:00:39 +0100
-Message-ID: <20210111150039.tqfosbfu27ddsbbf@lrrr.dead-link.org>
-Reply-To: Michael Ablassmeier <abi@grinser.de>
+From: Miss lilian christoph <lilianchristophe.0@gmail.com>
+Subject: Are you available?
+Date: Sat, 13 Nov 2021 21:34:39 +0100
+Message-ID: <CAO0H1XCjtX+5h=zLD-oExSfUa3fXLeNwp-zXvSy-2qYvke-MQQ@mail.gmail.com>
+Reply-To: lilianchrstph@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="u4js77q2e4vckgp3"
 Return-path: <stgt-owner@vger.kernel.org>
-Content-Disposition: inline
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:reply-to:sender:from:date:message-id:subject:to;
+        bh=WeOVAkz9Du/PMbvz3f0ckve3VeQzpJMgdKgUBtKRVbo=;
+        b=Y2m6ftBEemxkD2ubRr6Ypi0CD/UWRt52eChhttln6Pg7wvNS7pFsSAz26luGfLvK/5
+         in+HSkD8bvR04hFgLfLv5/gtXr8ZY/HqSf7WZDDgsTAMU5cbb9s/vS9d8efKVh2BWOyK
+         XsMzV8RJ6+L5uJsXoPu3yZTuwOR1PbVs4gaNyuFwGW4cgJCtKmlhC/8yffxW0RoqQ7ug
+         XzwqOgWh7mHivoC9pCbUtogtcLjcupzsdzm5LKaWQoUTRYTL9QNbhE51UV7y4N+AqoBm
+         v5lbiDl6WFieYqpQUf5XGkbslTnVbxQ3zThAx+CQMS0Eb03a+giu9O1M/97/OO4dZCmW
+         AaDA==
+Sender: aishacoulibaly4@gmail.com
 List-ID: <stgt.vger.kernel.org>
-To: stgt@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: 
+
+-- 
+Are you available?
+
+My name is Miss. Lilian Christophe I am a Canadian,
+
+I will like to request your services to be my partner,investor to
+support me transfer and manage my funds by investing in a profit
+investment and 30% of the money for you.
 
 
---u4js77q2e4vckgp3
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+I have a reasonable sum that I inherited from my late father, late Dr.
+Dan Christophe, the amount of $10.5 Million dollars
+presently with the with the bank.
 
-hi,
+Below is the main reason why I am communicating with you.
 
-the storage element descriptor has an access parameter value which most
-storage vendors[0] and also mhvtl[1] do implement:
+(1) Provide a new empty bank account which this Fund will be
+transferred into, in case you do not want us to use your
+personal account.
 
- >  Indicates that the medium transport element cannot access the
- >  media at the storage location [..]
+(2) To serve as guardian of this fund as the bank insisted that its
+agreement with my late father that I should provide a foreign partner
+before the fund could be released.
 
-TGT's smc unfortunately does not handle at all and only sets information
-wether if slot is filled or not. I have seen that commercial products
-care about the access flag in some way and if missing, will show an
-empty slot, even if filled.
+(3) To make arrangements for me to come over to your country,settle
+down and start a new life after the transfer of this money to your
+country.
 
-Attached patch sets access bit if slot is filled.
+I will like to stop for now until I hear from you, have a great day.
 
-[0] https://support.spectralogic.com/documentation/default-source/user-guides/12-8-t-seriesscsidevguide.pdf?sfvrsn=79ecf946_6
-(Page 80)
-[1] https://github.com/markh794/mhvtl/blob/master/usr/smc.c#L512
+Yours Faithful
 
-bye,
-    - michael
-
---u4js77q2e4vckgp3
-Content-Type: text/x-diff; charset=us-ascii
-Content-Disposition: attachment; filename="access_flag.diff"
-
-diff --git a/usr/smc.c b/usr/smc.c
-index bbc7b7f..7a9dec8 100644
---- a/usr/smc.c
-+++ b/usr/smc.c
-@@ -146,7 +146,7 @@ static int add_element_descriptor(uint8_t *data, struct slot *s,
- 	int i;	/* data[] index */
- 
- 	*(uint16_t *)(data) = __cpu_to_be16(s->slot_addr);
--	data[2] = s->status;
-+	data[2] = s->status | 0x8;
- 	data[3] = 0;	/* Reserved */
- 	data[4] = (s->asc >> 8) & 0xff;	/* Additional Sense Code */
- 	data[5] = s->asc & 0xff;	/* Additional Sense Code Qualifier */
-
---u4js77q2e4vckgp3--
+Lilian Christophe.

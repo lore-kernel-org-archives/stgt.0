@@ -1,35 +1,28 @@
-From: Forza <forza@tnonline.net>
-Subject: New user of tgtd
-Date: Fri, 14 Jul 2023 17:07:25 +0200 (GMT+02:00)
-Message-ID: <80102ab.d19c822c.18954f143dc@tnonline.net>
+From: ronnie sahlberg <ronniesahlberg@gmail.com>
+Subject: Re: New user of tgtd
+Date: Sat, 15 Jul 2023 01:46:49 +1000
+Message-ID: <CAN05THRvMQpUjLAeWJ9B+jz2KRgRQsOz7yF4GVWbm4xovY32sw@mail.gmail.com>
+References: <80102ab.d19c822c.18954f143dc@tnonline.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8BIT
 Return-path: <stgt-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20221208; t=1689349622; x=1691941622;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=VZJz3mvP7VCr80jZ44/9FvdR3R4FoNMfPkjQBvtoEvw=;
+        b=KnGrq1XQIFtkEjspLvYjYI6VtewBNGFI90wXCMBODCmBU2/+9lw9kYOn3PH3Pg18j8
+         KA4BDahhCXuIyFmkYZ3BqdsmDe4tGSVyn8zFAfdMqXREQhSgP0HK7YF31oT0KxjHj5fo
+         Uhhc4PkxqpCIgZ/GRLQCIX7IN5zXBbzBqdgwvLjJAhM1n20wzRW6G3FnHTYT9cYZ8G1c
+         ZVtuwP+RB2uenEVu2ALeBgaqQBwkYfqgFCP5mX9Fq554pDLZojxL+iqT+UhAtqD36BVe
+         Hzv8ZklilVGGpgw+UvcpCffbJaYsaU6G/oN4Nd0UEjuvKq/f3LpHZouVrqtv18G9zE2R
+         UP0w==
+In-Reply-To: <80102ab.d19c822c.18954f143dc@tnonline.net>
 List-ID: <stgt.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: stgt@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+To: Forza <forza@tnonline.net>
+Cc: stgt@vger.kernel.org
 
-Hi,
+> * Is there a way to hint to the initiators that the LUN is non-rotational? Some OSes use this parameter to adjusts its internal io scheduling.
 
-I am a new user of tgtd. I am intending to replace LIO with tgtd because it's a user-space target.
-
-My use-case is to export files to remote initiators, so I will be using the backing-store option.
-
-I have been trying to go through the docs and examples but I have some questions I'd like to clarify.
-
-* aio driver. Does this mean tgtd won't pass down flush/barrier requests from initiators (like in LIO)? I. E. data loss on power failure?
-* I am using btrfs on the target server and I'd like to use the thin_provisioning option. Am I correct in that this has to be enabled via "params  thin_provisioning=1" in the backing-store section?
-* Is there a way to hint to the initiators that the LUN is non-rotational? Some OSes use this parameter to adjusts its internal io scheduling.
-* i notice that tgtd uses 16 IO threads no matter the number of cpus. Is there a guideline on a suitable number for my use-case?
-* Is ErrorRecoveryLevel=1/2 implemented in tgtd so that supporting clients transparently can recreate the connection after interruption or target restarts?
-* the targets.conf.5.xml doesn't seem to include all available options. I am glad for the examples which helped me get going :)
-
-I also noticed the following warning:
-
-tgtd: bs_init_signalfd(267) could not open backing-store module directory /usr/lib/tgt/backing-store
-
-I created the dir, but can't see it is actualky being used. What is the purpose of this directory?
-
-Thanks,
-
-~ Forza
+I think the param rotation_rate=0 will do that.

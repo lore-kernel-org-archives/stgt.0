@@ -1,28 +1,44 @@
-From: Forza <forza@tnonline.net>
-Subject: Daemon not immediately available after start.
-Date: Tue, 22 Aug 2023 14:14:04 +0200 (GMT+02:00)
-Message-ID: <ffaa7cb.1727b74a.18a1d2a93f0@tnonline.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8BIT
-Return-path: <stgt-owner@vger.kernel.org>
-List-ID: <stgt.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD7CD4412
+	for <stgt@vger.kernel.org>; Thu, 23 Nov 2023 02:52:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="NZqyPBrk"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 29376C433C8;
+	Thu, 23 Nov 2023 02:52:37 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
+	s=korg; t=1700707957;
+	bh=rRbIXqjq8DKBA6vW+7glleky65j8TQodsqrm6IeWtY0=;
+	h=Date:From:To:Subject:From;
+	b=NZqyPBrkENqBt/gF6xrkJ7VrNseIFWU/gBzZmU0ii5IAFVw11TMZ8fKNhFcARHqvk
+	 jiVLWRx6rMvNVXwHOoe2Ll3Y5mtmi4zYNtZ9eUHQBOIW1z1feJrwGAwTcIZWbnVnQ3
+	 iiJPPRl0fX8otKsZZ+XmOOqo/185aHitLv92CM24=
+Date: Wed, 22 Nov 2023 21:52:36 -0500
+From: Konstantin Ryabitsev <konstantin@linuxfoundation.org>
 To: stgt@vger.kernel.org
+Subject: PSA: this list has moved to new vger infra (no action required)
+Message-ID: <20231122-inquisitive-translucent-rat-b7aebd@nitro>
+Precedence: bulk
+X-Mailing-List: stgt@vger.kernel.org
+List-Id: <stgt.vger.kernel.org>
+List-Subscribe: <mailto:stgt+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:stgt+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-Hi,
+Hello, all:
 
-I have taken over as maintainer for the tgt package (scsi-tgt) in Alpine Linux.
+This list has been migrated to the new vger infrastructure. No action is
+required on your part and there should be no change in how you interact with
+this list.
 
-On Alpine we like to split packages to keep their footprint small. I have written an init script in two parts, one for the tgtd daemon and one for tgt-admin that loads the config file. I assume some people use tgtadm directly instead of tgt-admin and the config files.
+This message acts as a verification test that the archives are properly
+updating.
 
-I have one issue during launch of the tgtd, which is that it starts and returns ok to init system, which now tries to load the config via tgt-admin. This, however, sometimes fails. I saw that the same issue was documented in Gentoo, which solved the issue by adding a one second delay after starting tgtd, before issuing tgtadm or tgt-admin commands.
+If something isn't working or looking right, please reach out to
+helpdesk@kernel.org.
 
-I think this is not an ideal situation as it is conceivable that an initiator tries to connect during that second, but finds an empty target.
-
-Is there a good solution for this? 
-* can tgtd wait until it is fully ready for connections from tgtadm before returning to shell/init system?
-* or can tgtd start in offline mofd, and we can keep the one second delay before activating again via tgtadm?
-
-Thanks,
-
-~ Forza
+Best regards,
+-K

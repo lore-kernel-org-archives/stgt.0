@@ -1,169 +1,104 @@
-Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com [209.85.214.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp-relay-internal-1.canonical.com (smtp-relay-internal-1.canonical.com [185.125.188.123])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94977391
-	for <stgt@vger.kernel.org>; Thu, 15 Feb 2024 00:26:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C868B130ADD
+	for <stgt@vger.kernel.org>; Thu, 15 Feb 2024 13:39:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.123
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707956797; cv=none; b=Tczm8KvV6va7T/49nKqt+X+PO7HHWYqIsG+Q9WCJ8O4KUB8lIBdrcselRVKikqUftua6YTppNQ2Po8M2hRLP7v38QBJs2hP/wkB7FyKyhfxZy7/kzcC6Br1X/1T4SbIYRC8F9kykDkTpWWH7je8QZLTkVcZzbhn+HhTRgbaAM/M=
+	t=1708004400; cv=none; b=BU5J7Fyi4LiCei+09qD/zbTFMqbYT05N3E73+Jwiva8TkHALVlrv/UO4Ml6OZNFwMOhSvflgXNEW+vvuBvlquuRR88G8Umi/TcKgOcOE7+fJDCfeRi6EX54959prXEgUw8UHkRQ9x3Gky6etfVUch23q3DFOxJJctydFCC78oaw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707956797; c=relaxed/simple;
-	bh=vRYczHBP2SSm0vJjNuYX6X0V5ZloZx4b77sUMWHB6jU=;
-	h=Date:Message-Id:To:Cc:Subject:From:In-Reply-To:References:
-	 Mime-Version:Content-Type; b=cYeKAGv/59CZ/7zI8R28UReol5l7Yi0kW3vGFzMgNjRAnrKuhz9uAiWNKyzdcDftHGW1zta077pOhRO1o4VkO83aUd1ztAmnC5WM88BL0v+ExikRf+gWDGDQ3YdG724wqaFBWpo4nVk0/t0P0COVecY5R/hh0md1uKmfpghofRk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bjSDuBuu; arc=none smtp.client-ip=209.85.214.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1708004400; c=relaxed/simple;
+	bh=M95Z0vzRBeQxHgvq0r46Arq0YU4v0YJfT3eepWVFjhM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=i4HnKZCED0tA8aBrX6EWQO5jakzCz6P7NQXrYTH9UFHZaSlVJjc3Xc6DYzuTd3iqnpzwM5gaQ70GuAMJlGQpYrjHohsTgJP/7paQIi1+5QLbGP0OQriXq52QDkLpuFLSrIKhgKQPLz7tzG9bNnglk5J0d9Ly7pEYItYZEOv6PVk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=FVsHqJlU; arc=none smtp.client-ip=185.125.188.123
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bjSDuBuu"
-Received: by mail-pl1-f178.google.com with SMTP id d9443c01a7336-1db4244f2e3so751835ad.1
-        for <stgt@vger.kernel.org>; Wed, 14 Feb 2024 16:26:35 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1707956795; x=1708561595; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to:from
-         :subject:cc:to:message-id:date:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=aro9dTlC5SvZdYBk1MTVKKhShu9eHwFk8QQGeOKisUU=;
-        b=bjSDuBuuhIqQnOtQDFqtmzdfb3w186Z8eYuk9z4jMrEr99lLT6rlWvcbImgvxbc8D/
-         RKKHWLJyjVJdc+oRPkaUDwmdoKoL6k5UmUlwNh1jfjpHAzlZ6WmS7FBDoyinjeoaP6D4
-         IwlyGKEnFaYLaXQ0Lt847s1htPcwedw49ixnM3GyD6eOj4u0FkTkzHJeHTkcQzuc6aQ5
-         R0iSwNqMzKYhQvR9SFffgwCgz/hAiJcYzEcZtZsZESJquPwwdjil96gjh65zYXHKxLIw
-         j0kTuFVMVYqk/Jy4p/JVWe1pIWHH1M0dKQFl38iA29//6gByov+h/rv38/Jb0rT6Tyd3
-         A1nw==
+	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="FVsHqJlU"
+Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com [209.85.128.200])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-relay-internal-1.canonical.com (Postfix) with ESMTPS id F2D993FFCE
+	for <stgt@vger.kernel.org>; Thu, 15 Feb 2024 13:39:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+	s=20210705; t=1708004395;
+	bh=M95Z0vzRBeQxHgvq0r46Arq0YU4v0YJfT3eepWVFjhM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type;
+	b=FVsHqJlUa0FC8xlB2BiVwI5ID0ONOJJ9vsqmEl8bNbvXQ2kUfRf6j/XIhEBXhg2uQ
+	 JWZ0SVBgRrjYOgpC0x7Kbw2TH9G1Fn4A2mhr2lCIVO0UhQqF0uqVTIc3eZ2/nyiAvW
+	 XIVD4x3vKjpfVMlTyl85Bdt1czy3Pup7rfI4x2xYocmCgF7XsF7C/XWbHREHP1r1L1
+	 auepLtWFh7qqNoZn4JgkdD+DInaLkURQV4NeGTOMIjpEse56tTovJSReils/5WGCli
+	 3WW0YsxCxpsv8Q51wcNlPdf3P7hs4XFDY4aERnYUGbVZXnDBe/8b/7d0FbmvtlCfLW
+	 V9FiYIsDiv9LQ==
+Received: by mail-yw1-f200.google.com with SMTP id 00721157ae682-607ac101b6fso16834687b3.2
+        for <stgt@vger.kernel.org>; Thu, 15 Feb 2024 05:39:55 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707956795; x=1708561595;
-        h=content-transfer-encoding:mime-version:references:in-reply-to:from
-         :subject:cc:to:message-id:date:x-gm-message-state:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=aro9dTlC5SvZdYBk1MTVKKhShu9eHwFk8QQGeOKisUU=;
-        b=lV6Wv0rKskEuKaoSB9ZYaKcjAYbKHGMUp6tvR9uU5qESgAE3WbkozPn+n0azYJDz6T
-         m2VvCOnjEdl01oOPij7MxcbdfnrcMt1/g7u+zI5SX/ua+xN8idRwXjGMxyxC31Lfg4ra
-         Js/0YFFqImdF5rcTXuWV+AFk+AUUuFN/nLFxip2wKZYKF8e/z9zOz4nbb19Rz9bWGn91
-         VpP76mO0tNnr0D8S0bOdVMr+7t8YujLi/ySST+PGwWFCiiXiRefKA5sVkSQF/MLPbs4U
-         wKDXLigDzGpi6r7uBDTr7YGto2DgKehOQSgDHpVZCJjLkIb70BQC9TniUkjp5shaz8T1
-         SBGA==
-X-Gm-Message-State: AOJu0Yz+bT9CBtUAir2V6Pj8fMp4kSBRR64X+F0eny7Lxvcc9vgUfLBp
-	OdnovKcroeP/xQyx9WMDYAypGpAIDbE7VzbVd8HmbKoItAW6xI0tnSW8sEH/
-X-Google-Smtp-Source: AGHT+IGH+rzd6+RGTcgyMiBkdOicWd3a9RGVEEsTjoNK7CnXwGdMOBd/oq8f9VltFukjypoyyvb9pg==
-X-Received: by 2002:a17:903:2282:b0:1d9:3411:b10f with SMTP id b2-20020a170903228200b001d93411b10fmr270486plh.0.1707956794717;
-        Wed, 14 Feb 2024 16:26:34 -0800 (PST)
-Received: from localhost (ec2-54-68-170-188.us-west-2.compute.amazonaws.com. [54.68.170.188])
-        by smtp.gmail.com with ESMTPSA id 4-20020a170902c24400b001d9cfb9af20sm39186plg.70.2024.02.14.16.26.34
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 14 Feb 2024 16:26:34 -0800 (PST)
-Date: Thu, 15 Feb 2024 09:26:33 +0900 (JST)
-Message-Id: <20240215.092633.419504594582279426.fujita.tomonori@gmail.com>
-To: andreas@canonical.com
-Cc: stgt@vger.kernel.org, sergio.durigan@canonical.com
-Subject: Re: tgt on arm64 and USE_SIGNALFD
-From: FUJITA Tomonori <fujita.tomonori@gmail.com>
-In-Reply-To: <CANYNYEGR=8vV4JFicnWZ=MDwMc9zjPxHJ8tNj=zSner30UpeXg@mail.gmail.com>
-References: <CANYNYEGR=8vV4JFicnWZ=MDwMc9zjPxHJ8tNj=zSner30UpeXg@mail.gmail.com>
+        d=1e100.net; s=20230601; t=1708004395; x=1708609195;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=M95Z0vzRBeQxHgvq0r46Arq0YU4v0YJfT3eepWVFjhM=;
+        b=jP0CKeXeLhsvfXVmJxvl/SwI0F9HIxHPPbSX/5HAM/fABmC/Z5/5VBN3cCxxWyoCTd
+         UqDuaX0qWTa/TG0V/KhEdhAi/WG3ofM1YcA0TmlHMCGTPRKfm3hGRoZE2Vrq1Vb4iHyC
+         T04rsGD6KbSDZWUkVAr5EktQyE+uxbfL1qc/pEi+EtY9AOb54gj/dv1BAWIFE6BOleuO
+         3DnES9xpnyRhrCubiO38JCzzYLtFERWKx9yA8zn7OU/MMlu5Vgcl8w+HIYM+YNoGJsB6
+         Oy9Q/F1BzV0yS47c/2mCM/dclKAvYPtEHKq5Zhr8FgkWuaLUeDcAPR4jntpao29JKVlg
+         plOA==
+X-Gm-Message-State: AOJu0YzRR7Pb+GBL0AAond7h8tew6LY02Lo/dBAVRb+WvU3blvRUfqAd
+	uNDJ6FtmH7ejGJkFPoZDfTFuj5+2ht2ezjOdZncV7oKxJCtqo+kf3N8XuEN2ZouDIBRqjnaFfWc
+	LTvwrV2XldgcDz7nYNDf2TZ4JpRO/Lk8E6KLtmkB7d8vzr+0krMkRfVQtXp4Rg5aqouihaqKWAq
+	5JIn+GDvPgnoqKNZEhU4GjcK/C24BMWjeQDe3MwAG4Vps6Ywb+ow==
+X-Received: by 2002:a25:c50b:0:b0:dcc:5a73:1cad with SMTP id v11-20020a25c50b000000b00dcc5a731cadmr1780633ybe.42.1708004395069;
+        Thu, 15 Feb 2024 05:39:55 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IGTPozycxUChK9nztaZJsLKIWdql0QAI6rwrPRk6Uk/L6QC2Y2vdTOPXdqHQGHuf8hrQQLOkzsYtNseX0z4n1Y=
+X-Received: by 2002:a25:c50b:0:b0:dcc:5a73:1cad with SMTP id
+ v11-20020a25c50b000000b00dcc5a731cadmr1780618ybe.42.1708004394840; Thu, 15
+ Feb 2024 05:39:54 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: stgt@vger.kernel.org
 List-Id: <stgt.vger.kernel.org>
 List-Subscribe: <mailto:stgt+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:stgt+unsubscribe@vger.kernel.org>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+References: <CANYNYEGR=8vV4JFicnWZ=MDwMc9zjPxHJ8tNj=zSner30UpeXg@mail.gmail.com>
+ <20240215.092633.419504594582279426.fujita.tomonori@gmail.com>
+In-Reply-To: <20240215.092633.419504594582279426.fujita.tomonori@gmail.com>
+From: Andreas Hasenack <andreas@canonical.com>
+Date: Thu, 15 Feb 2024 10:39:43 -0300
+Message-ID: <CANYNYEHY=t+f7oV0A-+3faAgiSzb90mp6KB7XF2k=bVgpR_3dg@mail.gmail.com>
+Subject: Re: tgt on arm64 and USE_SIGNALFD
+To: FUJITA Tomonori <fujita.tomonori@gmail.com>
+Cc: stgt@vger.kernel.org, sergio.durigan@canonical.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hello,
 
-On Wed, 14 Feb 2024 17:14:42 -0300
-Andreas Hasenack <andreas@canonical.com> wrote:
+On Wed, Feb 14, 2024 at 9:26=E2=80=AFPM FUJITA Tomonori
+<fujita.tomonori@gmail.com> wrote:
+>
+> Hi,
+>
+> On Wed, 14 Feb 2024 17:14:42 -0300
+> Andreas Hasenack <andreas@canonical.com> wrote:
+>
+> > is USE_SIGNALFD meant to be supported on arm64? The check in
+> > bs/util.h[1] is looking for __NR_signalfd, but arm64 only has the
+> > newer __NR_signalfd4[2]:
+> >
+> > #if defined(__NR_signalfd) && defined(USE_SIGNALFD)
+> > ...
+> > #else
+> > #define __signalfd(fd, mask, flags) (-1)
+> > struct signalfd_siginfo {
+> > };
+> > #endif
+>
+> I think that we don't need this hack anymore (it was necessary when
+> the signalfd feature was introduced). I've not tested on arm64 but
+> I guess that simply using sys/signalfd.h works like the following?
 
-> is USE_SIGNALFD meant to be supported on arm64? The check in
-> bs/util.h[1] is looking for __NR_signalfd, but arm64 only has the
-> newer __NR_signalfd4[2]:
-> 
-> #if defined(__NR_signalfd) && defined(USE_SIGNALFD)
-> ...
-> #else
-> #define __signalfd(fd, mask, flags) (-1)
-> struct signalfd_siginfo {
-> };
-> #endif
-
-I think that we don't need this hack anymore (it was necessary when
-the signalfd feature was introduced). I've not tested on arm64 but
-I guess that simply using sys/signalfd.h works like the following?
-
-
-diff --git a/usr/bs.c b/usr/bs.c
-index 8171a32..8da5a9b 100644
---- a/usr/bs.c
-+++ b/usr/bs.c
-@@ -311,7 +311,7 @@ static int bs_init_signalfd(void)
- 	sigaddset(&mask, SIGUSR2);
- 	sigprocmask(SIG_BLOCK, &mask, NULL);
- 
--	sig_fd = __signalfd(-1, &mask, 0);
-+	sig_fd = signalfd(-1, &mask, 0);
- 	if (sig_fd < 0)
- 		return 1;
- 
-diff --git a/usr/util.h b/usr/util.h
-index c709f9b..8aef6ab 100644
---- a/usr/util.h
-+++ b/usr/util.h
-@@ -14,11 +14,12 @@
- #include <stdlib.h>
- #include <string.h>
- #include <limits.h>
-+#include <linux/fs.h>
- #include <linux/types.h>
- #include <sys/ioctl.h>
--#include <linux/fs.h>
--#include <sys/types.h>
-+#include <sys/signalfd.h>
- #include <sys/stat.h>
-+#include <sys/types.h>
- 
- #include "be_byteshift.h"
- 
-@@ -103,44 +104,6 @@ static inline int between(uint32_t seq1, uint32_t seq2, uint32_t seq3)
- 
- extern unsigned long pagesize, pageshift;
- 
--#if defined(__NR_signalfd) && defined(USE_SIGNALFD)
--
--/*
-- * workaround for broken linux/signalfd.h including
-- * usr/include/linux/fcntl.h
-- */
--#define _LINUX_FCNTL_H
--
--#include <linux/signalfd.h>
--
--static inline int __signalfd(int fd, const sigset_t *mask, int flags)
--{
--	int fd2, ret;
--
--	fd2 = syscall(__NR_signalfd, fd, mask, _NSIG / 8);
--	if (fd2 < 0)
--		return fd2;
--
--	ret = fcntl(fd2, F_GETFL);
--	if (ret < 0) {
--		close(fd2);
--		return -1;
--	}
--
--	ret = fcntl(fd2, F_SETFL, ret | O_NONBLOCK);
--	if (ret < 0) {
--		close(fd2);
--		return -1;
--	}
--
--	return fd2;
--}
--#else
--#define __signalfd(fd, mask, flags) (-1)
--struct signalfd_siginfo {
--};
--#endif
--
- /* convert string to integer, check for validity of the string numeric format
-  * and the natural boundaries of the integer value type (first get a 64-bit
-  * value and check that it fits the range of the destination integer).
+Yes, thank you, that worked just fine!

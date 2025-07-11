@@ -1,59 +1,62 @@
-Received: from PA4PR04CU001.outbound.protection.outlook.com (mail-francecentralazon11023105.outbound.protection.outlook.com [40.107.162.105])
+Received: from AS8PR04CU009.outbound.protection.outlook.com (mail-westeuropeazon11021134.outbound.protection.outlook.com [52.101.70.134])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91D13221562
-	for <stgt@vger.kernel.org>; Wed, 11 Jun 2025 17:29:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.162.105
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D806A2D0C6B
+	for <stgt@vger.kernel.org>; Fri, 11 Jul 2025 12:55:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.70.134
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749662991; cv=fail; b=pUYa8ope4oyIcFDHJbL9QTl0wAMrhqH/qXRcssry2bcIeXxy9j5ziVLWL7ocC/1BJi215Smlf+SiYpJgJXearkpDRQoHhuw9p0AvIFQO0fBFw7/fHpOQKCYyG2UH1O2XVm432O4G73xSUzRs/2yP/+YnbXiivc4nNCxnW6UGvPo=
+	t=1752238537; cv=fail; b=qHzjE9IqYnDIUTdKe4ozkUK7zPHEZSrmQsqNX9QT1+8SulS/sfjCkBklN7VmbfvhTt/Zj6bB641WHGsooqHYSOCgOc+wHPh90nnPAsVbv9V0FG9Oakt/NpSY7bSkyZllnz17ylRFjJj6L/l+Ar6tLFQjfmkca19Wylv2hQKArg8=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749662991; c=relaxed/simple;
-	bh=H0kcDjCSdgnDYSje6WaHy41A76nm92Bwfd60josfrEk=;
-	h=To:From:Subject:Message-ID:Date:Content-Type:MIME-Version; b=IDxhUI/4RjcfZmEJNuokFIiZ4BSdLL2cZhGyT6GXcG1HEJwaRuiBKr1sAP04R5HMa8Qqq2oeQdxlLnM0eKjyYPNg3ZFS7UVVvyim4MsidAx1Xjv+7MYJPmLgz6J9h7ddtP/ui/7BuYe1Gy4oJXdjVmaN62Qtu6l3ts12eUBoPGo=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kontron.com; spf=pass smtp.mailfrom=kontron.com; dkim=pass (1024-bit key) header.d=mysnt.onmicrosoft.com header.i=@mysnt.onmicrosoft.com header.b=KkWV0ZF3; arc=fail smtp.client-ip=40.107.162.105
+	s=arc-20240116; t=1752238537; c=relaxed/simple;
+	bh=qwWNBUtEkeLg/ojaMooIAqwAJ+WVuLcu9fpR2lI0OBQ=;
+	h=Subject:From:To:References:Message-ID:Date:In-Reply-To:
+	 Content-Type:MIME-Version; b=SDlJ97L5T6dQzCa6QvrICUPnVityGXw9RGer1G6dG4jD04c2xgMnWY7+CxJIBeN39PuddNaYOkRVtFiZ4JK5PEes06BA6F7jNI6dDHEZfgPWjUx5BZ/STaixhX5dKj4uFqZBI+zFr1omagZu6b1DcmP+86i35rMWuFEvHDR/z58=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kontron.com; spf=pass smtp.mailfrom=kontron.com; dkim=pass (1024-bit key) header.d=mysnt.onmicrosoft.com header.i=@mysnt.onmicrosoft.com header.b=DkvatUFE; arc=fail smtp.client-ip=52.101.70.134
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kontron.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kontron.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=mysnt.onmicrosoft.com header.i=@mysnt.onmicrosoft.com header.b="KkWV0ZF3"
+	dkim=pass (1024-bit key) header.d=mysnt.onmicrosoft.com header.i=@mysnt.onmicrosoft.com header.b="DkvatUFE"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=Qg+ZjiVOe9Kb9VJ8Ic25evF++/F6dium7eDhyvqeVTJty+aBCy8gNhlRaXr0E2lsykVElvj3lul8d47BDnvtbEgD+F32WUO4ZCk7TUe6dhFrmWaq8v59+nawQGgArMys1pZc3CKEc6F7Q4x+cCOOZmttBem/Ai4Cs5qmir8CdiMEf8Ww3fS4jF+Hw1pURGxU6xd4feR1NFwmrxP5BsmqPaA/Sk+UG9g4V5H1UZIFRskBZn4frWs2SX4HYqW9DE8qB4PggKN4hhEaoMVGEBrP3EgG7leDfksHAXhw6BDQWK+w8Ow7/+r2FRd/SuwXC7HCORQmN5vbMie6XQsIoICQFg==
+ b=MB1IYIkkhQ9EyFTa2HsXHsIaYsJPa7KXeN3dJ5mkycouTly9m+BZGnEhJfJXXH6yy+S1NAOTlBZNYdZ7jRCDRQvE5I21ENUqIW6twIrG6070RqPl4XVefOi/8BH8uP6J2CWfcEFP66AqlKdcDuD+S3jvWOq1y2JPLz7aOpkEad5ddObjbrQNDSNO0vdIAn1P3WSMGvDgqFBN3HvXZhynclh+SUQ/3VnV39XE+EiNTdQ2RMExpUKJ4O6ECEoE27HBSnxY/kARyoxzK2JO7W97gS8L7KbNTStzuZchPild65GCOCUpXqaG9CsLzj2wvqNWec6JNvvlW5uM3LlG5beNCA==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=H0kcDjCSdgnDYSje6WaHy41A76nm92Bwfd60josfrEk=;
- b=nHfSPL895motB6LEjTMmNKX9+eKSqM4Qi6NzeJ/kjqRQUnpzX0yVOc67f1w96Prqi8nMGDI0lyBlbOIqnrycCT2QQn+WRSLV1yc8153FE4+B6qgECwNQoZm0XNQwrO95IxtyOXs0b1cy9eRTUf8JL0nzOpz55/muDRTLypssQbmZvozjXxuVEJYxaU3Jk0AbD0t4xKexGbPNlOznqywo/m2IA0H0y9pEhbU9Hs9TVRfb95vt+Esyxibzh8x4e3FnA0Bn+F8+lu8UYyTStZhRumtGeL1+InKb7WCBLRs8T68h68uLVx/sRwl1vI8CqlAowr812ix4meatlL1Yf0rAoQ==
+ bh=qwWNBUtEkeLg/ojaMooIAqwAJ+WVuLcu9fpR2lI0OBQ=;
+ b=FMn/pusB6jT2iY61DIZMKJm/1vmcr6O5S4yn/ojU1J9OdYn5qtjHg4Q6DpN/7JRKhz+lHcreIX/MYTBZYOVqjNkgVhqQkaDQHAt9YBcugW61rSTxzXG1Mz8OwpXNi+aFqBT0fvW8J87dzOh9rd5NYFWXgDFUBI2aljc0tWwExLd6F5iyM/VOuOjy3dQiKLZ+9LSpvqJPqoJHAmJXUcVbbEIopSpO3DCffNzNUUOkJ8KDuY3R4U5k/hj7gyE5UwUwheAE7BNQ6yrGD7B40a7Fpp6TL2ZIKViNtNTc6IhTpdB1pSgBjqyhTNBEcz5H0C370cTW88sU4LDVvbwQSycgAw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=kontron.com; dmarc=pass action=none header.from=kontron.com;
  dkim=pass header.d=kontron.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mysnt.onmicrosoft.com;
  s=selector2-mysnt-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=H0kcDjCSdgnDYSje6WaHy41A76nm92Bwfd60josfrEk=;
- b=KkWV0ZF3/AABctPBrdjkhTOMNSMYFUFdqORyokyIMIt3DN6iyJ+3WevQXLh0BrmEWex2KcgudRURzZJDqDw/TVILDeN1rvEIoGvT8kPnvnDOj3niPUAYJHN5B0FHG4kv+iQRxMqVix6Jc9Z8I4Yr1H+qxdwmbO83o5sEH8OT52Q=
+ bh=qwWNBUtEkeLg/ojaMooIAqwAJ+WVuLcu9fpR2lI0OBQ=;
+ b=DkvatUFEdTNWaR6fdCK1iuUz6sbPzY9Sg6MC/UCbWtjhTmLX8kSByCladbpyvqq0Dv7IO6gjHFALLaD/DeotFq/s4uHkI9GEMPWzaxhJKUj8Yp/sXGNWuS0QtFWyLlVEsew8ivW4ePu89tQ7gYn3QvNGwUmdcA/g6PQgopPfPfY=
 Authentication-Results: dkim=none (message not signed)
  header.d=none;dmarc=none action=none header.from=kontron.com;
 Received: from DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:10:3ef::11)
- by GV1PR10MB5793.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:150:60::14) with
+ by AM0PR10MB3522.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:153::23) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8835.18; Wed, 11 Jun
- 2025 17:29:43 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8922.25; Fri, 11 Jul
+ 2025 12:55:31 +0000
 Received: from DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
  ([fe80::142d:c1aa:6bc9:ca4]) by DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::142d:c1aa:6bc9:ca4%5]) with mapi id 15.20.8813.024; Wed, 11 Jun 2025
- 17:29:43 +0000
-To: stgt@vger.kernel.org
+ ([fe80::142d:c1aa:6bc9:ca4%3]) with mapi id 15.20.8901.018; Fri, 11 Jul 2025
+ 12:55:30 +0000
+Subject: Re: tgt : handling of missing session logout from initiator
 From: Gilles BULOZ <gilles.buloz@kontron.com>
-Subject: tgt : handling of missing session logout from initiator
+To: stgt@vger.kernel.org
+References: <7715d5af-f8da-069a-7a13-4a7312f8f6a1@kontron.com>
 Organization: Kontron Modular Computers SA
-Message-ID: <7715d5af-f8da-069a-7a13-4a7312f8f6a1@kontron.com>
-Date: Wed, 11 Jun 2025 19:29:40 +0200
+Message-ID: <4bddceb1-fb09-1a71-a4cf-44665d467d1b@kontron.com>
+Date: Fri, 11 Jul 2025 14:55:28 +0200
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
  Thunderbird/78.4.0
+In-Reply-To: <7715d5af-f8da-069a-7a13-4a7312f8f6a1@kontron.com>
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Content-Language: en-US
-X-ClientProxiedBy: OS6P279CA0174.NORP279.PROD.OUTLOOK.COM
- (2603:10a6:e10:38::16) To DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
+X-ClientProxiedBy: PA7P264CA0342.FRAP264.PROD.OUTLOOK.COM
+ (2603:10a6:102:39a::12) To DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
  (2603:10a6:10:3ef::11)
 Precedence: bulk
 X-Mailing-List: stgt@vger.kernel.org
@@ -62,125 +65,139 @@ List-Subscribe: <mailto:stgt+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:stgt+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DU0PR10MB6252:EE_|GV1PR10MB5793:EE_
-X-MS-Office365-Filtering-Correlation-Id: 0f4813c3-5e4d-4c65-97f8-08dda90d8d4a
+X-MS-TrafficTypeDiagnostic: DU0PR10MB6252:EE_|AM0PR10MB3522:EE_
+X-MS-Office365-Filtering-Correlation-Id: 62525dbf-a991-4895-868b-08ddc07a3757
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|376014|1800799024;
+X-Microsoft-Antispam: BCL:0;ARA:13230040|1800799024|376014|366016;
 X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?U2VmaHNxOStLaER2eWVTVk5WY1BUNFM0a1luRWQ0N1c4eG96S1dCRTNSWDN1?=
- =?utf-8?B?dU4wZUt2a0ZkT0JCNnZTUWZ6ZUZGNHp4VThxRThNNmJKNmZXMHg3MUNKdmJV?=
- =?utf-8?B?Y1JWSnFwL2IwOWdoc0FDSkJvckpLVk1ReUdSM0hNZUZrYTJKaTJUWWpFUXIv?=
- =?utf-8?B?c1BEOWJENzNSKzdrUWpEck9oSzMrT3RFVjBBYjNkb0MvVkRTSGxoa25UdjZh?=
- =?utf-8?B?M3NaQWVPbTlTT2N3VzcwODdnVDk3TjB6eWsxSUhhOE52dUJjUVpiM29hOEZo?=
- =?utf-8?B?bno1YVlMM3NsZmxWL1VNRzBaQkg1YVh2U20rUWpHaS85OEJoMDRFMTdaa0Nm?=
- =?utf-8?B?N1RQYzRNaFF0Sk5VcHpFK0pmeVlhTGkxeFBLNmxXaVBCTXQ0UTlGWitzREZV?=
- =?utf-8?B?RHJGZG5uV25lNER6dnE4b1I5VlRmcys4aUptMlBpd242VlNXV1phU09GSmUv?=
- =?utf-8?B?V0k4cy96cjdOMVVCZmt6NVQ5eVFNWmNzb1ZzSWJsSHptQkFkUFJ0RkFmNE1G?=
- =?utf-8?B?N0kwR0IvdnkxSEcwa3ZJMk5VSDJTSUF2UEFiUkh5TC9zdERkN1R4L1lHa2Fh?=
- =?utf-8?B?MjJpQ21nK2lBa2FPbWhRc2VJMTJMNHFPL1I3bUtVSGNKTTdYMmQvMEtaR0E2?=
- =?utf-8?B?akFiMDZoU0tLZnU2VlpwWjdBdE5XR3ZsOVJnbGRaVUErc2VKcDJ2RWR1ekJN?=
- =?utf-8?B?VGI3QVZ6eC9hOGc2b25RY1hldWFoZ0twWElMOUZBRkN0eTVsUUdqUVNuMEhB?=
- =?utf-8?B?SDhnSEpROWhrcC9vZjBvVHY0R2RBNTh1clF1VGhXeTlYbkljZWxJR2lCc0lG?=
- =?utf-8?B?dCs3UVhRNFZsUVpLZzVNajllRGlzVzBmeDN2SStiRk0vdncwNkQvUGtXTlpp?=
- =?utf-8?B?OWVGREZ4Qy84RWduYWZtTlQ4V3dmbFBaeTFSeW0zd3pTQ0NFTlFMOVJuT0tT?=
- =?utf-8?B?SnB5VzBaMTE2SkZITDVxakJaME1mdkg5ZmhoTnhoWERVWUZUSTZtTUNtenVX?=
- =?utf-8?B?MHhGMzRLNUxWbzh6V1M1QWdrUEt5SThGQndqZDh5R2pwdVFVMkhXeCszYWlO?=
- =?utf-8?B?bnhRS2ZxczY4WHRvYzlla0I3YWFPVEIrN3l2R0tlbTZYbFI4a0V3L2tqS0lZ?=
- =?utf-8?B?UmNSWHAzVG51bDFXQTJvYnJTM3ErM3VOa1NIMk1sNU9xYzZGUGdwSm90NEll?=
- =?utf-8?B?RHNKdzgrYVJ2Tk5oUUx3R252U0xxWUZFUDNtb2hhMDBaajB3djYwM2tZenBp?=
- =?utf-8?B?SW9RWUVoTVYxOVc1dkZQMlZZcnNUYjJLOUNjbkcxZFZQQ3ZaMmpubldtN1hR?=
- =?utf-8?B?VFpBenAzY2hzeGhwREhjdFc2Mis3MHZPUW9pZGc1V0dCY3VhNnV1RmxZNWxx?=
- =?utf-8?B?aW1FaDBmNDA2SUFicC9nS0lxenNROEtlYkZCanlpaWw0MXVNUnhhTkhJTzlx?=
- =?utf-8?B?enNsVTJaZWN1Q1Bzamp0NDdabzBXdWNRNDZJMEpDR0djT1BuVmxqSThGMlBT?=
- =?utf-8?B?L0l4dSs3RFZocXZMVUVib2tXam04dEdnOEVjZk5tRDdveDYwdlJDd2tLL1Vt?=
- =?utf-8?B?TVNGMktlZVEyQkw4alhadzlkUHpvbm93VU5lV1ZCc3FTakxoa0xGd0l0eDBC?=
- =?utf-8?B?S2krY0FCRmlKOGVkRU8xbUhRRkhEOWJNL0R3TGlwQWloUFhyeTNvNEswbmVH?=
- =?utf-8?B?djlFdFQyVlRhekNnVmFsVzBUcVNWV1BaUXk3eFV5QnFKR3BUU0NuOWF5UDBh?=
- =?utf-8?B?NkdTMzR2RnN3c3VETzI1RmNvVTlENy96MEhsOHBFV1FsdlNHdTJyL2JWN3Nt?=
- =?utf-8?B?TXI2Sm1nY2VTSk42R0NVa2dBZHd0RllteTVsSnRSV3I0MWdlS0JIWmloWnR0?=
- =?utf-8?B?ay9aQzVFbTdtVytBbDBITk51Vk5mZk1tN1RySWZaeFNRL0E9PQ==?=
+	=?utf-8?B?N3JYU1JvTzEySnZRb1dyWUdiUWEyU0R0NWswWjNIb2podUgwZ0JrSnpaN1dT?=
+ =?utf-8?B?UGs3eGhSTEpMQTNMYWJycGVTd21Ddkp3RTBOaGdvVnoxdXMyYTlhQkFCOVRF?=
+ =?utf-8?B?MGdUcXZTc2oxMndTQXdWV2FQV2RuL3ZFcDVxNjJHNitUYW5YUG9iNVRWbkxa?=
+ =?utf-8?B?eFVtVlVRNEcyZlZaVHd4SHdVYkxjbExjUHorQXBsdVZ5MTZYWmFjNkFNRmEy?=
+ =?utf-8?B?ODgwZEdHUmlBODhHKzIzWVFwbGpvSCtQKzZQcXpGQnk5QU4wZGZrVUZVZW5q?=
+ =?utf-8?B?VHdNRkhFQlV4MzVNNGJKL1FLVDZTNklLZWZuVDl6SWU1cXBLVVAzZGZmTDdD?=
+ =?utf-8?B?MDhENGJqUUkwOUxoNkNxQittQ0k1YzVSZU5CcGpXY3FIRS9rbVRRM2RCcU81?=
+ =?utf-8?B?enVrNExRMXFLSDZWOGhhMVRnZkVIT0tkZlY3TDNsTW5rYlNUQllKNVZ1MC9V?=
+ =?utf-8?B?NU5UN2FIVHgrUzZ5dEZwT3Rtelc3SmF4Vkk2bC80UWdBOVBCNDRNTzJwa1VY?=
+ =?utf-8?B?d3krNFZRVUxNVGkwQ3hBcEtYek9nTFdqcDFPNHpMZGhRekE0c1NWeDFmS2FM?=
+ =?utf-8?B?dEZ4cWtPK3NNT042QzF0Nm9MK2tncSs0MGdRZUFDN2tEenh4d0htRW1EZUtj?=
+ =?utf-8?B?ai8zd1lLQnBzZHJXZjZYV0hRc1hHaWRaeE1ia09tcldLSTQ3Skc2Ykh1NlJ3?=
+ =?utf-8?B?TkgvMVdleGFHRTR3ZW5KUmtQM2g1MElsblZ0MGtjTFVPa3VPeTlDWkpia1Jt?=
+ =?utf-8?B?RnJMV0JCdXp3WWxBblB4Y3VFMFVLQmJBakJ0K0w4N2pINnlHejBDU2JIdGwy?=
+ =?utf-8?B?aWVvTmlEVFh4S2pKTXpxa0dzb3pPbmxoaGdtWlRsM1d5eGNYVFVVZE4xTzZV?=
+ =?utf-8?B?aC9PUFJwa0dBWHlTOVEyaXN4dVhJZ3YzWkZyQlowVmx5cUlCUUJGMlBzVUV3?=
+ =?utf-8?B?OGozSXhyVGkzT3JJZFlWM2VORXFFNEpLMk5GQ1VGU3dhQ2RIWUFPQzNXRUtF?=
+ =?utf-8?B?aVRsTmtzN29QWXJJenF3UENnZFFXaFNNK2x1akNGc3hUTVNJb3FndTUwR0k3?=
+ =?utf-8?B?clVyNk11dW5aOVZ5Z3hBT2N2cnJkZHJMR2lTbnQ2M1JwWDNMM2dTeDF3THlT?=
+ =?utf-8?B?NjR6RVZLNkhsRkNTR3EyTHFtTVU2MDZreUkrSll3SnBRRVhPWDE0QTZJMlBl?=
+ =?utf-8?B?NmNEWlU0alVFcGpPWjV0bHNSRkwxcXJGOGc0S0xEelV3eFlxMk8zci9ycHoz?=
+ =?utf-8?B?TlRsZytGWngrcE81cTRXTVROL2lWQ3R0bnhpRG9oUHQybVprVDRGQUJHZzNX?=
+ =?utf-8?B?eDh1L3RUaUM3bFV5T1IxaDBJYW52T0tmZmhadW9RbGNDUGVlZ0Q0M1JqdytX?=
+ =?utf-8?B?dXBIWDIyVFhsSkFIZDN4cUJ1L3RCaGFiTHYwSTF2OGlWVUZPSTExSGFYaTVT?=
+ =?utf-8?B?Z2VIK3ZBeWZIZlZnRStvM3pMTzB5S2k3Vy8vVGY0eW1qb0dodHo4NnpSL1c2?=
+ =?utf-8?B?a0xLV2FRY0ZwRXpIYlhyYWhhRDJXVXpMbmFPMEpIaEVIQmZ2VE1XZjVtNjlm?=
+ =?utf-8?B?ZERtalI0WXJkM2Y2QVNPaWp5ZmdIdkx6NXd1YzFMUVlyZEdESExWbExuOEd6?=
+ =?utf-8?B?K1B3VTNrUkNNeWpsd01ha3Q5ZW1oV0NLU2lPc1haYWJVS29QNXJQNWFwajll?=
+ =?utf-8?B?NDVFS2o1MjEvUW1YMmFoRVV1ZThtUWJZS29pWFhWOG5scUlhcW9mL1dRbWhC?=
+ =?utf-8?B?RHArZ09uRHhFalMwTTdzVXRoVTNaanpWMithRXlkaFBocUVZM243UzdaSy9h?=
+ =?utf-8?B?TGJRb1hjMzdZejdHSW5XSDR5OWtBODdncC9ZSjhxZ0xFa2xGZTZtNGsxbmJl?=
+ =?utf-8?B?Mlg3ZDFZUEpSYkxMdUNtek9MQ1NKY01aMG12SUU3ZCt1b21tOG1sOFI5UDNw?=
+ =?utf-8?Q?z+ZD8Grk+f4=3D?=
 X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(366016)(376014)(1800799024);DIR:OUT;SFP:1102;
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(376014)(366016);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?ZTNRd3hPRXUvSE5IRXdkZU5GNzJHWC9ZZkdSZytFNjN0YzFCUHV6N0EzeHBL?=
- =?utf-8?B?dmtvTW5zZmwzcjBwOUIzNnhzeWxkc2lBQzAvczN5WE5sd2xCdFptUXhhVkts?=
- =?utf-8?B?MGh3UVNBN3dlZGROYy9teDltNGJaek9HaExYckhpakRtcFZlU0J2SXd6WE9I?=
- =?utf-8?B?N3FFaUJLdW5LQTVSdVFSeU55N1JYNk5HcXlpcWpyWHZlYUtKQjhQYzJpdGNB?=
- =?utf-8?B?MUwxekQ3ZVl6c2JTZFVUNnRFbGhQeG5HY3d1MGFVWEF2emVTcW9EV0xhUTVa?=
- =?utf-8?B?K055ZEtlbU45ektrUkFFalM4bWVodVUwYlhyQTAwbVJGeGRxVVdFbVZQSXZK?=
- =?utf-8?B?MEFERzRPMERTTzBGY0ZhYlVMMGtKMVYvZE9LVzFMcVdYb1cvM21DaGJWell1?=
- =?utf-8?B?RXRTTXpmWjdZVHJCUWR5MFZWRFZaZ2xuTzNSRERBUWk2UXJyTUtzYmdBSFZy?=
- =?utf-8?B?M2YvQ3NvbWRsSmNJejA2MnE4NGNPajJrcE53bWRsK3hjOHNtZ1F2UENVNHh4?=
- =?utf-8?B?NExjL2l5dUhicHBYMHRnZ2FGWkxTcTB2NkVBNTZtYXpEZUFldHBUb1pTK0Jj?=
- =?utf-8?B?QWxpdWx4QXk3NDVjL3JEUkFQUktqUXMxQ0VBZXdkaklCVWZxZlFhVytmdUQ0?=
- =?utf-8?B?SlFBTExaTDg0NEdrbTB0QmxLRkg3cXNQTzZ4ZzJ1dk5aM2dvUGlJVXBJam5x?=
- =?utf-8?B?TUlGZDVXYVdnaEdRK3l2QWp2ajV2OWE5VHphMWxYK29KYldPUVhDTy9yZkFX?=
- =?utf-8?B?bmd0V1BDMDczSGUvaWk2MTJRc1hIY0QrUlZKTlhkR2hTTU1kV1l3cFBCMEhq?=
- =?utf-8?B?NDY4SDk0TlJhMmU2azNQVWlDQ0lmQXFOcXNtT2d4UGsxaStOMzkxS3hQNmkr?=
- =?utf-8?B?YlVnZlpjMU1ZaldHRGVncW53ZVpxMmROcUczemtaS2RvaE16NENma2MzanB0?=
- =?utf-8?B?Z0ZjaXl2SFIxYWFXVldQdTdyWUpwWnJBYlpUbTNvNGRycm1ZTklUQmVWSytI?=
- =?utf-8?B?N0ZEckF3dUlFckpiczR3TURvVTAvSHduUVpEc3VOd3A2bWRueEZJSllJbnAz?=
- =?utf-8?B?UjNOWmN6VWlaMk1SWGRrYVJBR1hpd1R4MmdxMjYvZFU0c1JrTFFIMHI3YktF?=
- =?utf-8?B?SEJqSWpJVThTUDlMOVFkYTR4OHJsSkxVVk5heDUvMlNqMTV0ei9zam0wcjM3?=
- =?utf-8?B?SmNQdHlFU2hTVXh2aXgwYnI4Q3l3cHdFOFVJdXBRSkt5Ync1YzZqdTREUUpk?=
- =?utf-8?B?eDkrdG1VdkxuODRTa1ZLNG5tSFdyemVNc0FFWG9hK1dHQ0ZXemNpSmtVSVBY?=
- =?utf-8?B?R09iZ0RNY3ZlOElBWHVRUzNiZGJXWTZyZ2FhMEpFbEg3dzFZZGNqTUNEemxC?=
- =?utf-8?B?NDh5QzI2OEsybDZHZkQ1K3JXQ2hRNHVZTXI1ODk0MWZFWFN6UW5DUjVNSDlt?=
- =?utf-8?B?WFZRSXFaejlIdjdhWnkweldTakppSEVpNnpYZk5ld2pkNHN3bG1UallVdXpE?=
- =?utf-8?B?T3p6cml2WmpnallnaGJicVJ5MklCT0JONjUrbWI2T3NtSUJMejI2MUxkdHRS?=
- =?utf-8?B?am1NL21OTXFXM0hlZDdVcEZzRHk2OVh4dlppYVZJNXd5NVVkQzJ4aHhidlhL?=
- =?utf-8?B?LzhjSkMrK3lkT3JMTE9xaUFueDFPN3ZNd0JiNWgvY2pmVDhZWldBUzJlejJ4?=
- =?utf-8?B?SmpFT3kxb1k3alV4RUdBTmFVU0dsL0JOdHFsZEZyZWxMSkpURzhFRHdZU0p6?=
- =?utf-8?B?cEVianNlaVNQenpJYTZrWHgvVU40TDJ6cEhlSVVQbjFXUm4zbm9vZ0N4Z1o4?=
- =?utf-8?B?aFU1RGQ5QzVJYk53aUlLRDFMVEdCS0RjOG1yVWNQZGR6V21xcitaR2Npck5n?=
- =?utf-8?B?NmRhRExzaVFweGFzL0JYeDlXb24wK2JDQ096VmF6SjUrc2RMa0l4Z3F2NzNM?=
- =?utf-8?B?c3gvaTAzY0IxalBnQ1RNcUdCOE1UWW1vQjNhS2ZhRHhtTmROZjNGUWJ1S3JS?=
- =?utf-8?B?WGFPRmlqdS9Fek9kSUdDaHZsSWlxdzBxMmRkZTQ1VVZpZWt4UWM2N0pFcmtn?=
- =?utf-8?B?eERPMnBnRGJWZWlSNWhiNjJ6bzBSRVVJUnlwbWZnc2k2T0VyOWpETmdKbkli?=
- =?utf-8?B?M09mVzltV3hsV3VINEdveHpZVzk5QkdpbGZxbHZBOVRDcFZueUhlbFgzclR4?=
- =?utf-8?B?dVE9PQ==?=
+	=?utf-8?B?UTVwQzJveFRYVlJjZHFkc3NiSlZwWk5xZHl4QU1WQWQ5VVZDWkxuRnJXMEVi?=
+ =?utf-8?B?Mk5jak54Q081TnhETk1HOGJ4a2V0MnErV0Z6WGd1OVo3NDJwV1dhTzBvSmxp?=
+ =?utf-8?B?bXFncFE1aXA2Vm9LSVlDTkt3cDZZemlXV0FOWFEvTitid0tZN0d3allxb090?=
+ =?utf-8?B?QnM1VHc1aXgycTdrL3AxMFA5aEE1SVE1UURBTU5ad3RIQ2drTDA4ZnYzY1RY?=
+ =?utf-8?B?V1NVdGRveDVqdmc1UEZvbmJDUWlvbzZvTy9ITXN5TTYzVEZNRUdObEhOakhG?=
+ =?utf-8?B?Q29nK2JZeEYzNDJaVkVPRCtON05QU3dNb0s3TEwwSmtPcXg4VlBFSjVwVjZ2?=
+ =?utf-8?B?Z002cHJMQmRhWjFYOEtFMUtIUUZaZTc0VDFRUitaWkl2YW0xbkdZYUF4L2hR?=
+ =?utf-8?B?ZStKMXpHaSt3QzZocWRKblg3TGFlYi9PaDRWUGR5K1h5cWpTNWxsZ1pkMCtF?=
+ =?utf-8?B?V0pabWo3dHZZOXNpLzVlMlMyYW5FMDBGaWNyQThETE05cFRyR0Jsdm9VWnZB?=
+ =?utf-8?B?YVRKRkJGMHEvY0l1NHhtbnlla1FPZUNWNmM4RzMybG1BcjBqbEdOMkNJNzBy?=
+ =?utf-8?B?emNNSjhDU0kzN0NnWWNlVGwrWldHWGlCWGJaeXdyMXJzQzJmZWlyVytEanc2?=
+ =?utf-8?B?YXBiUVlTUHVZSHkvT1NpOXZHYzd0UFRWTjNQb2UwZkt5V1UxV1ZJV0lIL0J5?=
+ =?utf-8?B?cXpMVEw0aStPa0E2OGN5RHNQcmswNTRERlorZUNQTnRRSnkzRUhlb3RZUzNV?=
+ =?utf-8?B?eExFc3JWL1RtMXpOWVhrOVJqVDZTdjhNV3BiS2cwbUVXQzV6aXlGTC9Eb0pB?=
+ =?utf-8?B?Yzh0UzV4R0VIVlpiRFVBSHBHQ3lpNlJobjV1OWwrL3pNVW9OTVRwbVZIYkZ3?=
+ =?utf-8?B?MHpvcXlqeEJjL2tLeTJrb0FmRnNKTytCMnlibm16ek43K21zL1dtYWZzd2JR?=
+ =?utf-8?B?ejZQWmx6UEcvV0ExSDE4RjRidDhZWk1kc21IRjRHS0lnRUFyMjVmYkErTnQx?=
+ =?utf-8?B?dndwWW9McmtyN2M0Z3dOL254S0dKZVp4Wm05NTVIMDVrUU1UYVhnTU1ENlJU?=
+ =?utf-8?B?Z0tiZks1YkVkcXZBNVdEaGcvSVFjTkI4RHlJZ1ZyMXFXWDVMYXdPTXlvdDB5?=
+ =?utf-8?B?emJqOVB1bTRwZXFEaTU0SWk5UlIrSEhKMUlYWmlHZmEvWXErVUZSMXRPZ0g3?=
+ =?utf-8?B?eFBuK2FlMmtlVEhIWkpLcytxTlNRUXducHFPTmkzKzRobUFqeGxPVlhFVldu?=
+ =?utf-8?B?NlhSd1ZqUWxHc3dkdmR2b3BXVmdabDRyYjdKczFacnNWVHJlMW9CZGRUc3ZO?=
+ =?utf-8?B?QlNhblhTanJORGdkOUludHZoNmpmOUVlMSsxVTMyS1dvaE9KWWVIbUhuV05s?=
+ =?utf-8?B?b1h4b1RnUlpOMzNEa2NJaWx3UG50VDJmVVhHT2lPZmtKSHJLZFhtZElNRk9T?=
+ =?utf-8?B?QThSS2kwSlIwUWp2UksweDROQUw5cEV4OWxQNktuejhxOUdMbGdqQXFoUXpS?=
+ =?utf-8?B?bzlRYnYzak1GMy9XVWw3UWNsdkIydlc4NEJQSVh5N1UwTkxXQ0o0disvT0RZ?=
+ =?utf-8?B?d1pGWkRuQUtyNWFaNWhFU1JpSUdrRTF3QXM1WHhQTkR0ZHVLWEJTUEpsdmJj?=
+ =?utf-8?B?cHpvanVRMjl6QlV5czBPMk9acnVtS1JnWjRWbFpMNVF5MldQYnJSenFJbFRm?=
+ =?utf-8?B?dWFLYXdOdnB1M2pyelNKck56blVTUWVqakpSSERHSytGUTNpTFkwb2JWV0Vh?=
+ =?utf-8?B?VUVaeDNIbmNHem4rWlhCRmMxMXlRVUl3d0JpZDVnWUpSSHpWdzM4OVU5aFRS?=
+ =?utf-8?B?V2Zram8rSVp6QVdzbXEwVUJWNUVNYm42TDh0VmNESmx0VTZBYTMyL1g3VFh4?=
+ =?utf-8?B?Si9NclI4TFFTenV4WWU5aDRFMlplNW5PYjJiOU03MFplcTIrZUlkd0NTeE03?=
+ =?utf-8?B?RGpkSWxaUFVoU1VhcnZZbVZ4ZkhGNW0ydFU1elFxNVhNMVJpWDJ0cFE1WDhH?=
+ =?utf-8?B?dGFxdDB0RWVwcnBlc3BmT1d1TW5nQ1JXZHBMSkptVmxBK3IvVjdBWGNDWHZO?=
+ =?utf-8?B?Zm9scThYaVJheFd5N2R4akRNUURYL2hOSXBCMGFvYUFGWVg4VnB0TzF1Z29t?=
+ =?utf-8?B?Z0lUUlJ6N0c2N3VJcHA4V1RJMWR2a1RnWUh6YXdYWnhRVEp6czNCUTllWG8y?=
+ =?utf-8?B?Znc9PQ==?=
 X-OriginatorOrg: kontron.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 0f4813c3-5e4d-4c65-97f8-08dda90d8d4a
+X-MS-Exchange-CrossTenant-Network-Message-Id: 62525dbf-a991-4895-868b-08ddc07a3757
 X-MS-Exchange-CrossTenant-AuthSource: DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Jun 2025 17:29:42.9107
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Jul 2025 12:55:30.5330
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 8c9d3c97-3fd9-41c8-a2b1-646f3942daf1
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: mtQRV0G9mxha3C93vwueqV0p+3W2vBe8PGnmStso2+sYebEOxzzvMl2fD6b25n5ieAV4WXD0nGr7dC2RwP/tTVQrSEakNf2u0EsjQo1gE3I=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: GV1PR10MB5793
+X-MS-Exchange-CrossTenant-UserPrincipalName: UtpxIW39FLOFgP8l/XeVUJKW6ee+loJ8UZKH4OjWxDbonMUHEk367NXJWdlSpjRY1pGmisy0vFOkm0nWaIl09n34hlGc4BhKwKqH1YmaEdM=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR10MB3522
 
-Sorry for overhead, but I'm unable to find any answer to this question.
-
-I use a diskless board that is booted from a PXE server and is mounting its
-rootfs from an iSCSI target on this server running tgtd. OS is Fedora 41.
-
-The problem is that on diskless shutdown/reboot, the rootfs is cleanly unmounted
-but no session logout is sent to the server. So at next diskles boot, another
-session is created but the old one is still there. As a workaround I can manually
-delete these old sessions by running something like this on the server :
-tgtadm --op delete --mode conn --tid x --sid y --cid z
-I've found another workaround for that that is to run a logout from a script that
-is run by the diskless board near the end of its shutdown.
-
-But the issue is still there is the diskless is brutally reset or power-cycled
-(occurs very often in the embedded world) because of no session logout.
-
-I'm wondering why a session from the same initiator to the same target could not
-automatically delete older sessions.
-
-Also I'm wondering if there's some sort of timeout to enable to have old
-sessions automatically deleted if the connection to the initiator is broken.
-
-Should I really care about these old sessions or do with them ? The problem is
-see with them is that stopping tgtd from a command or shutting down the server
-hangs for ~40s seconds because of these old sessions.
-
-Thanks for your answers
-
-Gilles Buloz
-Kontron Modular Computers
+Le 11/06/2025 à 19:29, Gilles BULOZ a écrit :
+> Sorry for overhead, but I'm unable to find any answer to this question.
+>
+> I use a diskless board that is booted from a PXE server and is mounting its
+> rootfs from an iSCSI target on this server running tgtd. OS is Fedora 41.
+>
+> The problem is that on diskless shutdown/reboot, the rootfs is cleanly unmounted
+> but no session logout is sent to the server. So at next diskles boot, another
+> session is created but the old one is still there. As a workaround I can manually
+> delete these old sessions by running something like this on the server :
+> tgtadm --op delete --mode conn --tid x --sid y --cid z
+> I've found another workaround for that that is to run a logout from a script that
+> is run by the diskless board near the end of its shutdown.
+>
+> But the issue is still there is the diskless is brutally reset or power-cycled
+> (occurs very often in the embedded world) because of no session logout.
+>
+> I'm wondering why a session from the same initiator to the same target could not
+> automatically delete older sessions.
+>
+I'm still wondering that
+>
+> Also I'm wondering if there's some sort of timeout to enable to have old
+> sessions automatically deleted if the connection to the initiator is broken.
+>
+In fact there's already a timeout set to ~1 hour.
+In the worst case, if I do boot/reboot loops and depending of the boot/reboot
+speed I end up with ~45 sessions but this seems not to cause any issue.
+>
+> Should I really care about these old sessions or do with them ? The problem is
+> see with them is that stopping tgtd from a command or shutting down the server
+> hangs for ~40s seconds because of these old sessions.
+>
+A workaround for the ~40s delay when stopping tftd is to add "TimeoutStopSec=3"
+to /usr/lib/systemd/system/tgtd.service so that systemd only waits for 3 seconds
+after the attempt to kill tgtd cleanly before killing it more brutally but
+successfully.
+>
+> Thanks for your answers
+>
+> Gilles Buloz
+> Kontron Modular Computers
+>
 

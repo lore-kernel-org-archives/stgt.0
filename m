@@ -1,203 +1,400 @@
-Received: from AS8PR04CU009.outbound.protection.outlook.com (mail-westeuropeazon11021134.outbound.protection.outlook.com [52.101.70.134])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yw1-f176.google.com (mail-yw1-f176.google.com [209.85.128.176])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D806A2D0C6B
-	for <stgt@vger.kernel.org>; Fri, 11 Jul 2025 12:55:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.70.134
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752238537; cv=fail; b=qHzjE9IqYnDIUTdKe4ozkUK7zPHEZSrmQsqNX9QT1+8SulS/sfjCkBklN7VmbfvhTt/Zj6bB641WHGsooqHYSOCgOc+wHPh90nnPAsVbv9V0FG9Oakt/NpSY7bSkyZllnz17ylRFjJj6L/l+Ar6tLFQjfmkca19Wylv2hQKArg8=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752238537; c=relaxed/simple;
-	bh=qwWNBUtEkeLg/ojaMooIAqwAJ+WVuLcu9fpR2lI0OBQ=;
-	h=Subject:From:To:References:Message-ID:Date:In-Reply-To:
-	 Content-Type:MIME-Version; b=SDlJ97L5T6dQzCa6QvrICUPnVityGXw9RGer1G6dG4jD04c2xgMnWY7+CxJIBeN39PuddNaYOkRVtFiZ4JK5PEes06BA6F7jNI6dDHEZfgPWjUx5BZ/STaixhX5dKj4uFqZBI+zFr1omagZu6b1DcmP+86i35rMWuFEvHDR/z58=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kontron.com; spf=pass smtp.mailfrom=kontron.com; dkim=pass (1024-bit key) header.d=mysnt.onmicrosoft.com header.i=@mysnt.onmicrosoft.com header.b=DkvatUFE; arc=fail smtp.client-ip=52.101.70.134
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kontron.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kontron.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6E11227E83
+	for <stgt@vger.kernel.org>; Mon, 28 Jul 2025 21:44:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.176
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1753739062; cv=none; b=nxsEEjZ94S2NaAIWopxx3D37jYDcAx1Gdwh4vpATua1/nLheihFNJSvmfzSq2SrTGreHxTVc314yOn8BgMhA7sYlEculiGKMWStrzpGDsbNw0eaZ0ZQDURbiCBN+3oa0ZJtowNytfsxwZS6+LnI2XXnzqnwoIFPYYBK0CSN88RQ=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1753739062; c=relaxed/simple;
+	bh=hYAOFZhBykMPTf39QIugHKUwm8CD2fySHE23ZEtdTe8=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=su8kwI4UhxN8gbW3+1ODlRRCpuloSGqYqp/UklZ1Td+t+ahB2Pkkw4+yIAGHAO9QBs506NQJEAcxBi2n8pmviqpoNZSXARBuHYjqsX4VljEXJVWnWmHc3aG6z1ZfXaTD3aNG6/v+XD/XUo3z7TWViQA93TsA4sW2TjoDRwtwVkQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Sss7D18Q; arc=none smtp.client-ip=209.85.128.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=mysnt.onmicrosoft.com header.i=@mysnt.onmicrosoft.com header.b="DkvatUFE"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=MB1IYIkkhQ9EyFTa2HsXHsIaYsJPa7KXeN3dJ5mkycouTly9m+BZGnEhJfJXXH6yy+S1NAOTlBZNYdZ7jRCDRQvE5I21ENUqIW6twIrG6070RqPl4XVefOi/8BH8uP6J2CWfcEFP66AqlKdcDuD+S3jvWOq1y2JPLz7aOpkEad5ddObjbrQNDSNO0vdIAn1P3WSMGvDgqFBN3HvXZhynclh+SUQ/3VnV39XE+EiNTdQ2RMExpUKJ4O6ECEoE27HBSnxY/kARyoxzK2JO7W97gS8L7KbNTStzuZchPild65GCOCUpXqaG9CsLzj2wvqNWec6JNvvlW5uM3LlG5beNCA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=qwWNBUtEkeLg/ojaMooIAqwAJ+WVuLcu9fpR2lI0OBQ=;
- b=FMn/pusB6jT2iY61DIZMKJm/1vmcr6O5S4yn/ojU1J9OdYn5qtjHg4Q6DpN/7JRKhz+lHcreIX/MYTBZYOVqjNkgVhqQkaDQHAt9YBcugW61rSTxzXG1Mz8OwpXNi+aFqBT0fvW8J87dzOh9rd5NYFWXgDFUBI2aljc0tWwExLd6F5iyM/VOuOjy3dQiKLZ+9LSpvqJPqoJHAmJXUcVbbEIopSpO3DCffNzNUUOkJ8KDuY3R4U5k/hj7gyE5UwUwheAE7BNQ6yrGD7B40a7Fpp6TL2ZIKViNtNTc6IhTpdB1pSgBjqyhTNBEcz5H0C370cTW88sU4LDVvbwQSycgAw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=kontron.com; dmarc=pass action=none header.from=kontron.com;
- dkim=pass header.d=kontron.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mysnt.onmicrosoft.com;
- s=selector2-mysnt-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=qwWNBUtEkeLg/ojaMooIAqwAJ+WVuLcu9fpR2lI0OBQ=;
- b=DkvatUFEdTNWaR6fdCK1iuUz6sbPzY9Sg6MC/UCbWtjhTmLX8kSByCladbpyvqq0Dv7IO6gjHFALLaD/DeotFq/s4uHkI9GEMPWzaxhJKUj8Yp/sXGNWuS0QtFWyLlVEsew8ivW4ePu89tQ7gYn3QvNGwUmdcA/g6PQgopPfPfY=
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=kontron.com;
-Received: from DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:10:3ef::11)
- by AM0PR10MB3522.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:153::23) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8922.25; Fri, 11 Jul
- 2025 12:55:31 +0000
-Received: from DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::142d:c1aa:6bc9:ca4]) by DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::142d:c1aa:6bc9:ca4%3]) with mapi id 15.20.8901.018; Fri, 11 Jul 2025
- 12:55:30 +0000
-Subject: Re: tgt : handling of missing session logout from initiator
-From: Gilles BULOZ <gilles.buloz@kontron.com>
-To: stgt@vger.kernel.org
-References: <7715d5af-f8da-069a-7a13-4a7312f8f6a1@kontron.com>
-Organization: Kontron Modular Computers SA
-Message-ID: <4bddceb1-fb09-1a71-a4cf-44665d467d1b@kontron.com>
-Date: Fri, 11 Jul 2025 14:55:28 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.4.0
-In-Reply-To: <7715d5af-f8da-069a-7a13-4a7312f8f6a1@kontron.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Content-Language: en-US
-X-ClientProxiedBy: PA7P264CA0342.FRAP264.PROD.OUTLOOK.COM
- (2603:10a6:102:39a::12) To DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
- (2603:10a6:10:3ef::11)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Sss7D18Q"
+Received: by mail-yw1-f176.google.com with SMTP id 00721157ae682-718389fb988so43711177b3.1
+        for <stgt@vger.kernel.org>; Mon, 28 Jul 2025 14:44:19 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1753739058; x=1754343858; darn=vger.kernel.org;
+        h=content-transfer-encoding:to:subject:message-id:date:from
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=g4mpyaeVd2W/QODqFzLb5XTzWFkHRIvXoEyfz6BIuas=;
+        b=Sss7D18Qy0U5fMh7sKJUSPltTetqqppsSGXHM+nMnAsfci/L1G9ZczdcDxJDPIxoz+
+         2EPRHF0TwkW9apvtNybNpBMD6eXTncK8RAYiZem1oeOauiJTmmcQSPjzjA9Mzyo/dcyY
+         6aCecC1VvKBojpNuQZlQZ8vXgUCDhlwVZ4lg2Xz+/o9rc/VVvqz/qkkWZdklps7nHdpL
+         UQ/HMWbUN1wWOcpA8U9iHKSI9GfbRRR/6hfXmxQEeWX9P1APqiOWqDpHOqvpwxN8urk5
+         Ns51NCOqfx46UgD8kfMv13Q+LbNJ9wh7xeQvHGXS67vIxC8G0IZiF3LJWmx1GQ/jAwlN
+         q0Aw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1753739058; x=1754343858;
+        h=content-transfer-encoding:to:subject:message-id:date:from
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=g4mpyaeVd2W/QODqFzLb5XTzWFkHRIvXoEyfz6BIuas=;
+        b=iK62VEbql2IPrJTn6dJmFxj38O8Zc+N8VUyJTDwlHOEfAAIa5oPkrW1p0G453VRwP3
+         pjzt0cNaiUme9R9O3CUXm+zf23OJQg4yz88Gh5Xcm283K4VaoSLlltwI0Idhl7WcVWT/
+         4JGJ93v3t++R+QBrRPpwaFnl8g3y5Gu7s/x6QpmRkM58W3zlaTHTfnAGlolnQzlDWcQ+
+         VTPvs2wvV7ToqmB9NV2SwYNzzqWnzQ2t/fz5MsQtnJbXDjTw2bpBJvahbWQybM3ClejF
+         hB8LujQ4Lxv17iH3j5NsJYQhouZDVq/jpvTlaDdvWeQs5YVWV/e8TzQHFNYJZf+JznmG
+         X4eQ==
+X-Gm-Message-State: AOJu0YyIa8a033d2q3kH6BqDLzSzdDS6f95OTYsw8zAAkHFsTBmlkRm+
+	A6arEPAqL+hGaZWiGnPRkMB0YI+aQnfbWMR4CWlG939viBwoWOl5RmIsLlxiD7IcY+bGDo+9jqa
+	Y7OMbTJXUNG3TNmh4ngE7rwm8KDWD2OygyioYSwE=
+X-Gm-Gg: ASbGnctWVc++yMW5BePMSJlPXTtjZBXClv+MdlA426xkxpDNmdd4xE+Dicrwx1LbBbz
+	sxb7Q8BYyLNSBlya8eKfk/uMbCYAp3eM/5IR2cAcC5Oo7Wr5dbS7ml/E7gS6J7ijyIWfwEKTSZN
+	gCpNWtF/m8ZHT6p+ncDt3xFcv3i5CUen6aqSGXkJ+ioNst46l6FKRMJA8n8T38pXWBGK9vxQhzV
+	fWMtAWI
+X-Google-Smtp-Source: AGHT+IFtz/1PHb8M3ZSt55u/a7si2hZBwVHB1+g1rrnBh7h8765enksFRqsqjgaV9oEM4az8EW3Ka47HUwx5pb3I60U=
+X-Received: by 2002:a05:690c:9c05:b0:6ef:5097:5daa with SMTP id
+ 00721157ae682-719e3472b77mr166702847b3.34.1753739058217; Mon, 28 Jul 2025
+ 14:44:18 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: stgt@vger.kernel.org
 List-Id: <stgt.vger.kernel.org>
 List-Subscribe: <mailto:stgt+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:stgt+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DU0PR10MB6252:EE_|AM0PR10MB3522:EE_
-X-MS-Office365-Filtering-Correlation-Id: 62525dbf-a991-4895-868b-08ddc07a3757
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|1800799024|376014|366016;
-X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?N3JYU1JvTzEySnZRb1dyWUdiUWEyU0R0NWswWjNIb2podUgwZ0JrSnpaN1dT?=
- =?utf-8?B?UGs3eGhSTEpMQTNMYWJycGVTd21Ddkp3RTBOaGdvVnoxdXMyYTlhQkFCOVRF?=
- =?utf-8?B?MGdUcXZTc2oxMndTQXdWV2FQV2RuL3ZFcDVxNjJHNitUYW5YUG9iNVRWbkxa?=
- =?utf-8?B?eFVtVlVRNEcyZlZaVHd4SHdVYkxjbExjUHorQXBsdVZ5MTZYWmFjNkFNRmEy?=
- =?utf-8?B?ODgwZEdHUmlBODhHKzIzWVFwbGpvSCtQKzZQcXpGQnk5QU4wZGZrVUZVZW5q?=
- =?utf-8?B?VHdNRkhFQlV4MzVNNGJKL1FLVDZTNklLZWZuVDl6SWU1cXBLVVAzZGZmTDdD?=
- =?utf-8?B?MDhENGJqUUkwOUxoNkNxQittQ0k1YzVSZU5CcGpXY3FIRS9rbVRRM2RCcU81?=
- =?utf-8?B?enVrNExRMXFLSDZWOGhhMVRnZkVIT0tkZlY3TDNsTW5rYlNUQllKNVZ1MC9V?=
- =?utf-8?B?NU5UN2FIVHgrUzZ5dEZwT3Rtelc3SmF4Vkk2bC80UWdBOVBCNDRNTzJwa1VY?=
- =?utf-8?B?d3krNFZRVUxNVGkwQ3hBcEtYek9nTFdqcDFPNHpMZGhRekE0c1NWeDFmS2FM?=
- =?utf-8?B?dEZ4cWtPK3NNT042QzF0Nm9MK2tncSs0MGdRZUFDN2tEenh4d0htRW1EZUtj?=
- =?utf-8?B?ai8zd1lLQnBzZHJXZjZYV0hRc1hHaWRaeE1ia09tcldLSTQ3Skc2Ykh1NlJ3?=
- =?utf-8?B?TkgvMVdleGFHRTR3ZW5KUmtQM2g1MElsblZ0MGtjTFVPa3VPeTlDWkpia1Jt?=
- =?utf-8?B?RnJMV0JCdXp3WWxBblB4Y3VFMFVLQmJBakJ0K0w4N2pINnlHejBDU2JIdGwy?=
- =?utf-8?B?aWVvTmlEVFh4S2pKTXpxa0dzb3pPbmxoaGdtWlRsM1d5eGNYVFVVZE4xTzZV?=
- =?utf-8?B?aC9PUFJwa0dBWHlTOVEyaXN4dVhJZ3YzWkZyQlowVmx5cUlCUUJGMlBzVUV3?=
- =?utf-8?B?OGozSXhyVGkzT3JJZFlWM2VORXFFNEpLMk5GQ1VGU3dhQ2RIWUFPQzNXRUtF?=
- =?utf-8?B?aVRsTmtzN29QWXJJenF3UENnZFFXaFNNK2x1akNGc3hUTVNJb3FndTUwR0k3?=
- =?utf-8?B?clVyNk11dW5aOVZ5Z3hBT2N2cnJkZHJMR2lTbnQ2M1JwWDNMM2dTeDF3THlT?=
- =?utf-8?B?NjR6RVZLNkhsRkNTR3EyTHFtTVU2MDZreUkrSll3SnBRRVhPWDE0QTZJMlBl?=
- =?utf-8?B?NmNEWlU0alVFcGpPWjV0bHNSRkwxcXJGOGc0S0xEelV3eFlxMk8zci9ycHoz?=
- =?utf-8?B?TlRsZytGWngrcE81cTRXTVROL2lWQ3R0bnhpRG9oUHQybVprVDRGQUJHZzNX?=
- =?utf-8?B?eDh1L3RUaUM3bFV5T1IxaDBJYW52T0tmZmhadW9RbGNDUGVlZ0Q0M1JqdytX?=
- =?utf-8?B?dXBIWDIyVFhsSkFIZDN4cUJ1L3RCaGFiTHYwSTF2OGlWVUZPSTExSGFYaTVT?=
- =?utf-8?B?Z2VIK3ZBeWZIZlZnRStvM3pMTzB5S2k3Vy8vVGY0eW1qb0dodHo4NnpSL1c2?=
- =?utf-8?B?a0xLV2FRY0ZwRXpIYlhyYWhhRDJXVXpMbmFPMEpIaEVIQmZ2VE1XZjVtNjlm?=
- =?utf-8?B?ZERtalI0WXJkM2Y2QVNPaWp5ZmdIdkx6NXd1YzFMUVlyZEdESExWbExuOEd6?=
- =?utf-8?B?K1B3VTNrUkNNeWpsd01ha3Q5ZW1oV0NLU2lPc1haYWJVS29QNXJQNWFwajll?=
- =?utf-8?B?NDVFS2o1MjEvUW1YMmFoRVV1ZThtUWJZS29pWFhWOG5scUlhcW9mL1dRbWhC?=
- =?utf-8?B?RHArZ09uRHhFalMwTTdzVXRoVTNaanpWMithRXlkaFBocUVZM243UzdaSy9h?=
- =?utf-8?B?TGJRb1hjMzdZejdHSW5XSDR5OWtBODdncC9ZSjhxZ0xFa2xGZTZtNGsxbmJl?=
- =?utf-8?B?Mlg3ZDFZUEpSYkxMdUNtek9MQ1NKY01aMG12SUU3ZCt1b21tOG1sOFI5UDNw?=
- =?utf-8?Q?z+ZD8Grk+f4=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(376014)(366016);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?UTVwQzJveFRYVlJjZHFkc3NiSlZwWk5xZHl4QU1WQWQ5VVZDWkxuRnJXMEVi?=
- =?utf-8?B?Mk5jak54Q081TnhETk1HOGJ4a2V0MnErV0Z6WGd1OVo3NDJwV1dhTzBvSmxp?=
- =?utf-8?B?bXFncFE1aXA2Vm9LSVlDTkt3cDZZemlXV0FOWFEvTitid0tZN0d3allxb090?=
- =?utf-8?B?QnM1VHc1aXgycTdrL3AxMFA5aEE1SVE1UURBTU5ad3RIQ2drTDA4ZnYzY1RY?=
- =?utf-8?B?V1NVdGRveDVqdmc1UEZvbmJDUWlvbzZvTy9ITXN5TTYzVEZNRUdObEhOakhG?=
- =?utf-8?B?Q29nK2JZeEYzNDJaVkVPRCtON05QU3dNb0s3TEwwSmtPcXg4VlBFSjVwVjZ2?=
- =?utf-8?B?Z002cHJMQmRhWjFYOEtFMUtIUUZaZTc0VDFRUitaWkl2YW0xbkdZYUF4L2hR?=
- =?utf-8?B?ZStKMXpHaSt3QzZocWRKblg3TGFlYi9PaDRWUGR5K1h5cWpTNWxsZ1pkMCtF?=
- =?utf-8?B?V0pabWo3dHZZOXNpLzVlMlMyYW5FMDBGaWNyQThETE05cFRyR0Jsdm9VWnZB?=
- =?utf-8?B?YVRKRkJGMHEvY0l1NHhtbnlla1FPZUNWNmM4RzMybG1BcjBqbEdOMkNJNzBy?=
- =?utf-8?B?emNNSjhDU0kzN0NnWWNlVGwrWldHWGlCWGJaeXdyMXJzQzJmZWlyVytEanc2?=
- =?utf-8?B?YXBiUVlTUHVZSHkvT1NpOXZHYzd0UFRWTjNQb2UwZkt5V1UxV1ZJV0lIL0J5?=
- =?utf-8?B?cXpMVEw0aStPa0E2OGN5RHNQcmswNTRERlorZUNQTnRRSnkzRUhlb3RZUzNV?=
- =?utf-8?B?eExFc3JWL1RtMXpOWVhrOVJqVDZTdjhNV3BiS2cwbUVXQzV6aXlGTC9Eb0pB?=
- =?utf-8?B?Yzh0UzV4R0VIVlpiRFVBSHBHQ3lpNlJobjV1OWwrL3pNVW9OTVRwbVZIYkZ3?=
- =?utf-8?B?MHpvcXlqeEJjL2tLeTJrb0FmRnNKTytCMnlibm16ek43K21zL1dtYWZzd2JR?=
- =?utf-8?B?ejZQWmx6UEcvV0ExSDE4RjRidDhZWk1kc21IRjRHS0lnRUFyMjVmYkErTnQx?=
- =?utf-8?B?dndwWW9McmtyN2M0Z3dOL254S0dKZVp4Wm05NTVIMDVrUU1UYVhnTU1ENlJU?=
- =?utf-8?B?Z0tiZks1YkVkcXZBNVdEaGcvSVFjTkI4RHlJZ1ZyMXFXWDVMYXdPTXlvdDB5?=
- =?utf-8?B?emJqOVB1bTRwZXFEaTU0SWk5UlIrSEhKMUlYWmlHZmEvWXErVUZSMXRPZ0g3?=
- =?utf-8?B?eFBuK2FlMmtlVEhIWkpLcytxTlNRUXducHFPTmkzKzRobUFqeGxPVlhFVldu?=
- =?utf-8?B?NlhSd1ZqUWxHc3dkdmR2b3BXVmdabDRyYjdKczFacnNWVHJlMW9CZGRUc3ZO?=
- =?utf-8?B?QlNhblhTanJORGdkOUludHZoNmpmOUVlMSsxVTMyS1dvaE9KWWVIbUhuV05s?=
- =?utf-8?B?b1h4b1RnUlpOMzNEa2NJaWx3UG50VDJmVVhHT2lPZmtKSHJLZFhtZElNRk9T?=
- =?utf-8?B?QThSS2kwSlIwUWp2UksweDROQUw5cEV4OWxQNktuejhxOUdMbGdqQXFoUXpS?=
- =?utf-8?B?bzlRYnYzak1GMy9XVWw3UWNsdkIydlc4NEJQSVh5N1UwTkxXQ0o0disvT0RZ?=
- =?utf-8?B?d1pGWkRuQUtyNWFaNWhFU1JpSUdrRTF3QXM1WHhQTkR0ZHVLWEJTUEpsdmJj?=
- =?utf-8?B?cHpvanVRMjl6QlV5czBPMk9acnVtS1JnWjRWbFpMNVF5MldQYnJSenFJbFRm?=
- =?utf-8?B?dWFLYXdOdnB1M2pyelNKck56blVTUWVqakpSSERHSytGUTNpTFkwb2JWV0Vh?=
- =?utf-8?B?VUVaeDNIbmNHem4rWlhCRmMxMXlRVUl3d0JpZDVnWUpSSHpWdzM4OVU5aFRS?=
- =?utf-8?B?V2Zram8rSVp6QVdzbXEwVUJWNUVNYm42TDh0VmNESmx0VTZBYTMyL1g3VFh4?=
- =?utf-8?B?Si9NclI4TFFTenV4WWU5aDRFMlplNW5PYjJiOU03MFplcTIrZUlkd0NTeE03?=
- =?utf-8?B?RGpkSWxaUFVoU1VhcnZZbVZ4ZkhGNW0ydFU1elFxNVhNMVJpWDJ0cFE1WDhH?=
- =?utf-8?B?dGFxdDB0RWVwcnBlc3BmT1d1TW5nQ1JXZHBMSkptVmxBK3IvVjdBWGNDWHZO?=
- =?utf-8?B?Zm9scThYaVJheFd5N2R4akRNUURYL2hOSXBCMGFvYUFGWVg4VnB0TzF1Z29t?=
- =?utf-8?B?Z0lUUlJ6N0c2N3VJcHA4V1RJMWR2a1RnWUh6YXdYWnhRVEp6czNCUTllWG8y?=
- =?utf-8?B?Znc9PQ==?=
-X-OriginatorOrg: kontron.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 62525dbf-a991-4895-868b-08ddc07a3757
-X-MS-Exchange-CrossTenant-AuthSource: DU0PR10MB6252.EURPRD10.PROD.OUTLOOK.COM
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Jul 2025 12:55:30.5330
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 8c9d3c97-3fd9-41c8-a2b1-646f3942daf1
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: UtpxIW39FLOFgP8l/XeVUJKW6ee+loJ8UZKH4OjWxDbonMUHEk367NXJWdlSpjRY1pGmisy0vFOkm0nWaIl09n34hlGc4BhKwKqH1YmaEdM=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR10MB3522
+From: Davy Davidse <davydavidse@gmail.com>
+Date: Mon, 28 Jul 2025 23:44:03 +0200
+X-Gm-Features: Ac12FXyD2LwnSFZNkjC5Uogea5YACcfhTB1Z3-NczahrSvFLb194A9EOqppEeWE
+Message-ID: <CADzRqdC_fWwiCvkNYN-VGC=q-B5Lwy34ztaGV-nWVqP4UJCBAA@mail.gmail.com>
+Subject: tgtd hung task during heavy I/O - fdatasync blocking indefinitely
+To: stgt@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Le 11/06/2025 à 19:29, Gilles BULOZ a écrit :
-> Sorry for overhead, but I'm unable to find any answer to this question.
->
-> I use a diskless board that is booted from a PXE server and is mounting its
-> rootfs from an iSCSI target on this server running tgtd. OS is Fedora 41.
->
-> The problem is that on diskless shutdown/reboot, the rootfs is cleanly unmounted
-> but no session logout is sent to the server. So at next diskles boot, another
-> session is created but the old one is still there. As a workaround I can manually
-> delete these old sessions by running something like this on the server :
-> tgtadm --op delete --mode conn --tid x --sid y --cid z
-> I've found another workaround for that that is to run a logout from a script that
-> is run by the diskless board near the end of its shutdown.
->
-> But the issue is still there is the diskless is brutally reset or power-cycled
-> (occurs very often in the embedded world) because of no session logout.
->
-> I'm wondering why a session from the same initiator to the same target could not
-> automatically delete older sessions.
->
-I'm still wondering that
->
-> Also I'm wondering if there's some sort of timeout to enable to have old
-> sessions automatically deleted if the connection to the initiator is broken.
->
-In fact there's already a timeout set to ~1 hour.
-In the worst case, if I do boot/reboot loops and depending of the boot/reboot
-speed I end up with ~45 sessions but this seems not to cause any issue.
->
-> Should I really care about these old sessions or do with them ? The problem is
-> see with them is that stopping tgtd from a command or shutting down the server
-> hangs for ~40s seconds because of these old sessions.
->
-A workaround for the ~40s delay when stopping tftd is to add "TimeoutStopSec=3"
-to /usr/lib/systemd/system/tgtd.service so that systemd only waits for 3 seconds
-after the attempt to kill tgtd cleanly before killing it more brutally but
-successfully.
->
-> Thanks for your answers
->
-> Gilles Buloz
-> Kontron Modular Computers
->
+Hi,
 
+I'm experiencing a hung task issue with tgtd during sustained heavy
+write operations and would appreciate some guidance on debugging this
+further. I'm not very experienced in Linux nor iSCSI so I'm looking
+for some pointers as to where to look.
+
+Setup:
+
+Host: Debian 6.1.0-37-amd64 running in Proxmox VM
+Physical storage: Proxmox cluster with Ceph storage (6x 500GB local
+SSDs, replication factor 2 =3D ~2TB effective)
+VM storage: /dev/sdb backed by Ceph RBD, presented to TGT VM
+TGT configuration: serving iSCSI targets for network boot via iPXE
+Storage stack: Windows client =E2=86=92 iSCSI over Ethernet =E2=86=92 TGT (=
+rdwr) =E2=86=92 LVM
+thin =E2=86=92 Ceph RBD =E2=86=92 local SSDs
+Target configuration: See below
+Use case: LAN party network boot - multiple Windows clients boot from
+disk images over network (And just because I like this concept)
+
+Client Configuration:
+
+Windows client boots via iPXE from iSCSI target
+PrimoCache installed with 20GB RAM cache (since the connection to the
+iSCSI disks can be a little slow, PrimoCache is effectively a windows
+read-write cache)
+PrimoCache configuration: caches all reads/writes to improve network
+storage performance
+Steam installation target: ~70GB game download/installation
+
+Issue Manifestation: During the GTA 5 installation via Steam, the
+first ~20GB of writes are absorbed by PrimoCache's RAM buffer and
+appear to complete quickly. However, once the cache fills up,
+PrimoCache begins flushing data to the network storage (TGT).
+
+The installation progresses normally for a while as data streams
+through the cache to the iSCSI target, but at some point (usually
+around 30-40GB into the installation), all I/O operations completely
+cease. The Windows client shows the Steam download as paused/stalled,
+and the system becomes effectively frozen for storage operations.
+
+At this point, the TGT target becomes unresponsive - no new I/O
+operations are processed, and the client cannot complete any disk
+operations. This coincides with the kernel hung task message appearing
+in dmesg.
+
+Kernel trace:
+
+[14259.621377] INFO: task tgtd:824 blocked for more than 241 seconds.
+[14259.627485] Call Trace:
+[14259.628232]  <TASK>
+[14259.628867]  __schedule+0x34d/0x9e0
+[14259.629728]  schedule+0x5a/0xd0
+[14259.630527]  io_schedule+0x42/0x70
+[14259.631387]  folio_wait_bit_common+0x13d/0x350
+[14259.632388]  ? filemap_alloc_folio+0x100/0x100
+[14259.633441]  folio_wait_writeback+0x28/0x80
+[14259.634347]  __filemap_fdatawait_range+0x90/0x120
+[14259.635403]  file_write_and_wait_range+0x6f/0x90
+[14259.636510]  blkdev_fsync+0x13/0x30
+[14259.637373]  __x64_sys_fdatasync+0x4b/0x90
+
+
+The trace shows tgtd is blocked in fdatasync(), waiting for writeback
+to complete.
+
+Current LVM thin pool status:
+
+thin_pool: 499.75GB, 17.11% data, 16.42% metadata
+Target LV: iscsi_grandia2, 250GB, 34.20% used
+Chunk size: default (64KB)
+
+Additional Observations:
+
+The issue appears to be triggered specifically by sustained write workloads
+Multiple I_T nexus connections (4-23) from the same initiator
+(iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19) all from
+IP 10.62.0.57 - What could this mean?
+No obvious issues visible in Ceph cluster health during the hang
+LVM thin pool has plenty of free space (17.11% data usage, 16.42%
+metadata usage)
+
+Some more information:
+
+root@vm-iscsibeasttgt2:~# tgtadm --lld iscsi --mode target --op show --tid =
+5
+nop_interval=3D0
+nop_count=3D0
+MaxRecvDataSegmentLength=3D8192
+HeaderDigest=3DNone
+DataDigest=3DNone
+InitialR2T=3DYes
+MaxOutstandingR2T=3D1
+ImmediateData=3DYes
+FirstBurstLength=3D65536
+MaxBurstLength=3D262144
+DataPDUInOrder=3DYes
+DataSequenceInOrder=3DYes
+ErrorRecoveryLevel=3D0
+IFMarker=3DNo
+OFMarker=3DNo
+DefaultTime2Wait=3D2
+DefaultTime2Retain=3D20
+OFMarkInt=3DReject
+IFMarkInt=3DReject
+MaxConnections=3D1
+RDMAExtensions=3DYes
+TargetRecvDataSegmentLength=3D262144
+InitiatorRecvDataSegmentLength=3D262144
+MaxOutstandingUnexpectedPDUs=3D0
+MaxXmitDataSegmentLength=3D8192
+MaxQueueCmd=3D128
+
+root@vm-iscsibeasttgt2:~# lvs -a
+  LV                VG       Attr       LSize    Pool      Origin
+Data%  Meta%  Move Log Cpy%Sync Convert
+  iscsi_devedselvm  iscsi_vg Vwi-aotz--  100.00g thin_pool        0.00
+  iscsi_grandia2    iscsi_vg Vwi-aotz--  250.00g thin_pool        34.20
+  [lvol0_pmspare]   iscsi_vg ewi-------  128.00m
+  thin_pool         iscsi_vg twi-aotz-- <499.75g                  17.11  16=
+.42
+  [thin_pool_tdata] iscsi_vg Twi-ao---- <499.75g
+  [thin_pool_tmeta] iscsi_vg ewi-ao----  128.00m
+
+dmesg:
+[14259.621377] INFO: task tgtd:824 blocked for more than 241 seconds.
+[14259.623000]       Not tainted 6.1.0-37-amd64 #1 Debian 6.1.140-1
+[14259.624314] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[14259.625871] task:tgtd            state:D stack:0     pid:824
+ppid:1      flags:0x00004002
+[14259.627485] Call Trace:
+[14259.628232]  <TASK>
+[14259.628867]  __schedule+0x34d/0x9e0
+[14259.629728]  schedule+0x5a/0xd0
+[14259.630527]  io_schedule+0x42/0x70
+[14259.631387]  folio_wait_bit_common+0x13d/0x350
+[14259.632388]  ? filemap_alloc_folio+0x100/0x100
+[14259.633441]  folio_wait_writeback+0x28/0x80
+[14259.634347]  __filemap_fdatawait_range+0x90/0x120
+[14259.635403]  file_write_and_wait_range+0x6f/0x90
+[14259.636510]  blkdev_fsync+0x13/0x30
+[14259.637373]  __x64_sys_fdatasync+0x4b/0x90
+[14259.638283]  do_syscall_64+0x55/0xb0
+[14259.639220]  ? __rseq_handle_notify_resume+0xa9/0x4a0
+[14259.640361]  ? do_futex+0x106/0x1b0
+[14259.641207]  ? futex_wake+0x7c/0x180
+[14259.641997]  ? do_futex+0xda/0x1b0
+[14259.642843]  ? __x64_sys_futex+0x8e/0x1d0
+[14259.643869]  ? exit_to_user_mode_prepare+0x40/0x1e0
+[14259.644972]  ? syscall_exit_to_user_mode+0x1e/0x40
+[14259.645986]  ? do_syscall_64+0x61/0xb0
+[14259.646786]  ? do_syscall_64+0x61/0xb0
+[14259.647659]  ? do_syscall_64+0x61/0xb0
+[14259.648528]  ? do_syscall_64+0x61/0xb0
+[14259.649453]  entry_SYSCALL_64_after_hwframe+0x6e/0xd8
+[14259.650454] RIP: 0033:0x7f3194c90cba
+[14259.651218] RSP: 002b:00007f316d7fac70 EFLAGS: 00000293 ORIG_RAX:
+000000000000004b
+[14259.652659] RAX: ffffffffffffffda RBX: 00005576cb22d8a0 RCX: 00007f3194c=
+90cba
+[14259.654022] RDX: 0000000000000000 RSI: 0000000000000000 RDI: 00000000000=
+0000f
+[14259.655403] RBP: 0000000000000000 R08: 0000000000000035 R09: 00000000fff=
+fffff
+[14259.656820] R10: 0000000000000000 R11: 0000000000000293 R12: 00000000000=
+00000
+[14259.658114] R13: 000000000000000f R14: 00007ffcb3047e80 R15: 00007f316cf=
+fb000
+[14259.659461]  </TASK>
+
+tgt-admin -s:
+Target 5: iqn.2024-11.local.vm-iscsibeast:grandia2
+    System information:
+        Driver: iscsi
+        State: ready
+    I_T nexus information:
+        I_T nexus: 4
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 5
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 6
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 7
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 8
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 9
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 10
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 11
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 12
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 13
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 14
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 15
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 16
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 17
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 18
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 19
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 20
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 21
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+        I_T nexus: 23
+            Initiator:
+iqn.2010-04.org.ipxe:98ae8321-e8c8-ab14-ae97-345a60b59b19 alias: none
+            Connection: 1
+                IP Address: 10.62.0.57
+    LUN information:
+        LUN: 0
+            Type: controller
+            SCSI ID: IET     00050000
+            SCSI SN: beaf50
+            Size: 0 MB, Block size: 1
+            Online: Yes
+            Removable media: No
+            Prevent removal: No
+            Readonly: No
+            SWP: No
+            Thin-provisioning: No
+            Backing store type: null
+            Backing store path: None
+            Backing store flags:
+        LUN: 1
+            Type: disk
+            SCSI ID: IET     00050001
+            SCSI SN: beaf51
+            Size: 268435 MB, Block size: 512
+            Online: Yes
+            Removable media: No
+            Prevent removal: No
+            Readonly: No
+            SWP: No
+            Thin-provisioning: No
+            Backing store type: rdwr
+            Backing store path: /dev/iscsi_vg/iscsi_grandia2
+            Backing store flags:
+    Account information:
+    ACL information:
+        ALL
+
+root@vm-iscsibeasttgt2:~# cat /etc/tgt/conf.d/iscsi.conf
+# TGT iSCSI Configuration
+# Auto-generated by debian-server-setup-tgt.sh
+# Using all TGT defaults for optimal connection management
+
+# Default settings
+default-driver iscsi
+
+# Prevent connection accumulation for iPXE clients
+<driver iscsi>
+    MaxConnections 1
+</driver>
+
+# Include user-specific target files
+include /etc/tgt/conf.d/targets/*.conf
+
+So I'm mainly curious if someone has some ideas what is causing this
+problem. I would expect that "slow" storage would just "slow down"
+write operations. Not cause a complete system freeze and eventual
+bluescreen in windows stating "Critical_process_died". Also I'm not
+sure if this is the place to ask these questions as I've never used a
+mailing list before. So if not, feel free to point me to the right
+place.
+
+Kind regards,
+Devedse
